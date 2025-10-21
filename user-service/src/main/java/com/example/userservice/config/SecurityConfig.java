@@ -2,6 +2,7 @@ package com.example.userservice.config;
 
 import com.example.userservice.filter.CustomAuthenticationFilter;
 import com.example.userservice.service.UserService;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -18,9 +19,11 @@ import org.springframework.security.web.SecurityFilterChain;
 public class SecurityConfig {
 
     private final UserService userService;
+    private final ObjectMapper objectMapper;
 
-    public SecurityConfig(UserService userService) {
+    public SecurityConfig(UserService userService, ObjectMapper objectMapper) {
         this.userService = userService;
+        this.objectMapper = objectMapper;
     }
 
     @Value("${jwt.secret}")
@@ -50,7 +53,7 @@ public class SecurityConfig {
         );
 
         // ✅ AuthenticationFilter 등록
-        http.addFilter(new CustomAuthenticationFilter(authenticationManager, userService, secret, expirationTime));
+        http.addFilter(new CustomAuthenticationFilter(authenticationManager, userService, secret, expirationTime, objectMapper));
 
         return http.build();
     }

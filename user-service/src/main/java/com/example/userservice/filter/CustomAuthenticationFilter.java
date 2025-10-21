@@ -30,14 +30,15 @@ public class CustomAuthenticationFilter extends UsernamePasswordAuthenticationFi
     private final UserService userService;
     private final String secret;
     private final String expirationTime;
-    private final ObjectMapper objectMapper = new ObjectMapper();
+    private final ObjectMapper objectMapper;
 
     public CustomAuthenticationFilter(AuthenticationManager authenticationManager, UserService userService,
-                                      String secret, String expirationTime) {
+                                      String secret, String expirationTime, ObjectMapper objectMapper) {
         super(authenticationManager);
         this.userService = userService;
         this.secret = secret;
         this.expirationTime = expirationTime;
+        this.objectMapper = objectMapper;
     }
 
     // 로그인 요청 시, UsernamePasswordAuthenticationFilter가 요청을 가로채서 attemptAuthentication() 메서드 실행
@@ -77,7 +78,7 @@ public class CustomAuthenticationFilter extends UsernamePasswordAuthenticationFi
         // 필요시 권한 정보 추가 : .claim("roles", authResult.getAuthorities())
         String token = Jwts.builder()
                 .setSubject(userDetails.getId().toString())
-                .claim("username", userDetails.getEmail())
+                .claim("email", userDetails.getEmail())
                 .setExpiration(expirationDate)
                 .signWith(secretKey)
                 .compact();
