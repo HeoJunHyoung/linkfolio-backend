@@ -1,0 +1,32 @@
+server:
+  port: 8000
+
+spring:
+  application:
+    name: apigateway-service
+  cloud:
+    gateway:
+      routes:
+        # 1. User Service Definition (With Authorization Filter Adjust)
+        - id: user-service-route
+          uri: http://user-service:80
+          predicates:
+            - Path=/user-service/**
+          filters:
+            - RewritePath=/user-service/(?<segment>.*), /$\{segment}
+            - AuthorizationHeaderFilter
+
+app:
+  gateway:
+    excluded-urls:
+      - /users/login
+      - /users/signup
+      - /welcome
+      - /actuator
+      - /swagger-ui
+      - /v3/api-docs
+
+# JWT Token Settings
+jwt:
+  secret: ${JWT_SECRET}
+  expiration_time: 86400000
