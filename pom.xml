@@ -11,6 +11,7 @@
     <groupId>com.example</groupId>
     <artifactId>linkfolio</artifactId>
     <version>0.0.1-SNAPSHOT</version>
+    <packaging>pom</packaging>
     <name>linkfolio</name>
     <description>linkfolio</description>
     <url/>
@@ -27,6 +28,9 @@
         <url/>
     </scm>
 
+    <modules>
+        <module>user-service</module>
+    </modules>
 
     <properties>
         <java.version>17</java.version>

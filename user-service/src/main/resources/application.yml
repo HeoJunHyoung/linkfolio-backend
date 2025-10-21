@@ -1,15 +1,21 @@
+# ? Server Configuration
 server:
   port: 8080
 
+
+# ?? Spring Application Settings
 spring:
   application:
     name: user-service
 
+  ## ?? Database (MySQL) Configuration
   datasource:
     driver-class-name: com.mysql.cj.jdbc.Driver
     url: jdbc:mysql://${DB_HOST}/${MYSQL_DATABASE}?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC
     username: ${MYSQL_USER}
     password: ${MYSQL_PASSWORD}
+
+  ## ? JPA / Hibernate Configuration
   jpa:
     hibernate:
       ddl-auto: ${JPA_DDL_AUTO}
@@ -18,10 +24,13 @@ spring:
       hibernate:
         format_sql: ${JPA_FORMAT_SQL}
 
+
+# ? JWT Token Settings
 jwt:
   secret: ${JWT_SECRET}
-  expiration_time: 86400000 # 24 hours
+  expiration_time: 86400000
 
+# ? gRPC Configuration
 grpc:
   server:
     port: -1
