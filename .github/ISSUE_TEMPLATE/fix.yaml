@@ -1,0 +1,20 @@
+name: 🐛 Bug Fix
+description: 버그나 오류 수정 작업
+title: "[fix] 버그 제목"
+labels: ["bug", "fix"]
+body:
+  - type: textarea
+    id: bug
+    attributes:
+      label: 🐞 발생한 문제
+      description: 어떤 문제가 있었나요?
+      placeholder: ex) 여행 일정 수정 시 저장되지 않음
+    validations:
+      required: true
+
+  - type: textarea
+    id: steps
+    attributes:
+      label: ✅ 재현 방법
+      description: 어떤 과정을 거치면 문제가 발생하나요?
+      placeholder: ex) 1. 일정 수정 > 2. 저장 클릭 > 3. 새로고침하면 반영 안됨

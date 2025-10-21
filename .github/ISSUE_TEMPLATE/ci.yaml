@@ -1,0 +1,13 @@
+name: 🤖 CI/CD
+description: 빌드, 배포, GitHub Actions 등 CI 설정 변경
+title: "[ci] CI 설정 작업 제목"
+labels: ["ci"]
+body:
+  - type: textarea
+    id: what
+    attributes:
+      label: 🔧 작업 내용
+      description: 어떤 CI/CD 요소를 수정하나요?
+      placeholder: ex) main 브랜치에만 배포되도록 워크플로 수정
+    validations:
+      required: true
