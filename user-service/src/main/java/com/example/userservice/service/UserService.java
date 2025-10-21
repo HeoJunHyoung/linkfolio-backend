@@ -10,6 +10,7 @@ import org.springframework.security.core.userdetails.User;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
+import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -20,14 +21,15 @@ import java.util.ArrayList;
 public class UserService implements UserDetailsService {
 
     private final UserRepository userRepository;
+    private final BCryptPasswordEncoder passwordEncoder;
 
     // 회원가입
     @Transactional
     public void signUp(UserSignUpRequest request) {
         validatePasswordMatch(request);             // 비밀번호 검증
         validateEmailDuplicate(request.getEmail()); // 이메일 검증
-        UserEntity user = UserEntity.of(request.getEmail(), generateUniqueNickname(), request.getPassword());   // 객체 생성
-        userRepository.save(user);  // 객체 저장
+        UserEntity signUpUser = UserEntity.of(request.getEmail(), generateUniqueNickname(), passwordEncoder.encode(request.getPassword()));   // 객체 생성
+        userRepository.save(signUpUser);  // 객체 저장
     }
 
     // 회원 단일 조회
