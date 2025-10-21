@@ -1,0 +1,32 @@
+server:
+  port: 8080
+
+spring:
+  application:
+    name: user-service
+
+  datasource:
+    driver-class-name: com.mysql.cj.jdbc.Driver
+    url: jdbc:mysql://${DB_HOST}/${MYSQL_DATABASE}?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC
+    username: ${MYSQL_USER}
+    password: ${MYSQL_PASSWORD}
+  jpa:
+    hibernate:
+      ddl-auto: ${JPA_DDL_AUTO}
+    show-sql: ${JPA_SHOW_SQL}
+    properties:
+      hibernate:
+        format_sql: ${JPA_FORMAT_SQL}
+
+jwt:
+  secret: ${JWT_SECRET}
+  expiration_time: 86400000 # 24 hours
+
+grpc:
+  server:
+    port: -1
+  client:
+    order-service:
+      address: '${GRPC_CLIENT_ORDER_SERVICE_ADDRESS:static://localhost:9099}'
+      enableKeepAlive: true
+      negotiationType: PLAINTEXT
