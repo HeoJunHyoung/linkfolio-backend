@@ -65,7 +65,7 @@ public class SecurityConfig {
         );
         authenticationFilter.setFilterProcessesUrl("/users/login");
 
-        http.addFilter(new CustomAuthenticationFilter(authenticationManager, userService, objectMapper, jwtTokenProvider));
+        http.addFilter(authenticationFilter);
         return http.build();
     }
 
