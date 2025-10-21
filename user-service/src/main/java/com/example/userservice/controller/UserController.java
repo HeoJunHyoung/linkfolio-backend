@@ -30,7 +30,7 @@ public class UserController {
     }
 
     // 로그인
-    @PostMapping("/login")
+    @PostMapping("/users/login")
     public void login(@RequestBody UserLoginRequest request) {
         // 로그인 처리는 AuthenticationFilter 위임
     }

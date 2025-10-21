@@ -47,13 +47,23 @@ public class SecurityConfig {
 
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http, AuthenticationManager authenticationManager) throws Exception {
-        http.csrf(csrf -> csrf.disable());
-        http.sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS));
+        http
+                .csrf(csrf -> csrf.disable())
+                .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
+                .authorizeHttpRequests(authorize -> authorize
+                        .requestMatchers("/swagger-ui/**", "/v3/api-docs/**", "/swagger-resources/**").permitAll()
+                        .requestMatchers("/users/signup", "/users/login", "/welcome").permitAll()
+                        .anyRequest().authenticated()
+                );
 
-        http.authorizeHttpRequests(authorize -> authorize
-                        .requestMatchers("/swagger-ui/**", "/v3/api-docs/**", "/swagger-resources/**").permitAll() // Swagger 경로 허용
-                        .requestMatchers("/**").permitAll()
+        // login -> users/login 으로 커스터 마이징
+        CustomAuthenticationFilter authenticationFilter = new CustomAuthenticationFilter(
+                authenticationManager,
+                userService,
+                objectMapper,
+                jwtTokenProvider
         );
+        authenticationFilter.setFilterProcessesUrl("/users/login");
 
         http.addFilter(new CustomAuthenticationFilter(authenticationManager, userService, objectMapper, jwtTokenProvider));
         return http.build();
