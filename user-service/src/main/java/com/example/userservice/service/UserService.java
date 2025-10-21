@@ -1,10 +1,12 @@
 package com.example.userservice.service;
 
 import com.example.userservice.dto.UserDto;
+import com.example.userservice.dto.UserResponse;
 import com.example.userservice.dto.UserSignUpRequest;
 import com.example.userservice.entity.UserEntity;
 import com.example.userservice.repository.UserRepository;
 import com.example.userservice.util.NicknameGenerator;
+import com.example.userservice.util.UserMapper;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.core.userdetails.User;
 import org.springframework.security.core.userdetails.UserDetails;
@@ -22,6 +24,7 @@ public class UserService implements UserDetailsService {
 
     private final UserRepository userRepository;
     private final BCryptPasswordEncoder passwordEncoder;
+    private final UserMapper userMapper;
 
     // 회원가입
     @Transactional
@@ -33,9 +36,10 @@ public class UserService implements UserDetailsService {
     }
 
     // 회원 단일 조회
-    public UserEntity getUser(Long userId) {
-        return userRepository.findById(userId)
+    public UserResponse getUser(Long userId) {
+        UserEntity userEntity = userRepository.findById(userId)
                 .orElseThrow(() -> new IllegalArgumentException("회원이 존재하지 않습니다."));
+        return userMapper.toUserResponse(userEntity);
     }
 
 
@@ -74,7 +78,8 @@ public class UserService implements UserDetailsService {
     public UserDto getUserDetailsByEmail(String email) {
         UserEntity userEntity = userRepository.findUserDetailsByEmail(email)
                 .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 회원 입니다."));
-        return UserDto.of(userEntity.getUserId(), userEntity.getEmail(), userEntity.getPassword(), userEntity.getNickname());
+        
+        return userMapper.toUserDto(userEntity); // Mapper 이용
     }
 
 

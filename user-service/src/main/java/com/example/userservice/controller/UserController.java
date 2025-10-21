@@ -1,6 +1,7 @@
 package com.example.userservice.controller;
 
 import com.example.userservice.dto.UserLoginRequest;
+import com.example.userservice.dto.UserResponse;
 import com.example.userservice.dto.UserSignUpRequest;
 import com.example.userservice.entity.UserEntity;
 import com.example.userservice.service.UserService;
@@ -36,9 +37,9 @@ public class UserController {
     
     // 회원 단일 조회
     @GetMapping("/users/{userId}")
-    public ResponseEntity<UserEntity> getUserApi(@PathVariable("userId") Long userId) {
-        UserEntity findUser = userService.getUser(userId);
-        return ResponseEntity.status(HttpStatus.OK).body(findUser);
+    public ResponseEntity<UserResponse> getUserApi(@PathVariable("userId") Long userId) {
+        UserResponse userResponse = userService.getUser(userId);
+        return ResponseEntity.status(HttpStatus.OK).body(userResponse);
     }
 
 
