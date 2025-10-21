@@ -1,0 +1,23 @@
+name: 🚀 Feature
+description: 새로운 기능 추가를 위한 작업
+title: "[feat] 기능 제목"
+labels: ["feature"]
+body:
+  - type: textarea
+    id: what
+    attributes:
+      label: ✨ 기능 설명
+      description: 어떤 기능을 구현할 예정인가요?
+      placeholder: ex) 여행 메이트 추천 기능 구현
+    validations:
+      required: true
+
+  - type: textarea
+    id: detail
+    attributes:
+      label: 📋 상세 작업 내용
+      description: 예상 작업 항목을 목록 형태로 적어주세요
+      placeholder: |
+        - 사용자 설문 결과 조회 API 연동
+        - 유사도 계산 로직 작성
+        - UI에 추천 리스트 표시

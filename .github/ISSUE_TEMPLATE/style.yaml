@@ -1,0 +1,13 @@
+name: 🎨 Style
+description: 코드 스타일, 포맷팅, 세미콜론 등 문법 변경
+title: "[style] 스타일 변경 제목"
+labels: ["style"]
+body:
+  - type: textarea
+    id: what
+    attributes:
+      label: 🎨 스타일 변경 내용
+      description: 어떤 스타일/형식 요소를 수정하나요?
+      placeholder: ex) ESLint 적용, 들여쓰기 통일, 세미콜론 추가 등
+    validations:
+      required: true

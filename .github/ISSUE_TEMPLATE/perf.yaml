@@ -1,0 +1,20 @@
+name: ⚡ Performance
+description: 성능 최적화 관련 작업
+title: "[perf] 성능 개선 제목"
+labels: ["perf"]
+body:
+  - type: textarea
+    id: what
+    attributes:
+      label: ⚙️ 개선 내용
+      description: 어떤 성능 문제를 개선하나요?
+      placeholder: ex) 여행 추천 알고리즘 응답 속도 개선
+    validations:
+      required: true
+
+  - type: textarea
+    id: how
+    attributes:
+      label: 🔧 개선 방법
+      description: 어떤 방식으로 개선할 예정인가요?
+      placeholder: ex) DB 인덱스 추가, 캐싱 도입 등
