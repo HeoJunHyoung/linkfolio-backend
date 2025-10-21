@@ -2,6 +2,7 @@ package com.example.userservice.config;
 
 import com.example.userservice.filter.CustomAuthenticationFilter;
 import com.example.userservice.service.UserService;
+import com.example.userservice.util.JwtTokenProvider;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
@@ -20,10 +21,12 @@ public class SecurityConfig {
 
     private final UserService userService;
     private final ObjectMapper objectMapper;
+    private final JwtTokenProvider jwtTokenProvider;
 
-    public SecurityConfig(UserService userService, ObjectMapper objectMapper) {
+    public SecurityConfig(UserService userService, ObjectMapper objectMapper, JwtTokenProvider jwtTokenProvider) {
         this.userService = userService;
         this.objectMapper = objectMapper;
+        this.jwtTokenProvider = jwtTokenProvider;
     }
 
     @Value("${jwt.secret}")
@@ -52,9 +55,7 @@ public class SecurityConfig {
                         .requestMatchers("/**").permitAll()
         );
 
-        // ✅ AuthenticationFilter 등록
-        http.addFilter(new CustomAuthenticationFilter(authenticationManager, userService, secret, expirationTime, objectMapper));
-
+        http.addFilter(new CustomAuthenticationFilter(authenticationManager, userService, objectMapper, jwtTokenProvider));
         return http.build();
     }
 

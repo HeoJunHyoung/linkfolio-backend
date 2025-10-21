@@ -3,6 +3,7 @@ package com.example.userservice.filter;
 import com.example.userservice.dto.UserDto;
 import com.example.userservice.dto.UserLoginRequest;
 import com.example.userservice.service.UserService;
+import com.example.userservice.util.JwtTokenProvider;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.security.Keys;
@@ -18,27 +19,22 @@ import org.springframework.security.core.AuthenticationException;
 import org.springframework.security.core.userdetails.User;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 
-import javax.crypto.SecretKey;
 import java.io.IOException;
-import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
-import java.util.Date;
 
 @Slf4j
 public class CustomAuthenticationFilter extends UsernamePasswordAuthenticationFilter {
 
     private final UserService userService;
-    private final String secret;
-    private final String expirationTime;
     private final ObjectMapper objectMapper;
+    private final JwtTokenProvider jwtTokenProvider;
 
     public CustomAuthenticationFilter(AuthenticationManager authenticationManager, UserService userService,
-                                      String secret, String expirationTime, ObjectMapper objectMapper) {
+                                      ObjectMapper objectMapper, JwtTokenProvider jwtTokenProvider) {
         super(authenticationManager);
         this.userService = userService;
-        this.secret = secret;
-        this.expirationTime = expirationTime;
         this.objectMapper = objectMapper;
+        this.jwtTokenProvider = jwtTokenProvider;
     }
 
     // 로그인 요청 시, UsernamePasswordAuthenticationFilter가 요청을 가로채서 attemptAuthentication() 메서드 실행
@@ -67,21 +63,7 @@ public class CustomAuthenticationFilter extends UsernamePasswordAuthenticationFi
         String userIdentifier = ((User) authResult.getPrincipal()).getUsername(); // Principal에 사용되는 username은 email
         UserDto userDetails = userService.getUserDetailsByEmail(userIdentifier);  // UserDto는 userId가 포함된 DTO
 
-        byte[] secretKeyBytes = secret.getBytes(StandardCharsets.UTF_8);
-        SecretKey secretKey = Keys.hmacShaKeyFor(secretKeyBytes);
-
-        long expirationTimeMillis = Long.parseLong(expirationTime);
-        Date expirationDate = new Date(System.currentTimeMillis() + expirationTimeMillis);
-
-        // JWT Subject : userId
-        // JWT Claims  : email
-        // 필요시 권한 정보 추가 : .claim("roles", authResult.getAuthorities())
-        String token = Jwts.builder()
-                .setSubject(userDetails.getId().toString())
-                .claim("email", userDetails.getEmail())
-                .setExpiration(expirationDate)
-                .signWith(secretKey)
-                .compact();
+        String token = jwtTokenProvider.generateToken(userDetails);
 
         response.addHeader("Authorization", "Bearer " + token);
     }
