@@ -31,7 +31,7 @@ public class UserService implements UserDetailsService {
     public void signUp(UserSignUpRequest request) {
         validatePasswordMatch(request);             // 비밀번호 검증
         validateEmailDuplicate(request.getEmail()); // 이메일 검증
-        UserEntity signUpUser = UserEntity.of(request.getEmail(), generateUniqueNickname(), passwordEncoder.encode(request.getPassword()));   // 객체 생성
+        UserEntity signUpUser = UserEntity.of(request.getEmail(), passwordEncoder.encode(request.getPassword()), generateUniqueNickname());   // 객체 생성
         userRepository.save(signUpUser);  // 객체 저장
     }
 
