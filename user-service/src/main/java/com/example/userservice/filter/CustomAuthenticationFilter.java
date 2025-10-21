@@ -84,6 +84,5 @@ public class CustomAuthenticationFilter extends UsernamePasswordAuthenticationFi
                 .compact();
 
         response.addHeader("Authorization", "Bearer " + token);
-        response.addHeader("userId", userDetails.getId().toString());
     }
 }
