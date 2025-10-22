@@ -38,7 +38,7 @@ spring:
           naver:
             client-id: ${NAVER_CLIENT_ID}
             client-secret: ${NAVER_CLIENT_SECRET}
-            redirect-uri: "{baseUrl}/login/oauth2/code/{registrationId}"
+            redirect-uri: "{baseUrl}/user-service/login/oauth2/code/{registrationId}"
             authorization-grant-type: authorization_code
             scope:
               - email
@@ -47,7 +47,7 @@ spring:
           kakao:
             client-id: ${KAKAO_CLIENT_ID}
             client-secret: ${KAKAO_CLIENT_SECRET} # 카카오는 Client Secret을 사용하지 않는 경우도 있음
-            redirect-uri: "{baseUrl}/login/oauth2/code/{registrationId}"
+            redirect-uri: "{baseUrl}/user-service/login/oauth2/code/{registrationId}"
             authorization-grant-type: authorization_code
             scope:
               - profile_nickname
