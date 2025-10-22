@@ -69,7 +69,7 @@ public class SecurityConfig {
                         .baseUri("/oauth2/authorization") // 프론트에서 호출할 인증 요청 기본 URI
                 )
                 .redirectionEndpoint(redirect -> redirect
-                        .baseUri("/login/oauth2/code/*") // 소셜 로그인 후 콜백 URI
+                        .baseUri("/login/oauth2/code") // 소셜 로그인 후 콜백 URI
                 )
                 .userInfoEndpoint(userInfo -> userInfo
                         .userService(customOAuth2UserService) // 커스텀 유저 서비스 지정
