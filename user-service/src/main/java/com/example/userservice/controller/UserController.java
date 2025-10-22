@@ -1,5 +1,6 @@
 package com.example.userservice.controller;
 
+import com.example.userservice.dto.AuthUser;
 import com.example.userservice.dto.UserLoginRequest;
 import com.example.userservice.dto.UserResponse;
 import com.example.userservice.dto.UserSignUpRequest;
@@ -8,6 +9,7 @@ import com.example.userservice.service.UserService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
@@ -34,8 +36,15 @@ public class UserController {
     public void login(@RequestBody UserLoginRequest request) {
         // 로그인 처리는 AuthenticationFilter 위임
     }
-    
-    // 회원 단일 조회
+
+    // 내 정보 조회
+    @GetMapping("/users/me")
+    public ResponseEntity<UserResponse> getMyInfoApi(@AuthenticationPrincipal AuthUser authUser) {
+        UserResponse userResponse = userService.getUser(authUser.getUserId());
+        return ResponseEntity.status(HttpStatus.OK).body(userResponse);
+    }
+
+    // 특정 회원 단일 조회
     @GetMapping("/users/{userId}")
     public ResponseEntity<UserResponse> getUserApi(@PathVariable("userId") Long userId) {
         UserResponse userResponse = userService.getUser(userId);

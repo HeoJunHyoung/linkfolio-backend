@@ -1,5 +1,6 @@
 package com.example.apigatewayservice.filter;
 
+import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.security.Keys;
 import jakarta.annotation.PostConstruct;
@@ -58,36 +59,49 @@ public class AuthorizationHeaderFilter implements GlobalFilter, Ordered {
         String authHeader = request.getHeaders().getFirst(HttpHeaders.AUTHORIZATION);
         String jwt = authHeader.replace("Bearer ", "");
 
-        if (!isJwtValid(jwt)) {
+        Claims claims;
+        try {
+            claims = getClaims(jwt);
+        } catch (Exception e) {
+            log.warn("Invalid JWT token: {}", e.getMessage());
             return onError(exchange, "Invalid JWT token", HttpStatus.UNAUTHORIZED);
         }
 
-        return chain.filter(exchange);
+        String userId = claims.getSubject();
+        String email = claims.get("email", String.class);
+        if (userId == null || userId.isEmpty() || email == null || email.isEmpty()) {
+            return onError(exchange, "Invalid JWT payload", HttpStatus.UNAUTHORIZED);
+        }
+
+        ServerHttpRequest newRequest = request.mutate()
+                .header("X-User-Id", userId)     // 내부용 헤더 추가
+                .header("X-User-Email", email)   // 내부용 헤더 추가
+                .headers(httpHeaders -> httpHeaders.remove(HttpHeaders.AUTHORIZATION)) // [보안] 외부 토큰 제거
+                .build();
+
+        return chain.filter(exchange.mutate().request(newRequest).build());
     }
 
-    private boolean isJwtValid(String token) {
-        try {
-            String subject = Jwts.parser()
-                    .verifyWith(this.key)
-                    .build()
-                    .parseSignedClaims(token)
-                    .getPayload()
-                    .getSubject();
-            return (subject != null && !subject.isEmpty());
-        } catch (Exception e) {
-            log.warn("Invalid JWT token: {}", e.getMessage());
-            return false;
-        }
-    }
 
     private Mono<Void> onError(ServerWebExchange exchange, String message, HttpStatus status) {
         exchange.getResponse().setStatusCode(status);
         return exchange.getResponse().setComplete();
     }
 
+
+    private Claims getClaims(String token) {
+        return Jwts.parser()
+                .verifyWith(this.key)
+                .build()
+                .parseSignedClaims(token)
+                .getPayload();
+    }
+
+
     // 필터의 실행 순서 지정 (가장 먼저 실행)
     @Override
     public int getOrder() {
         return Ordered.HIGHEST_PRECEDENCE; // -2147483648
     }
+
 }
