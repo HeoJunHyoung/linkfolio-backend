@@ -1,6 +1,7 @@
 package com.example.userservice.config;
 
 import com.example.userservice.filter.CustomAuthenticationFilter;
+import com.example.userservice.filter.InternalHeaderAuthenticationFilter;
 import com.example.userservice.service.UserService;
 import com.example.userservice.util.JwtTokenProvider;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -14,6 +15,7 @@ import org.springframework.security.config.annotation.web.configuration.EnableWe
 import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
+import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 
 @Configuration
 @EnableWebSecurity
@@ -60,7 +62,11 @@ public class SecurityConfig {
         );
         authenticationFilter.setFilterProcessesUrl("/users/login");
 
-        http.addFilter(authenticationFilter);
+        // 필터 추가
+        http
+                .addFilter(authenticationFilter)
+                .addFilterBefore(new InternalHeaderAuthenticationFilter(), UsernamePasswordAuthenticationFilter.class);
+        
         return http.build();
     }
 

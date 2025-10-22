@@ -1,5 +1,6 @@
 package com.example.userservice.service;
 
+import com.example.userservice.dto.AuthUser;
 import com.example.userservice.dto.UserDto;
 import com.example.userservice.dto.UserResponse;
 import com.example.userservice.dto.UserSignUpRequest;
@@ -35,6 +36,7 @@ public class UserService implements UserDetailsService {
         userRepository.save(signUpUser);  // 객체 저장
     }
 
+
     // 회원 단일 조회
     public UserResponse getUser(Long userId) {
         UserEntity userEntity = userRepository.findById(userId)
@@ -49,12 +51,17 @@ public class UserService implements UserDetailsService {
                 .orElseThrow(() -> new IllegalArgumentException("회원이 존재하지 않습니다."));
 
         // 아래의 User 객체는 Spring Security의 고유 객체
-        return new User(userEntity.getEmail(), userEntity.getPassword(),
-                        true, true, true, true,
-                        new ArrayList<>());
+        return new AuthUser(
+                userEntity.getUserId(),
+                userEntity.getEmail(),
+                userEntity.getPassword()
+        );
     }
 
+
+    // =====================
     // 서비스 내부 헬퍼 메서드
+    // =====================
     private void validatePasswordMatch(UserSignUpRequest request) {
         if (!request.getPassword().equals(request.getPasswordConfirm())) {
             throw new IllegalArgumentException("비밀번호가 일치하지 않습니다.");
