@@ -86,4 +86,4 @@ grpc:
 
 app:
   frontend:
-    redirect-url: http://YOUR_FRONTEND_DOMAIN/oauth-callback # 프론트엔드 주소
+    redirect-url: http://127.0.0.1:5500/callback.html # 프론트엔드 주소
