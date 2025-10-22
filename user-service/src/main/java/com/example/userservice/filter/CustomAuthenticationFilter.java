@@ -1,5 +1,6 @@
 package com.example.userservice.filter;
 
+import com.example.userservice.dto.AuthUser;
 import com.example.userservice.dto.UserDto;
 import com.example.userservice.dto.UserLoginRequest;
 import com.example.userservice.service.UserService;
@@ -60,7 +61,7 @@ public class CustomAuthenticationFilter extends UsernamePasswordAuthenticationFi
                                             FilterChain chain,
                                             Authentication authResult) throws IOException, ServletException {
 
-        String userIdentifier = ((User) authResult.getPrincipal()).getUsername(); // Principal에 사용되는 username은 email
+        String userIdentifier = ((AuthUser) authResult.getPrincipal()).getUsername(); // Principal에 사용되는 username은 email
         UserDto userDetails = userService.getUserDetailsByEmail(userIdentifier);  // UserDto는 userId가 포함된 DTO
 
         String token = jwtTokenProvider.generateToken(userDetails);
