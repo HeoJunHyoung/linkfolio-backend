@@ -3,19 +3,23 @@ package com.example.userservice.dto;
 import lombok.Getter;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
+import org.springframework.security.oauth2.core.user.OAuth2User;
 
 import java.util.Collection;
 import java.util.Collections;
+import java.util.Map;
 
-// Q. Spring Security에서 기본적으로 제공해주는 User 객체를 사용하면 되는데, 왜 굳이 UserDetails를 상속받는 AuthUser가 필요한가?
-// A. 기본적으로 제공되는 User 객체에는 username, password만 받는데 우리는 email이 username으로 사용된다. 즉, @AuthenticationPrincipal에서 가져올 수 있는 값이 email 뿐이다.
-//    우리가 유저를 구분하는 값을 userId로 지정한다는 요구사항이 있기 때문에, userId, email을 사용하기 위해서는 UserDeatils를 상속받아서 구현해야 한다.
+// UserDetails와 OAuth2User를 모두 구현
 @Getter
-public class AuthUser implements UserDetails {
+public class AuthUser implements UserDetails, OAuth2User {
 
     private final Long userId;
     private final String email;
     private final String password; // 로그인 시에만 사용
+    // OAuth2 사용자 정보를 담을 필드
+    private Map<String, Object> attributes;
+    private String nameAttributeKey;
+
 
     /**
      * DB 조회를 통해 인증 객체를 생성할 때 사용 (로그인 시)
@@ -24,6 +28,8 @@ public class AuthUser implements UserDetails {
         this.userId = userId;
         this.email = email;
         this.password = password;
+        this.attributes = null;
+        this.nameAttributeKey = null;
     }
 
     /**
@@ -33,6 +39,19 @@ public class AuthUser implements UserDetails {
         this.userId = userId;
         this.email = email;
         this.password = null; // API 요청 시에는 비밀번호가 필요 없음
+        this.attributes = null;
+        this.nameAttributeKey = null;
+    }
+
+    /**
+     * OAuth2 로그인을 통해 인증 객체를 생성할 때 사용
+     */
+    public AuthUser(Long userId, String email, Map<String, Object> attributes, String nameAttributeKey) {
+        this.userId = userId;
+        this.email = email;
+        this.password = null; // OAuth2는 비밀번호 X
+        this.attributes = attributes;
+        this.nameAttributeKey = nameAttributeKey;
     }
 
     // --- UserDetails 인터페이스 구현 ---
@@ -59,4 +78,20 @@ public class AuthUser implements UserDetails {
     @Override public boolean isEnabled() { return true; }
 
 
+    // --- OAuth2User 인터페이스 구현 ---
+
+    @Override
+    public Map<String, Object> getAttributes() {
+        // attributes가 null일 경우(로컬 로그인 등) 빈 맵 반환
+        return this.attributes != null ? this.attributes : Collections.emptyMap();
+    }
+
+    @Override
+    public String getName() {
+        // OAuth2 공급자가 지정한 name attribute key (sub, id 등)
+        // 이 key가 없으면(로컬 로그인 등) userId를 문자열로 반환
+        return (this.nameAttributeKey != null && this.attributes != null)
+                ? (String) this.attributes.get(this.nameAttributeKey)
+                : String.valueOf(this.userId);
+    }
 }
