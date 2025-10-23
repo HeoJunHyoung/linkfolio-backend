@@ -43,7 +43,8 @@ public class AuthorizationHeaderFilter implements GlobalFilter, Ordered {
         ServerHttpRequest request = exchange.getRequest();
         String path = request.getURI().getPath();
 
-        log.info("API Gateway Global Filter received path {}", path);
+        log.info("🔍 API Gateway Request Path: {}", path);
+        log.info("🔍 Headers: {}", request.getHeaders());
 
         // 화이트리스트 검사 로직 (YML 기반)
         boolean isExcluded = excludedUrls.stream().anyMatch(path::startsWith);
