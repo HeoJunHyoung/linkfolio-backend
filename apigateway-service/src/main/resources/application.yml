@@ -12,8 +12,8 @@ spring:
           uri: http://user-service:80
           predicates:
             - Path=/user-service/**
-          filters:
-            - RewritePath=/user-service/(?<segment>.*), /$\{segment}
+#          filters:
+#            - RewritePath=/user-service/(?<segment>.*), /$\{segment}
 
 app:
   gateway:
