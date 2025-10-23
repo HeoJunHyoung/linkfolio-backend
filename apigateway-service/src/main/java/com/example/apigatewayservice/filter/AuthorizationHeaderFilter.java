@@ -13,6 +13,7 @@ import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.server.reactive.ServerHttpRequest;
 import org.springframework.stereotype.Component;
+import org.springframework.util.AntPathMatcher;
 import org.springframework.web.server.ServerWebExchange;
 import reactor.core.publisher.Mono;
 
@@ -31,6 +32,8 @@ public class AuthorizationHeaderFilter implements GlobalFilter, Ordered {
     @Value("${app.gateway.excluded-urls}")
     private List<String> excludedUrls;
 
+    private final AntPathMatcher pathMatcher = new AntPathMatcher();
+
     // 생성자 대신 Key 미리 생성해서 성능 향상
     @PostConstruct
     public void init() {
@@ -47,7 +50,9 @@ public class AuthorizationHeaderFilter implements GlobalFilter, Ordered {
         log.info("🔍 Headers: {}", request.getHeaders());
 
         // 화이트리스트 검사 로직 (YML 기반)
-        boolean isExcluded = excludedUrls.stream().anyMatch(path::startsWith);
+//        boolean isExcluded = excludedUrls.stream().anyMatch(path::startsWith);
+        boolean isExcluded = excludedUrls.stream()
+                .anyMatch(pattern -> pathMatcher.match(pattern, path));
         if (isExcluded) {
             log.info("Permitting request to {}", path);
             return chain.filter(exchange);
