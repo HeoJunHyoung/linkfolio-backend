@@ -4,6 +4,7 @@ import com.example.userservice.dto.AuthUser;
 import com.example.userservice.dto.OAuthAttributes;
 import com.example.userservice.entity.UserEntity;
 import com.example.userservice.repository.UserRepository;
+import com.example.userservice.service.oauth.OAuth2AttributeParser; // [Refactor] Import
 import com.example.userservice.util.NicknameGenerator;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.oauth2.client.userinfo.DefaultOAuth2UserService;
@@ -14,6 +15,7 @@ import org.springframework.security.oauth2.core.user.OAuth2User;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.Map; // [Refactor] Import
 import java.util.Optional;
 
 @Service
@@ -21,6 +23,10 @@ import java.util.Optional;
 public class CustomOAuth2UserService implements OAuth2UserService<OAuth2UserRequest, OAuth2User> {
 
     private final UserRepository userRepository;
+    private final NicknameGenerator nicknameGenerator; // (이전 리팩터링 적용됨)
+
+    // 전략(Parser) Map 주입
+    private final Map<String, OAuth2AttributeParser> attributeParsers;
 
     @Override
     @Transactional
@@ -36,37 +42,35 @@ public class CustomOAuth2UserService implements OAuth2UserService<OAuth2UserRequ
         String userNameAttributeName = userRequest.getClientRegistration()
                 .getProviderDetails().getUserInfoEndpoint().getUserNameAttributeName();
 
-        // 4. DTO로 변환 (공급자별 응답 파싱)
-        OAuthAttributes attributes = OAuthAttributes.of(registrationId, userNameAttributeName, oAuth2User.getAttributes());
+        // 4. DTO로 변환 (전략 패턴 적용)
+        // ㄴ Map에서 registrationId(예: "google")에 맞는 파서(전략)를 조회
+        OAuth2AttributeParser parser = attributeParsers.get(registrationId);
+        if (parser == null) {
+            throw new OAuth2AuthenticationException("Unsupported provider: " + registrationId);
+        }
+
+        // 해당 파서(전략)를 실행하여 속성을 DTO로 변환
+        OAuthAttributes attributes = parser.parse(userNameAttributeName, oAuth2User.getAttributes());
 
         // 5. DB에서 사용자 조회 또는 신규 생성
         UserEntity userEntity = saveOrUpdate(attributes);
 
         // 6. AuthUser 객체 반환 (UserDetails 구현체)
-        // 이 객체가 SecurityContext에 저장됨
-        return new AuthUser(
-                userEntity.getUserId(),
-                userEntity.getEmail(),
+        return AuthUser.fromOAuth2(
+                userEntity,
                 attributes.getAttributes(),
                 attributes.getNameAttributeKey()
         );
     }
 
     private UserEntity saveOrUpdate(OAuthAttributes attributes) {
-        // 이메일로 사용자 조회
         Optional<UserEntity> userOptional = userRepository.findUserDetailsByEmail(attributes.getEmail());
 
         UserEntity userEntity;
         if (userOptional.isPresent()) {
-            // 이미 가입된 사용자인 경우 (업데이트 로직은 필요시 추가)
             userEntity = userOptional.get();
         } else {
-            // 신규 사용자인 경우
-            String nickname;
-            do {
-                nickname = NicknameGenerator.generate();
-            } while (userRepository.existsByNickname(nickname)); // 닉네임 중복 검사
-
+            String nickname = nicknameGenerator.generateUniqueNickname();
             userEntity = attributes.toEntity(nickname);
             userRepository.save(userEntity);
         }

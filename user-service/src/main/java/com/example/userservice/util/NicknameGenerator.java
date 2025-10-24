@@ -1,9 +1,17 @@
 package com.example.userservice.util;
 
+import com.example.userservice.repository.UserRepository;
+import lombok.RequiredArgsConstructor;
+import org.springframework.stereotype.Component;
+
 import java.util.List;
 import java.util.Random;
 
+@Component
+@RequiredArgsConstructor
 public class NicknameGenerator {
+
+    private final UserRepository userRepository;
 
     private static final List<String> ADJECTIVES = List.of(
             "행복한", "용감한", "귀여운", "빠른", "신비한", "슬기로운", "똑똑한", "자유로운",
@@ -21,10 +29,18 @@ public class NicknameGenerator {
 
     private static final Random random = new Random();
 
-    public static String generate() {
+    public String generateUniqueNickname() {
+        String nickname;
+        do {
+            nickname = generateRandomNickname();
+        } while (userRepository.existsByNickname(nickname));
+        return nickname;
+    }
+
+    private String generateRandomNickname() {
         String adjective = ADJECTIVES.get(random.nextInt(ADJECTIVES.size()));
         String noun = NOUNS.get(random.nextInt(NOUNS.size()));
-        int number = random.nextInt(999);
+        int number = random.nextInt(999); // 0~998
 
         return String.format("%s%s#%04d", adjective, noun, number);
     }

@@ -12,10 +12,6 @@ import org.springframework.web.filter.OncePerRequestFilter;
 
 import java.io.IOException;
 
-/**
- * 게이트웨이 헤더(X-User-Id, X-User-Email)를 신뢰하여 DB 조회 없이
- * AuthUser 객체를 생성하고 SecurityContext에 인증 객체를 등록
- */
 public class InternalHeaderAuthenticationFilter extends OncePerRequestFilter {
 
     @Override
@@ -29,8 +25,8 @@ public class InternalHeaderAuthenticationFilter extends OncePerRequestFilter {
         // 2. 두 헤더가 모두 존재하면, 신뢰하고 AuthUser 객체 생성
         if (userId != null && !userId.isEmpty() && email != null && !email.isEmpty()) {
             try {
-                // 3. DB 조회 없이 헤더 정보로 UserDetails(AuthUser) 생성
-                UserDetails userDetails = new AuthUser(
+                // 3. [Refactor] 생성자 대신 정적 팩토리 메서드 사용
+                UserDetails userDetails = AuthUser.fromGatewayHeader(
                         Long.parseLong(userId),
                         email
                 );

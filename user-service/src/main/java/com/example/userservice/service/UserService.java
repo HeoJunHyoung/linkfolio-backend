@@ -1,6 +1,5 @@
 package com.example.userservice.service;
 
-import com.example.userservice.dto.AuthUser;
 import com.example.userservice.dto.UserDto;
 import com.example.userservice.dto.UserResponse;
 import com.example.userservice.dto.UserSignUpRequest;
@@ -9,30 +8,32 @@ import com.example.userservice.repository.UserRepository;
 import com.example.userservice.util.NicknameGenerator;
 import com.example.userservice.util.UserMapper;
 import lombok.RequiredArgsConstructor;
-import org.springframework.security.core.userdetails.User;
-import org.springframework.security.core.userdetails.UserDetails;
-import org.springframework.security.core.userdetails.UserDetailsService;
-import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.util.ArrayList;
-
 @Service
 @RequiredArgsConstructor
-public class UserService implements UserDetailsService {
+public class UserService {
 
     private final UserRepository userRepository;
     private final BCryptPasswordEncoder passwordEncoder;
     private final UserMapper userMapper;
+    private final NicknameGenerator nicknameGenerator;
 
     // 회원가입
     @Transactional
     public void signUp(UserSignUpRequest request) {
         validatePasswordMatch(request);             // 비밀번호 검증
         validateEmailDuplicate(request.getEmail()); // 이메일 검증
-        UserEntity signUpUser = UserEntity.of(request.getEmail(), passwordEncoder.encode(request.getPassword()), generateUniqueNickname());   // 객체 생성
+
+        // 객체 생성
+        UserEntity signUpUser = UserEntity.of(
+                request.getEmail(),
+                passwordEncoder.encode(request.getPassword()),
+                nicknameGenerator.generateUniqueNickname()
+        );
+
         userRepository.save(signUpUser);  // 객체 저장
     }
 
@@ -42,20 +43,6 @@ public class UserService implements UserDetailsService {
         UserEntity userEntity = userRepository.findById(userId)
                 .orElseThrow(() -> new IllegalArgumentException("회원이 존재하지 않습니다."));
         return userMapper.toUserResponse(userEntity);
-    }
-
-
-    @Override
-    public UserDetails loadUserByUsername(String email) throws UsernameNotFoundException {
-        UserEntity userEntity = userRepository.findUserDetailsByEmail(email)
-                .orElseThrow(() -> new IllegalArgumentException("회원이 존재하지 않습니다."));
-
-        // 아래의 User 객체는 Spring Security의 고유 객체
-        return new AuthUser(
-                userEntity.getUserId(),
-                userEntity.getEmail(),
-                userEntity.getPassword()
-        );
     }
 
 
@@ -72,14 +59,6 @@ public class UserService implements UserDetailsService {
         if (userRepository.findUserDetailsByEmail(email).isPresent()) {
             throw new IllegalArgumentException("이미 존재하는 이메일입니다.");
         }
-    }
-
-    private String generateUniqueNickname() {
-        String nickname;
-        do {
-            nickname = NicknameGenerator.generate();
-        } while (userRepository.existsByNickname(nickname));    // 닉네임 검증
-        return nickname;
     }
 
     public UserDto getUserDetailsByEmail(String email) {

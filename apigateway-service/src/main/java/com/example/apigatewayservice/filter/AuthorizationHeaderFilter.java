@@ -22,6 +22,10 @@ import javax.crypto.SecretKey;
 import java.nio.charset.StandardCharsets;
 import java.util.List;
 
+/**
+ * AuthorizationHeaderFilter를 이용한 방식은, Gateway가 인증(Authorization)을 책임지고, 내부 서비스는 전적으로 Gateway를 신뢰한다는 전제하에 동작한다.
+ * 따라서 user-service module은 InternalHeaderAuthenticationFilter를 사용하여, JWT를 검증하지 않고 게이트웨이가 넣어준 X-User-Id 헤더를 신뢰하여 사용자를 인증한다.
+ */
 @Component
 @Slf4j
 public class AuthorizationHeaderFilter implements GlobalFilter, Ordered {
@@ -83,7 +87,7 @@ public class AuthorizationHeaderFilter implements GlobalFilter, Ordered {
                 return onError(exchange, "Invalid JWT payload", HttpStatus.UNAUTHORIZED);
             }
 
-            // 6. [보안] 헤더를 변조하여 내부 서비스로 전달
+            // 6. [보안] 스푸핑 공격을 방지하도록 헤더 수정 후, 내부 서비스로 전달
             ServerHttpRequest newRequest = buildInternalRequest(request, userId, email);
 
             // 7. 다음 필터 체인 실행

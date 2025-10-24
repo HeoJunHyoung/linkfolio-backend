@@ -1,5 +1,6 @@
 package com.example.userservice.dto;
 
+import com.example.userservice.entity.UserEntity;
 import lombok.Getter;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
@@ -16,6 +17,7 @@ public class AuthUser implements UserDetails, OAuth2User {
     private final Long userId;
     private final String email;
     private final String password; // 로그인 시에만 사용
+
     // OAuth2 사용자 정보를 담을 필드
     private Map<String, Object> attributes;
     private String nameAttributeKey;
@@ -24,34 +26,45 @@ public class AuthUser implements UserDetails, OAuth2User {
     /**
      * DB 조회를 통해 인증 객체를 생성할 때 사용 (로그인 시)
      */
-    public AuthUser(Long userId, String email, String password) {
+    private AuthUser(Long userId, String email, String password, Map<String, Object> attributes, String nameAttributeKey) {
         this.userId = userId;
         this.email = email;
         this.password = password;
-        this.attributes = null;
-        this.nameAttributeKey = null;
-    }
-
-    /**
-     * 게이트웨이 헤더를 신뢰하여 인증 객체를 생성할 때 사용 (API 요청 시)
-     */
-    public AuthUser(Long userId, String email) {
-        this.userId = userId;
-        this.email = email;
-        this.password = null; // API 요청 시에는 비밀번호가 필요 없음
-        this.attributes = null;
-        this.nameAttributeKey = null;
-    }
-
-    /**
-     * OAuth2 로그인을 통해 인증 객체를 생성할 때 사용
-     */
-    public AuthUser(Long userId, String email, Map<String, Object> attributes, String nameAttributeKey) {
-        this.userId = userId;
-        this.email = email;
-        this.password = null; // OAuth2는 비밀번호 X
         this.attributes = attributes;
         this.nameAttributeKey = nameAttributeKey;
+    }
+
+    // 1. 자체 로그인 시 (UserDetailsService)
+    public static AuthUser from(UserEntity userEntity) {
+        return new AuthUser(
+                userEntity.getUserId(),
+                userEntity.getEmail(),
+                userEntity.getPassword(),
+                null,
+                null
+        );
+    }
+
+    // 2. 게이트웨이 헤더 신뢰 시 (InternalHeaderAuthenticationFilter)
+    public static AuthUser fromGatewayHeader(Long userId, String email) {
+        return new AuthUser(
+                userId,
+                email,
+                null, // API 요청 시에는 비밀번호가 필요 없음
+                null,
+                null
+        );
+    }
+
+    // 3. OAuth2 로그인 시 (CustomOAuth2UserService)
+    public static AuthUser fromOAuth2(UserEntity userEntity, Map<String, Object> attributes, String nameAttributeKey) {
+        return new AuthUser(
+                userEntity.getUserId(),
+                userEntity.getEmail(),
+                null, // OAuth2는 비밀번호 X
+                attributes,
+                nameAttributeKey
+        );
     }
 
     // --- UserDetails 인터페이스 구현 ---

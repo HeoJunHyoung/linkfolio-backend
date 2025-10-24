@@ -23,11 +23,11 @@ import org.springframework.security.web.access.intercept.AuthorizationFilter;
 @RequiredArgsConstructor
 public class SecurityConfig {
 
-    private final UserService userService;
     private final ObjectMapper objectMapper;
-    private final JwtTokenProvider jwtTokenProvider;
     private final CustomOAuth2UserService customOAuth2UserService;
     private final OAuth2LoginSuccessHandler oAuth2LoginSuccessHandler;
+    private final LocalLoginSuccessHandler localLoginSuccessHandler;
+
 
     @Value("${jwt.secret}")
     private String secret;
@@ -55,9 +55,8 @@ public class SecurityConfig {
         // login -> users/login 으로 커스터 마이징
         CustomAuthenticationFilter authenticationFilter = new CustomAuthenticationFilter(
                 authenticationManager,
-                userService,
                 objectMapper,
-                jwtTokenProvider
+                localLoginSuccessHandler // [Refactor] LocalLoginSuccessHandler 주입
         );
         authenticationFilter.setFilterProcessesUrl("/users/login");
 
