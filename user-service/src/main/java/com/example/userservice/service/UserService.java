@@ -4,6 +4,8 @@ import com.example.userservice.dto.UserDto;
 import com.example.userservice.dto.UserResponse;
 import com.example.userservice.dto.UserSignUpRequest;
 import com.example.userservice.entity.UserEntity;
+import com.example.userservice.exception.BusinessException;
+import com.example.userservice.exception.ErrorCode;
 import com.example.userservice.repository.UserRepository;
 import com.example.userservice.util.NicknameGenerator;
 import com.example.userservice.util.UserMapper;
@@ -41,7 +43,7 @@ public class UserService {
     // 회원 단일 조회
     public UserResponse getUser(Long userId) {
         UserEntity userEntity = userRepository.findById(userId)
-                .orElseThrow(() -> new IllegalArgumentException("회원이 존재하지 않습니다."));
+                .orElseThrow(() -> new BusinessException(ErrorCode.USER_NOT_FOUND));
         return userMapper.toUserResponse(userEntity);
     }
 
@@ -51,19 +53,19 @@ public class UserService {
     // =====================
     private void validatePasswordMatch(UserSignUpRequest request) {
         if (!request.getPassword().equals(request.getPasswordConfirm())) {
-            throw new IllegalArgumentException("비밀번호가 일치하지 않습니다.");
+            throw new BusinessException(ErrorCode.PASSWORD_MISMATCH);
         }
     }
 
     private void validateEmailDuplicate(String email) {
         if (userRepository.findUserDetailsByEmail(email).isPresent()) {
-            throw new IllegalArgumentException("이미 존재하는 이메일입니다.");
+            throw new BusinessException(ErrorCode.EMAIL_DUPLICATION);
         }
     }
 
     public UserDto getUserDetailsByEmail(String email) {
         UserEntity userEntity = userRepository.findUserDetailsByEmail(email)
-                .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 회원 입니다."));
+                .orElseThrow(() -> new BusinessException(ErrorCode.USER_NOT_FOUND));
         
         return userMapper.toUserDto(userEntity); // Mapper 이용
     }

@@ -1,18 +1,27 @@
 package com.example.apigatewayservice.filter;
 
+import com.example.apigatewayservice.exception.ErrorCode;
+import com.example.apigatewayservice.exception.GatewayAuthenticationException;
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import io.jsonwebtoken.Claims;
+import io.jsonwebtoken.JwtException;
 import io.jsonwebtoken.JwtParser;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.security.Keys;
 import jakarta.annotation.PostConstruct;
+import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.cloud.gateway.filter.GatewayFilterChain;
 import org.springframework.cloud.gateway.filter.GlobalFilter;
 import org.springframework.core.Ordered;
+import org.springframework.core.io.buffer.DataBuffer;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
 import org.springframework.http.server.reactive.ServerHttpRequest;
+import org.springframework.http.server.reactive.ServerHttpResponse;
 import org.springframework.stereotype.Component;
 import org.springframework.util.AntPathMatcher;
 import org.springframework.web.server.ServerWebExchange;
@@ -20,14 +29,13 @@ import reactor.core.publisher.Mono;
 
 import javax.crypto.SecretKey;
 import java.nio.charset.StandardCharsets;
+import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Map;
 
-/**
- * AuthorizationHeaderFilter를 이용한 방식은, Gateway가 인증(Authorization)을 책임지고, 내부 서비스는 전적으로 Gateway를 신뢰한다는 전제하에 동작한다.
- * 따라서 user-service module은 InternalHeaderAuthenticationFilter를 사용하여, JWT를 검증하지 않고 게이트웨이가 넣어준 X-User-Id 헤더를 신뢰하여 사용자를 인증한다.
- */
 @Component
 @Slf4j
+@RequiredArgsConstructor
 public class AuthorizationHeaderFilter implements GlobalFilter, Ordered {
 
     private static final String INTERNAL_USER_ID_HEADER = "X-User-Id";
@@ -43,8 +51,8 @@ public class AuthorizationHeaderFilter implements GlobalFilter, Ordered {
     private List<String> excludedUrls;
 
     private final AntPathMatcher pathMatcher = new AntPathMatcher();
+    private final ObjectMapper objectMapper;
 
-    // 생성자 대신 Key, jwtParser 미리 생성해서 성능 향상
     @PostConstruct
     public void init() {
         byte[] keyBytes = secretKey.getBytes(StandardCharsets.UTF_8);
@@ -69,63 +77,102 @@ public class AuthorizationHeaderFilter implements GlobalFilter, Ordered {
 
         // 2. Authorization Header 존재 여부 검사
         if (!request.getHeaders().containsKey(HttpHeaders.AUTHORIZATION)) {
-            return onError(exchange, "Missing Authorization header", HttpStatus.UNAUTHORIZED);
+            return onError(exchange, ErrorCode.MISSING_AUTH_HEADER);
         }
 
         try {
-            // 3. 헤더에서 JWT 추출
+            // 3. 헤더에서 JWT 추출 (GatewayAuthenticationException 발생 가능)
             String jwt = getJwtFromHeader(request);
+            // 4. JWT 파싱 및 Claims 추출 (JwtException 발생 가능)
             Claims claims = getClaims(jwt);
 
-            // 4. JWT 파싱 및 Claims 추출
+            // 5. Claims에서 사용자 정보 추출
             String userId = claims.getSubject();
             String email = claims.get("email", String.class);
 
-            // 5. Claims에서 사용자 정보 추출 및 검증
+            // 6. Claims 검증
             if (isInvalidPayload(userId, email)) {
                 log.warn("Invalid JWT payload: userId or email is missing.");
-                return onError(exchange, "Invalid JWT payload", HttpStatus.UNAUTHORIZED);
+                return onError(exchange, ErrorCode.INVALID_JWT_PAYLOAD);
             }
 
-            // 6. [보안] 스푸핑 공격을 방지하도록 헤더 수정 후, 내부 서비스로 전달
+            // 7. [보안] 스푸핑 공격을 방지하도록 헤더 수정 후, 내부 서비스로 전달
             ServerHttpRequest newRequest = buildInternalRequest(request, userId, email);
 
-            // 7. 다음 필터 체인 실행
+            // 8. 다음 필터 체인 실행
             return chain.filter(exchange.mutate().request(newRequest).build());
 
-        } catch (Exception e){
-            // getJwtFromHeader 또는 getClaims에서 발생한 모든 예외 (JWT 파싱/검증 실패)
+        } catch (GatewayAuthenticationException e) {
+            log.warn("Gateway Authentication Error for path {}: {}", path, e.getMessage());
+            return onError(exchange, e.getErrorCode());
+        } catch (JwtException e) {
+            // JWT 파싱/검증 실패 (서명, 만료, 형식 오류 등)
             log.warn("Invalid JWT token processing for path {}: {}", path, e.getMessage());
-            return onError(exchange, "Invalid JWT token", HttpStatus.UNAUTHORIZED);
+            return onError(exchange, ErrorCode.INVALID_JWT_TOKEN);
+        } catch (Exception e) {
+            // 그 외 예기치 못한 오류
+            log.error("Unexpected error in AuthorizationHeaderFilter: {}", e.getMessage(), e);
+            return onError(exchange, ErrorCode.INTERNAL_FILTER_ERROR);
         }
     }
 
-    private Mono<Void> onError(ServerWebExchange exchange, String message, HttpStatus status) {
-        log.warn("Gateway Error: {} (Status: {})", message, status);
-        exchange.getResponse().setStatusCode(status);
-        return exchange.getResponse().setComplete();
+    /**
+     * [수정]
+     * 에러 응답을 JSON 형식으로 반환하도록 수정
+     */
+    private Mono<Void> onError(ServerWebExchange exchange, ErrorCode errorCode) {
+        log.warn("Gateway Error: {} (Status: {})", errorCode.getMessage(), errorCode.getStatus());
+
+        ServerHttpResponse response = exchange.getResponse();
+        response.setStatusCode(errorCode.getStatus());
+        response.getHeaders().setContentType(MediaType.APPLICATION_JSON);
+
+        // 클라이언트에 반환할 표준 Error DTO 생성
+        Map<String, Object> errorResponse = Map.of(
+                "timestamp", LocalDateTime.now().toString(),
+                "status", errorCode.getStatus().value(),
+                "code", errorCode.getCode(),
+                "message", errorCode.getMessage()
+        );
+
+        try {
+            byte[] bytes = objectMapper.writeValueAsBytes(errorResponse);
+            DataBuffer buffer = response.bufferFactory().wrap(bytes);
+            return response.writeWith(Mono.just(buffer));
+        } catch (JsonProcessingException e) {
+            log.error("Error serializing error response to JSON", e);
+            // JSON 직렬화 실패 시, 상태 코드만 설정
+            response.setStatusCode(HttpStatus.INTERNAL_SERVER_ERROR);
+            return response.setComplete();
+        }
     }
 
-    // 필터의 실행 순서 지정 (가장 먼저 실행)
     @Override
     public int getOrder() {
-        return Ordered.HIGHEST_PRECEDENCE; // -2147483648
+        return Ordered.HIGHEST_PRECEDENCE;
     }
 
-    //== 내부 헬퍼 메서드 ==//
     private Boolean isPatchExcluded(String path) {
         return excludedUrls.stream()
                 .anyMatch(pattern -> pathMatcher.match(pattern, path));
     }
 
+
+    /**
+     * 유효성 검사 실패 시, GatewayAuthenticationException을 던지도록 변경
+     */
     private String getJwtFromHeader(ServerHttpRequest request) {
         String authHeader = request.getHeaders().getFirst(HttpHeaders.AUTHORIZATION);
         if (authHeader == null || !authHeader.startsWith(BEARER_PREFIX)) {
-            throw new IllegalArgumentException("Invalid Authorization header format.");
+            throw new GatewayAuthenticationException(ErrorCode.INVALID_AUTH_FORMAT);
         }
         return authHeader.substring(BEARER_PREFIX.length());
     }
 
+    /**
+     * [수정]
+     * 예외를 잡지 않고, 호출한 곳(filter 메서드)으로 전파 (JwtException)
+     */
     private Claims getClaims(String token) {
         return this.jwtParser
                 .parseSignedClaims(token)
@@ -139,18 +186,13 @@ public class AuthorizationHeaderFilter implements GlobalFilter, Ordered {
     private ServerHttpRequest buildInternalRequest(ServerHttpRequest request, String userId, String email) {
         return request.mutate()
                 .headers(httpHeaders -> {
-                    // 외부에서 유입될 수 있는 내부용 헤더를 먼저 제거 (Header Spoofing 방지)
                     httpHeaders.remove(INTERNAL_USER_ID_HEADER);
                     httpHeaders.remove(INTERNAL_USER_EMAIL_HEADER);
-
-                    // 외부 인증 토큰(JWT) 헤더 제거
                     httpHeaders.remove(HttpHeaders.AUTHORIZATION);
 
-                    // 검증된 정보로 내부용 헤더 추가
                     httpHeaders.add(INTERNAL_USER_ID_HEADER, userId);
                     httpHeaders.add(INTERNAL_USER_EMAIL_HEADER, email);
                 })
                 .build();
     }
-
 }
