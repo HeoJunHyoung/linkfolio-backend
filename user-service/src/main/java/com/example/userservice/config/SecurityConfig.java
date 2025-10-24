@@ -2,9 +2,9 @@ package com.example.userservice.config;
 
 import com.example.userservice.filter.CustomAuthenticationFilter;
 import com.example.userservice.filter.InternalHeaderAuthenticationFilter;
+import com.example.userservice.handler.LocalLoginSuccessHandler;
+import com.example.userservice.handler.OAuth2LoginSuccessHandler;
 import com.example.userservice.service.CustomOAuth2UserService;
-import com.example.userservice.service.UserService;
-import com.example.userservice.util.JwtTokenProvider;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;

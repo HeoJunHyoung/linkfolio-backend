@@ -1,4 +1,4 @@
-package com.example.userservice.config;
+package com.example.userservice.handler;
 
 import com.example.userservice.dto.AuthUser;
 import com.example.userservice.dto.UserDto;
