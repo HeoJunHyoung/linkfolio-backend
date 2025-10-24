@@ -78,7 +78,8 @@ spring:
 # JWT Token Settings
 jwt:
   secret: ${JWT_SECRET}
-  expiration_time: 86400000
+  access_expiration_time: 86400000
+  refresh_expiration_time: 604800000
 
 # gRPC Configuration
 grpc:

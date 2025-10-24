@@ -1,10 +1,14 @@
 package com.example.userservice.handler;
 
 import com.example.userservice.dto.AuthUser;
+import com.example.userservice.dto.TokenResponse;
 import com.example.userservice.dto.UserDto;
+import com.example.userservice.service.RefreshTokenService;
 import com.example.userservice.service.UserService;
 import com.example.userservice.util.JwtTokenProvider;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import jakarta.servlet.ServletException;
+import jakarta.servlet.http.Cookie;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
@@ -26,23 +30,47 @@ public class LocalLoginSuccessHandler implements AuthenticationSuccessHandler {
 
     private final UserService userService;
     private final JwtTokenProvider jwtTokenProvider;
+    private final RefreshTokenService refreshTokenService;
+    private final ObjectMapper objectMapper;
 
     @Override
     public void onAuthenticationSuccess(HttpServletRequest request,
                                         HttpServletResponse response,
                                         Authentication authResult) throws IOException, ServletException {
 
-        // 1. 인증 객체(AuthUser)에서 이메일(username) 추출
         String userIdentifier = ((AuthUser) authResult.getPrincipal()).getUsername();
-
-        // 2. 이메일로 UserDto 조회 (토큰 생성에 필요한 userId 포함)
         UserDto userDetails = userService.getUserDetailsByEmail(userIdentifier);
 
-        // 3. JWT 토큰 생성
-        String token = jwtTokenProvider.generateToken(userDetails);
-        log.info("Local Login Success. JWT Token generated for user: {}", userDetails.getId());
+        // Access Token 및 Refresh Token 생성
+        String accessToken = jwtTokenProvider.generateAccessToken(userDetails);
+        String refreshToken = jwtTokenProvider.generateRefreshToken(userDetails);
 
-        // 4. 응답 헤더에 "Authorization" 헤더 추가 (API 응답 방식)
-        response.addHeader("Authorization", "Bearer " + token);
+        // Refresh Token을 Redis에 저장
+        refreshTokenService.saveRefreshToken(userDetails.getId(), refreshToken);
+        log.info("Local Login Success. Access & Refresh Token generated for user: {}", userDetails.getId());
+
+        // 1. Refresh Token을 HttpOnly 쿠키에 담아 전송
+        addRefreshTokenToCookie(response, refreshToken);
+
+        // 2. Access Token을 JSON Body로 응답
+        response.setContentType("application/json;charset=UTF-8");
+        response.setStatus(HttpServletResponse.SC_OK);
+        response.getWriter().write(objectMapper.writeValueAsString(new TokenResponse(accessToken)));
     }
+
+    private void addRefreshTokenToCookie(HttpServletResponse response, String refreshToken) {
+        Cookie refreshTokenCookie = new Cookie("refresh_token", refreshToken); // 쿠키 이름 지정
+
+        refreshTokenCookie.setHttpOnly(true);
+        // refreshTokenCookie.setSecure(true); // TODO: HTTPS 환경에서는 true로 설정 필요
+        refreshTokenCookie.setPath("/"); // 쿠키가 전송될 경로 (전체 경로로 설정)
+
+        // 쿠키 만료 시간 설정 (초 단위)
+        int maxAgeInSeconds = (int) (jwtTokenProvider.getRefreshExpirationTimeMillis() / 1000);
+        refreshTokenCookie.setMaxAge(maxAgeInSeconds);
+
+        response.addCookie(refreshTokenCookie);
+        log.debug("Refresh Token 쿠키 설정 완료.");
+    }
+
 }

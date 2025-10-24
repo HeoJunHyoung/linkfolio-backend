@@ -74,7 +74,14 @@ public class UserService {
     public UserDto getUserDetailsByEmail(String email) {
         UserEntity userEntity = userRepository.findUserDetailsByEmail(email)
                 .orElseThrow(() -> new BusinessException(ErrorCode.USER_NOT_FOUND));
-        
+
+        return userMapper.toUserDto(userEntity);
+    }
+
+    public UserDto getUserDetailsById(Long userId) {
+        UserEntity userEntity = userRepository.findById(userId)
+                .orElseThrow(() -> new BusinessException(ErrorCode.USER_NOT_FOUND));
+
         return userMapper.toUserDto(userEntity); // Mapper 이용
     }
 

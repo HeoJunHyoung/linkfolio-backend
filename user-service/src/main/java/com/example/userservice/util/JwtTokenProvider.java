@@ -9,6 +9,7 @@ import io.jsonwebtoken.MalformedJwtException;
 import io.jsonwebtoken.UnsupportedJwtException;
 import io.jsonwebtoken.security.Keys;
 import io.jsonwebtoken.security.SecurityException;
+import lombok.extern.slf4j.Slf4j;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
@@ -19,38 +20,60 @@ import java.nio.charset.StandardCharsets;
 import java.util.Date;
 
 @Component
+@Slf4j
 public class JwtTokenProvider {
 
-    private static final Logger log = LoggerFactory.getLogger(JwtTokenProvider.class);
     private final SecretKey secretKey;
-    private final long expirationTimeMillis;
+    private final long accessExpirationTimeMillis;
+    private final long refreshExpirationTimeMillis;
     private final JwtParser jwtParser; // 재사용을 위한 JwtParser 인스턴스
 
     public JwtTokenProvider(@Value("${jwt.secret}") String secret,
-                            @Value("${jwt.expiration_time}") String expirationTime) {
+                            @Value("${jwt.access_expiration_time}") String accessExpirationTime,   // [수정] 주입 프로퍼티 변경
+                            @Value("${jwt.refresh_expiration_time}") String refreshExpirationTime) { // [추가] Refresh 만료 시간 주입
         byte[] secretKeyBytes = secret.getBytes(StandardCharsets.UTF_8);
         this.secretKey = Keys.hmacShaKeyFor(secretKeyBytes);
-        this.expirationTimeMillis = Long.parseLong(expirationTime);
+        this.accessExpirationTimeMillis = Long.parseLong(accessExpirationTime); // [수정] 필드명 변경
+        this.refreshExpirationTimeMillis = Long.parseLong(refreshExpirationTime); // [추가] 필드 초기화
 
         this.jwtParser = Jwts.parser()
-                .verifyWith(this.secretKey) // 'setSigningKey' 대신 'verifyWith' 사용
+                .verifyWith(this.secretKey)
                 .build();
     }
 
-    /**
-     * 로그인 성공 시 토큰 생성
-     */
-    public String generateToken(UserDto userDetails) {
-        Date expirationDate = new Date(System.currentTimeMillis() + expirationTimeMillis);
+    // Access Token 생성
+    public String generateAccessToken(UserDto userDetails) {
+        Date expirationDate = new Date(System.currentTimeMillis() + accessExpirationTimeMillis);
 
-        // JWT Subject : userId
-        // JWT Claims  : email
         return Jwts.builder()
                 .subject(userDetails.getId().toString())
-                .claim("email", userDetails.getEmail())
+                .claim("email", userDetails.getEmail()) // Access Token에는 이메일 포함
                 .expiration(expirationDate)
                 .signWith(secretKey)
                 .compact();
+    }
+
+    // Refresh Token 생성
+    public String generateRefreshToken(UserDto userDetails) {
+        Date expirationDate = new Date(System.currentTimeMillis() + refreshExpirationTimeMillis);
+
+        return Jwts.builder()
+                .subject(userDetails.getId().toString()) // Refresh Token에는 사용자 ID만 포함 (Payload 최소화)
+                .expiration(expirationDate)
+                .signWith(secretKey)
+                .compact();
+    }
+
+    private Claims getClaimsFromTokenEvenIfExpired(String token) {
+        try {
+            return this.jwtParser
+                    .parseSignedClaims(token)
+                    .getPayload();
+        } catch (ExpiredJwtException e) {
+            // 만료되었더라도 payload는 반환
+            return e.getClaims();
+        }
+        // 그 외 예외 (서명 오류 등)는 그대로 던져짐
     }
 
     /**
@@ -72,27 +95,18 @@ public class JwtTokenProvider {
         return false;
     }
 
-    /**
-     * 토큰에서 사용자 ID(Subject) 추출 메서드
-     */
     public String getUserIdFromToken(String token) {
-        Claims claims = this.jwtParser
-                .parseSignedClaims(token)
-                .getPayload();
-
-        // Claims에서 Subject(사용자 ID)를 반환
+        Claims claims = getClaimsFromTokenEvenIfExpired(token); // 내부 호출 변경
         return claims.getSubject();
     }
 
-    /**
-     * 토큰에서 이메일(Custom Claim) 추출 메서드
-     */
     public String getEmailFromToken(String token) {
-        Claims claims = this.jwtParser
-                .parseSignedClaims(token)
-                .getPayload();
-
-        // Claims에서 "email" 필드를 String으로 반환
+        Claims claims = getClaimsFromTokenEvenIfExpired(token); // 내부 호출 변경
         return claims.get("email", String.class);
     }
+
+    public long getRefreshExpirationTimeMillis() {
+        return this.refreshExpirationTimeMillis;
+    }
+
 }
