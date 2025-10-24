@@ -4,6 +4,7 @@ import com.example.userservice.dto.UserDto;
 import com.example.userservice.dto.UserResponse;
 import com.example.userservice.dto.UserSignUpRequest;
 import com.example.userservice.entity.UserEntity;
+import com.example.userservice.entity.UserProvider;
 import com.example.userservice.exception.BusinessException;
 import com.example.userservice.exception.ErrorCode;
 import com.example.userservice.repository.UserRepository;
@@ -33,7 +34,9 @@ public class UserService {
         UserEntity signUpUser = UserEntity.of(
                 request.getEmail(),
                 passwordEncoder.encode(request.getPassword()),
-                nicknameGenerator.generateUniqueNickname()
+                nicknameGenerator.generateUniqueNickname(),
+                UserProvider.LOCAL,
+                null
         );
 
         userRepository.save(signUpUser);  // 객체 저장
@@ -58,9 +61,14 @@ public class UserService {
     }
 
     private void validateEmailDuplicate(String email) {
-        if (userRepository.findUserDetailsByEmail(email).isPresent()) {
-            throw new BusinessException(ErrorCode.EMAIL_DUPLICATION);
-        }
+        userRepository.findUserDetailsByEmail(email).ifPresent(user -> {
+            // 이메일이 이미 존재하면, 가입 경로에 따라 다른 예외 발생
+            if (user.getProvider() == UserProvider.LOCAL) {
+                throw new BusinessException(ErrorCode.EMAIL_DUPLICATION);
+            } else {
+                throw new BusinessException(ErrorCode.EMAIL_ALREADY_REGISTERED_AS_SOCIAL);
+            }
+        });
     }
 
     public UserDto getUserDetailsByEmail(String email) {

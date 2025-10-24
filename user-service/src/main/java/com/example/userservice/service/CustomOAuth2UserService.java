@@ -3,6 +3,9 @@ package com.example.userservice.service;
 import com.example.userservice.dto.AuthUser;
 import com.example.userservice.dto.OAuthAttributes;
 import com.example.userservice.entity.UserEntity;
+import com.example.userservice.entity.UserProvider;
+import com.example.userservice.exception.BusinessException;
+import com.example.userservice.exception.ErrorCode;
 import com.example.userservice.repository.UserRepository;
 import com.example.userservice.service.oauth.OAuth2AttributeParser; // [Refactor] Import
 import com.example.userservice.util.NicknameGenerator;
@@ -64,16 +67,36 @@ public class CustomOAuth2UserService implements OAuth2UserService<OAuth2UserRequ
     }
 
     private UserEntity saveOrUpdate(OAuthAttributes attributes) {
-        Optional<UserEntity> userOptional = userRepository.findUserDetailsByEmail(attributes.getEmail());
+        UserProvider provider = UserProvider.valueOf(attributes.getProvider().toUpperCase());
+        String providerId = attributes.getProviderId();
+        String email = attributes.getEmail();
 
-        UserEntity userEntity;
+        // 1. (provider, providerId)로 소셜 유저 조회
+        Optional<UserEntity> userOptional = userRepository.findByProviderAndProviderId(provider, providerId);
+
         if (userOptional.isPresent()) {
-            userEntity = userOptional.get();
-        } else {
-            String nickname = nicknameGenerator.generateUniqueNickname();
-            userEntity = attributes.toEntity(nickname);
-            userRepository.save(userEntity);
+            // 1-1. 이미 해당 소셜 계정으로 가입된 경우
+            return userOptional.get();
         }
-        return userEntity;
+
+        // 2. 해당 소셜 계정으로 가입 이력이 없는 경우, 이메일로 조회
+        Optional<UserEntity> emailUserOptional = userRepository.findUserDetailsByEmail(email);
+
+        if (emailUserOptional.isPresent()) {
+            // 2-1. 이메일이 이미 존재하는데
+            UserEntity existingUser = emailUserOptional.get();
+            if (existingUser.getProvider() == UserProvider.LOCAL) {
+                // 2-2. 로컬 계정으로 가입된 경우 -> 소셜 계정 연동 실패
+                throw new BusinessException(ErrorCode.EMAIL_ALREADY_REGISTERED_AS_LOCAL);
+            } else {
+                // 2-3. 다른 소셜 계정으로 가입된 경우 (e.g. 카카오로 가입했는데 구글 로그인 시도)
+                throw new BusinessException(ErrorCode.EMAIL_ALREADY_REGISTERED_AS_SOCIAL);
+            }
+        }
+
+        // 3. 신규 가입
+        String nickname = nicknameGenerator.generateUniqueNickname();
+        UserEntity newUser = attributes.toEntity(nickname);
+        return userRepository.save(newUser);
     }
 }

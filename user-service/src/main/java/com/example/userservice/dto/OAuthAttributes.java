@@ -1,6 +1,7 @@
 package com.example.userservice.dto;
 
 import com.example.userservice.entity.UserEntity;
+import com.example.userservice.entity.UserProvider;
 import lombok.Builder;
 import lombok.Getter;
 
@@ -32,7 +33,9 @@ public class OAuthAttributes {
         return UserEntity.of(
                 email,
                 "SOCIAL_USER_PASSWORD_" + UUID.randomUUID(), // 임의의 비밀번호
-                uniqueNickname
+                uniqueNickname,
+                UserProvider.valueOf(provider.toUpperCase()),
+                providerId
         );
     }
 }
