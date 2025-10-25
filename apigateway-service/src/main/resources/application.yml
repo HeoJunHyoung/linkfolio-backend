@@ -24,6 +24,8 @@ app:
       - /user-service/v3/api-docs
       - /user-service/oauth2/authorization/**
       - /user-service/login/oauth2/code/**
+      - /user-service/users/refresh
+      - /user-service/users/logout
 
 # JWT Token Settings
 jwt:

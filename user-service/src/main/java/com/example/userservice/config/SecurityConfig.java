@@ -2,9 +2,9 @@ package com.example.userservice.config;
 
 import com.example.userservice.filter.CustomAuthenticationFilter;
 import com.example.userservice.filter.InternalHeaderAuthenticationFilter;
+import com.example.userservice.handler.LocalLoginSuccessHandler;
+import com.example.userservice.handler.OAuth2LoginSuccessHandler;
 import com.example.userservice.service.CustomOAuth2UserService;
-import com.example.userservice.service.UserService;
-import com.example.userservice.util.JwtTokenProvider;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
@@ -47,8 +47,7 @@ public class SecurityConfig {
                 .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .authorizeHttpRequests(authorize -> authorize
                         .requestMatchers("/swagger-ui/**", "/v3/api-docs/**", "/swagger-resources/**").permitAll()
-                        .requestMatchers("/users/signup", "/users/login", "/welcome").permitAll()
-                        .requestMatchers("/oauth2/**", "/login/oauth2/**").permitAll()
+                        .requestMatchers("/users/signup", "/users/login", "/welcome", "/users/refresh", "/users/logout").permitAll()                        .requestMatchers("/oauth2/**", "/login/oauth2/**").permitAll()
                         .anyRequest().authenticated()
                 );
 
