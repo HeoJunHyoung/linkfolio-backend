@@ -4,6 +4,7 @@ import com.example.userservice.dto.*;
 import com.example.userservice.entity.UserEntity;
 import com.example.userservice.service.RefreshTokenService;
 import com.example.userservice.service.UserService;
+import com.example.userservice.util.CookieUtil;
 import com.example.userservice.util.JwtTokenProvider;
 import jakarta.servlet.http.Cookie;
 import jakarta.servlet.http.HttpServletResponse;
@@ -24,7 +25,7 @@ public class UserController {
 
     private final UserService userService;
     private final RefreshTokenService refreshTokenService;
-    private final JwtTokenProvider jwtTokenProvider;
+    private final CookieUtil cookieUtil;
 
     @GetMapping("/welcome")
     public String welcome() {
@@ -58,73 +59,44 @@ public class UserController {
         return ResponseEntity.status(HttpStatus.OK).body(userResponse);
     }
 
+    // token 재발급
     @PostMapping("/users/refresh")
-    public ResponseEntity<TokenResponse> refreshAccessToken(
-            @CookieValue(name = "refresh_token", required = false) String refreshToken,
-            HttpServletResponse response) {
+    public ResponseEntity<TokenResponse> refreshAccessToken(@CookieValue(name = "refresh_token", required = false) String refreshToken,
+                                                            HttpServletResponse response) {
 
         if (refreshToken == null) {
             log.warn("Refresh Token 쿠키가 존재하지 않습니다.");
-            // ErrorCode에 쿠키 누락 관련 코드 추가 고려
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
         }
 
-        // 1. 서비스 호출 (Map<String, String> 반환)
         Map<String, String> newTokens = refreshTokenService.reissueTokens(refreshToken);
         String newAccessToken = newTokens.get("accessToken");
-        String newRefreshToken = newTokens.get("refreshToken"); // Map에서 새 Refresh Token 꺼내기
+        String newRefreshToken = newTokens.get("refreshToken");
 
-        // 2. 응답: 새 Refresh Token은 HttpOnly 쿠키로 설정
-        addRefreshTokenToCookie(response, newRefreshToken); // 꺼낸 Refresh Token 사용
+        cookieUtil.addRefreshTokenCookie(response, newRefreshToken);
 
-        // 3. 응답: 새 Access Token은 JSON Body로 반환 (TokenResponse DTO 사용)
         log.info("Access Token 재발급 및 Refresh Token 쿠키 갱신 완료.");
-        return ResponseEntity.ok(new TokenResponse(newAccessToken)); // 새 Access Token만 담아서 응답
+        return ResponseEntity.ok(new TokenResponse(newAccessToken));
     }
 
+    // 로그아웃
     @PostMapping("/users/logout")
     public ResponseEntity<Void> logout(@AuthenticationPrincipal AuthUser authUser, HttpServletResponse response) {
 
-        if (authUser == null) { // 인증되지 않은 사용자의 로그아웃 요청 (예: 토큰 만료 후)
+        if (authUser == null) {
             log.warn("인증 정보 없이 로그아웃 시도됨.");
-            expireRefreshTokenCookie(response); // 클라이언트 측 쿠키만 만료시킴
+            cookieUtil.expireRefreshTokenCookie(response);
             return ResponseEntity.ok().build();
         }
 
         Long userId = authUser.getUserId();
         log.info("로그아웃 요청. UserId: {}", userId);
 
-        // 1. Redis에서 해당 유저의 Refresh Token 삭제
         refreshTokenService.deleteRefreshToken(userId);
-
-        // 2. 클라이언트의 Refresh Token 쿠키 만료 시키기
-        expireRefreshTokenCookie(response);
+        cookieUtil.expireRefreshTokenCookie(response);
 
         log.info("로그아웃 처리 완료. UserId: {}", userId);
         return ResponseEntity.ok().build();
-    }
-
-
-    // === 컨트롤러 내 쿠키 처리 헬퍼 메서드 ===
-    private void addRefreshTokenToCookie(HttpServletResponse response, String refreshToken) {
-        Cookie refreshTokenCookie = new Cookie("refresh_token", refreshToken);
-        refreshTokenCookie.setHttpOnly(true);
-        // refreshTokenCookie.setSecure(true); // TODO: HTTPS 환경에서는 true 설정
-        refreshTokenCookie.setPath("/");
-        int maxAgeInSeconds = (int) (jwtTokenProvider.getRefreshExpirationTimeMillis() / 1000);
-        refreshTokenCookie.setMaxAge(maxAgeInSeconds);
-        response.addCookie(refreshTokenCookie);
-        log.debug("새 Refresh Token 쿠키 설정 완료.");
-    }
-
-    private void expireRefreshTokenCookie(HttpServletResponse response) {
-        Cookie refreshTokenCookie = new Cookie("refresh_token", null); // value를 null로 설정
-        refreshTokenCookie.setHttpOnly(true);
-        // refreshTokenCookie.setSecure(true);
-        refreshTokenCookie.setPath("/");
-        refreshTokenCookie.setMaxAge(0); // 만료 시간을 0으로 설정하여 즉시 삭제
-        response.addCookie(refreshTokenCookie);
-        log.debug("Refresh Token 쿠키 만료 처리 완료.");
     }
 
 }
