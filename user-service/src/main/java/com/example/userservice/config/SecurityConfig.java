@@ -28,13 +28,6 @@ public class SecurityConfig {
     private final OAuth2LoginSuccessHandler oAuth2LoginSuccessHandler;
     private final LocalLoginSuccessHandler localLoginSuccessHandler;
 
-
-    @Value("${jwt.secret}")
-    private String secret;
-
-    @Value("${jwt.expiration_time}")
-    private String expirationTime;
-
     @Bean
     public AuthenticationManager authenticationManager(AuthenticationConfiguration authConfig) throws Exception {
         return authConfig.getAuthenticationManager();
