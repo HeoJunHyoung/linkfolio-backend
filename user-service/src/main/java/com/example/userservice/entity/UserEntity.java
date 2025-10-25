@@ -31,10 +31,10 @@ public class UserEntity extends BaseEntity{
     @Column(name = "provider_id")
     private String providerId;
 
-    private UserEntity(String email, String nickname, String password, UserProvider provider, String providerId) {
+    private UserEntity(String email, String password, String nickname, UserProvider provider, String providerId) {
         this.email = email;
-        this.nickname = nickname;
         this.password = password;
+        this.nickname = nickname;
         this.provider = provider;
         this.providerId = providerId;
     }
