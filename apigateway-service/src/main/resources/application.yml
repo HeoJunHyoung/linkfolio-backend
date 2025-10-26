@@ -9,7 +9,10 @@ spring:
       globalcors:
         cors-configurations:
           '[/**]': # 모든 경로(/**)에 대해 적용
-            allowed-origins: 'http://localhost:5173' # React 앱의 주소
+            allowed-origins:
+              - 'http://localhost:5173' # React 앱의 주소
+              - 'http://127.0.0.1:5173'
+
             allowed-methods:
               - GET
               - POST
