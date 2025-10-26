@@ -6,6 +6,20 @@ spring:
     name: apigateway-service
   cloud:
     gateway:
+      globalcors:
+        cors-configurations:
+          '[/**]': # 모든 경로(/**)에 대해 적용
+            allowed-origins: 'http://localhost:5173' # React 앱의 주소
+            allowed-methods:
+              - GET
+              - POST
+              - PUT
+              - DELETE
+              - PATCH
+              - OPTIONS
+            allowed-headers: '*'
+            allow-credentials: true
+
       routes:
         # 1. User Service Definition (With Authorization Filter Adjust)
         - id: user-service-route
