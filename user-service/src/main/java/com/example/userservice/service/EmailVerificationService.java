@@ -1,7 +1,9 @@
 package com.example.userservice.service;
 
+import com.example.userservice.entity.UserProvider;
 import com.example.userservice.exception.BusinessException;
 import com.example.userservice.exception.ErrorCode;
+import com.example.userservice.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.redis.core.RedisTemplate;
@@ -18,7 +20,7 @@ public class EmailVerificationService {
 
     private final RedisTemplate<String, Object> redisTemplate;
     private final EmailService emailService;
-    private final UserService userService; // 이메일 중복 검사
+    private final UserRepository userRepository;
 
     private static final String VERIFICATION_CODE_PREFIX = "VC:"; // 인증 코드
     private static final String VERIFIED_EMAIL_PREFIX = "VE:";    // 인증 완료된 이메일
@@ -34,7 +36,7 @@ public class EmailVerificationService {
      */
     public void sendCode(String email) {
         // 1-1. 이메일 중복 검사 (UserService의 메서드 활용)
-        userService.validateEmailDuplicate(email);
+        validateEmailDuplicate(email);
 
         String code = generateRandomCode();
         String key = VERIFICATION_CODE_PREFIX + email;
@@ -96,4 +98,16 @@ public class EmailVerificationService {
         }
         return code.toString();
     }
+
+    private void validateEmailDuplicate(String email) {
+        userRepository.findUserDetailsByEmail(email).ifPresent(user -> {
+            if (user.getProvider() == UserProvider.LOCAL) {
+                throw new BusinessException(ErrorCode.EMAIL_DUPLICATION);
+            } else {
+                // (ErrorCode에 EMAIL_ALREADY_REGISTERED_AS_SOCIAL이 정의되어 있어야 함)
+                throw new BusinessException(ErrorCode.EMAIL_ALREADY_REGISTERED_AS_SOCIAL);
+            }
+        });
+    }
+
 }
