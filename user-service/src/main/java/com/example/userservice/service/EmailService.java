@@ -29,7 +29,7 @@ public class EmailService {
         try {
             MimeMessageHelper helper = new MimeMessageHelper(
                     mimeMessage,
-                    false, // 멀티파트(HTML/첨부파일)
+                    true, // 멀티파트(HTML/첨부파일)
                     StandardCharsets.UTF_8.name()
             );
 
@@ -50,6 +50,7 @@ public class EmailService {
             log.info("{}로 인증 코드 발송 성공: {}", toEmail, code);
         } catch (Exception e) {
             log.error("{}로 인증 코드 발송 실패", toEmail, e);
+            throw new RuntimeException("메일 발송 중 오류가 발생했습니다.", e);
         }
     }
 
