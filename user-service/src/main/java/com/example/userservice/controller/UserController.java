@@ -2,6 +2,7 @@ package com.example.userservice.controller;
 
 import com.example.userservice.dto.*;
 import com.example.userservice.entity.UserEntity;
+import com.example.userservice.service.EmailVerificationService;
 import com.example.userservice.service.RefreshTokenService;
 import com.example.userservice.service.UserService;
 import com.example.userservice.util.CookieUtil;
@@ -26,6 +27,7 @@ public class UserController {
     private final UserService userService;
     private final RefreshTokenService refreshTokenService;
     private final CookieUtil cookieUtil;
+    private final EmailVerificationService emailVerificationService;
 
     @GetMapping("/welcome")
     public String welcome() {
@@ -37,6 +39,20 @@ public class UserController {
     public ResponseEntity<Void> signUpApi(@RequestBody UserSignUpRequest request) {
         userService.signUp(request);
         return ResponseEntity.status(HttpStatus.CREATED).build();
+    }
+
+    // 회원가입 - 인증 코드 발송
+    @PostMapping("/users/email-verification/send")
+    public ResponseEntity<Void> sendVerificationCode(@RequestBody EmailRequest request) {
+        emailVerificationService.sendCode(request.getEmail());
+        return ResponseEntity.ok().build();
+    }
+
+    // 회원가입 - 인증 코드 검증
+    @PostMapping("/users/email-verification/check")
+    public ResponseEntity<Void> checkVerificationCode(@RequestBody VerificationRequest request) {
+        emailVerificationService.verifyCode(request.getEmail(), request.getCode());
+        return ResponseEntity.ok().build();
     }
 
     // 로그인

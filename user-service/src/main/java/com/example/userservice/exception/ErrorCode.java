@@ -18,9 +18,14 @@ public enum ErrorCode {
     EMAIL_ALREADY_REGISTERED_AS_SOCIAL(HttpStatus.CONFLICT, "U004", "이미 다른 소셜 계정으로 가입된 이메일입니다."),
     EMAIL_ALREADY_REGISTERED_AS_LOCAL(HttpStatus.CONFLICT, "U005", "이미 로컬 계정으로 가입된 이메일입니다. 로컬 로그인을 이용해주세요."),
 
+    VERIFICATION_CODE_EXPIRED(HttpStatus.BAD_REQUEST, "U006", "인증 코드가 만료되었거나 존재하지 않습니다."),
+    INVALID_VERIFICATION_CODE(HttpStatus.BAD_REQUEST, "U007", "인증 코드가 일치하지 않습니다."),
+    EMAIL_NOT_VERIFIED(HttpStatus.FORBIDDEN, "U008", "이메일 인증이 완료되지 않았습니다."),
+
     INVALID_REFRESH_TOKEN(HttpStatus.UNAUTHORIZED, "T001", "유효하지 않은 리프레시 토큰입니다."),
     REFRESH_TOKEN_MISMATCH(HttpStatus.UNAUTHORIZED, "T002", "리프레시 토큰이 일치하지 않습니다. (탈취 의심)"),
     REFRESH_TOKEN_NOT_FOUND(HttpStatus.NOT_FOUND, "T003", "리프레시 토큰을 찾을 수 없습니다. 다시 로그인해주세요.");
+
 
     private final HttpStatus status;
     private final String code;
