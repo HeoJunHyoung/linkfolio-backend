@@ -30,7 +30,21 @@ spring:
       host: ${REDIS_HOST}
       port: ${REDIS_PORT}
 
-## Social Login (OAuth2)
+  mail:
+    host: smtp.gmail.com
+    port: 587
+    username: {GMAIL_USERNAME}
+    password: {GMAIL_PASSWORD}
+    properties:
+      mail:
+        smtp:
+          auth: true
+          starttls:
+            enable: true
+    from: "no-reply@linkfolio.com"
+    from-name: "LinkFolio"
+
+  ## Social Login (OAuth2)
   security:
     oauth2:
       client:

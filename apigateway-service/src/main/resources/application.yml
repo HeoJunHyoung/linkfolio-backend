@@ -43,6 +43,8 @@ app:
       - /user-service/login/oauth2/code/**
       - /user-service/users/refresh
       - /user-service/users/logout
+      - /user-service/email-verification/send
+      - /user-service/email-verification/check
 
 # JWT Token Settings
 jwt:

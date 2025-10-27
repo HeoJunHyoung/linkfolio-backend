@@ -23,14 +23,22 @@ public class UserService {
     private final BCryptPasswordEncoder passwordEncoder;
     private final UserMapper userMapper;
     private final NicknameGenerator nicknameGenerator;
+    private final EmailVerificationService emailVerificationService;
 
     // 회원가입
     @Transactional
     public void signUp(UserSignUpRequest request) {
-        validatePasswordMatch(request);             // 비밀번호 검증
-        validateEmailDuplicate(request.getEmail()); // 이메일 검증
 
-        // 객체 생성
+        // 1. 이메일이 "인증 완료" 상태인지 확인
+        if (!emailVerificationService.isEmailVerified(request.getEmail())) {
+            throw new BusinessException(ErrorCode.EMAIL_NOT_VERIFIED); // (ErrorCode 추가 필요)
+        }
+
+        // 2. DB 레벨의 비밀번호 / 이메일 검증
+        validatePasswordMatch(request);
+        validateEmailDuplicate(request.getEmail());
+
+        // 3. 객체 생성
         UserEntity signUpUser = UserEntity.of(
                 request.getEmail(),
                 passwordEncoder.encode(request.getPassword()),
@@ -39,7 +47,10 @@ public class UserService {
                 null
         );
 
-        userRepository.save(signUpUser);  // 객체 저장
+        userRepository.save(signUpUser);  // 4. 객체 저장
+
+        // 5. 회원가입 완료 후, Redis의 "인증 완료" 상태 삭제
+        emailVerificationService.deleteVerifiedEmailStatus(request.getEmail());
     }
 
 
@@ -60,7 +71,7 @@ public class UserService {
         }
     }
 
-    private void validateEmailDuplicate(String email) {
+    public void validateEmailDuplicate(String email) {
         userRepository.findUserDetailsByEmail(email).ifPresent(user -> {
             // 이메일이 이미 존재하면, 가입 경로에 따라 다른 예외 발생
             if (user.getProvider() == UserProvider.LOCAL) {
