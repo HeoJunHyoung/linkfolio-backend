@@ -1,13 +1,13 @@
 package com.example.userservice.controller;
 
 import com.example.userservice.dto.*;
-import com.example.userservice.entity.UserEntity;
+import com.example.userservice.dto.request.*;
+import com.example.userservice.dto.response.TokenResponse;
+import com.example.userservice.dto.response.UserResponse;
 import com.example.userservice.service.EmailVerificationService;
 import com.example.userservice.service.RefreshTokenService;
 import com.example.userservice.service.UserService;
 import com.example.userservice.util.CookieUtil;
-import com.example.userservice.util.JwtTokenProvider;
-import jakarta.servlet.http.Cookie;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -39,6 +39,20 @@ public class UserController {
     public ResponseEntity<Void> signUpApi(@RequestBody UserSignUpRequest request) {
         userService.signUp(request);
         return ResponseEntity.status(HttpStatus.CREATED).build();
+    }
+
+    // 회원가입 - ID(username) 중복 검사
+    @PostMapping("/users/check-username")
+    public ResponseEntity<Void> checkUsernameApi(@RequestBody CheckUsernameRequest request) {
+        userService.validateUsernameDuplicate(request.getUsername());
+        return ResponseEntity.ok().build();
+    }
+
+    // 회원가입 - 비밀번호 일치 확인
+    @PostMapping("/users/check-password")
+    public ResponseEntity<Void> checkPasswordApi(@RequestBody CheckPasswordRequest request) {
+        userService.validatePasswordMatch(request.getPassword(), request.getPasswordConfirm());
+        return ResponseEntity.ok().build();
     }
 
     // 회원가입 - 인증 코드 발송
@@ -93,6 +107,27 @@ public class UserController {
 
         log.info("Access Token 재발급 및 Refresh Token 쿠키 갱신 완료.");
         return ResponseEntity.ok(new TokenResponse(newAccessToken));
+    }
+
+    // ID(username) 찾기
+    @PostMapping("/users/find-username")
+    public ResponseEntity<String> findUsernameApi(@RequestBody FindUsernameRequest request) {
+        String username = userService.findUsername(request);
+        return ResponseEntity.ok(username);
+    }
+
+    // 비밀번호 재설정 [1]: 인증 코드 발송
+    @PostMapping("/users/password-reset/send-code")
+    public ResponseEntity<Void> sendPasswordResetCodeApi(@RequestBody PasswordResetSendCodeRequest request) {
+        userService.sendPasswordResetCode(request);
+        return ResponseEntity.ok().build();
+    }
+
+    // 비밀번호 재설정 [2]: 인증 코드 확인 및 비밀번호 변경
+    @PostMapping("/users/password-reset/confirm")
+    public ResponseEntity<Void> resetPasswordApi(@RequestBody PasswordResetConfirmRequest request) {
+        userService.resetPassword(request);
+        return ResponseEntity.ok().build();
     }
 
     // 로그아웃

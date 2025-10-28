@@ -29,13 +29,13 @@ public class OAuthAttributes {
     }
 
     // UserEntity 생성 (가입 시)
-    public UserEntity toEntity(String uniqueNickname) {
+    public UserEntity toEntity() {
         return UserEntity.of(
                 email,
-                "SOCIAL_USER_PASSWORD_" + UUID.randomUUID(), // 임의의 비밀번호
-                uniqueNickname,
+                "SOCIAL_USER_PASSWORD_" + UUID.randomUUID(),
                 UserProvider.valueOf(provider.toUpperCase()),
-                providerId
+                providerId,
+                this.name
         );
     }
 }

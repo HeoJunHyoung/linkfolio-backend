@@ -10,7 +10,6 @@ import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.stereotype.Service;
 
 import java.security.SecureRandom;
-import java.util.Random;
 import java.util.concurrent.TimeUnit;
 
 @Slf4j
@@ -22,55 +21,53 @@ public class EmailVerificationService {
     private final EmailService emailService;
     private final UserRepository userRepository;
 
+    // --- 공통 상수 ---
+    private static final String CHARACTERS = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
+    private static final int CODE_LENGTH = 6;
+    private static final SecureRandom random = new SecureRandom();
+
+    // --- 회원가입 인증 코드용 ---
     private static final String VERIFICATION_CODE_PREFIX = "VC:"; // 인증 코드
     private static final String VERIFIED_EMAIL_PREFIX = "VE:";    // 인증 완료된 이메일
     private static final long CODE_EXPIRATION_MINUTES = 3;       // 코드 만료 시간 (3분)
     private static final long VERIFIED_EXPIRATION_MINUTES = 5;  // 인증 완료 상태 만료 시간 (5분)
 
-    private static final String CHARACTERS = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
-    private static final int CODE_LENGTH = 6;
-    private static final SecureRandom random = new SecureRandom();
+    // --- 비밀번호 재설정 인증 코드용 ---
+    private static final String PW_RESET_CODE_PREFIX = "PW_RESET:";
+    private static final long PW_RESET_CODE_EXPIRATION_MINUTES = 5; // 5분
+
+
+    // ========================//
+    // == 회원가입 인증 플로우 ==//
+    // ========================//
 
     /**
-     * 1. 인증 코드 발송
+     * 1. 회원가입 인증 코드 발송
      */
     public void sendCode(String email) {
-        // 1-1. 이메일 중복 검사 (UserService의 메서드 활용)
         validateEmailDuplicate(email);
-
         String code = generateRandomCode();
         String key = VERIFICATION_CODE_PREFIX + email;
 
-        // 1-2. Redis에 인증 코드 저장 (5분 만료)
-        redisTemplate.opsForValue().set(key, code, CODE_EXPIRATION_MINUTES, TimeUnit.MINUTES);
-
-        // 1-3. 이메일 발송
+        storeCode(key, code, CODE_EXPIRATION_MINUTES);
         emailService.sendVerificationCode(email, code);
     }
 
     /**
-     * 2. 인증 코드 검증
+     * 2. 회원가입 인증 코드 검증
      */
     public void verifyCode(String email, String code) {
         String key = VERIFICATION_CODE_PREFIX + email;
-        String storedCode = (String) redisTemplate.opsForValue().get(key);
 
-        // 2-1. 코드가 없거나 만료됨
-        if (storedCode == null) {
-            throw new BusinessException(ErrorCode.VERIFICATION_CODE_EXPIRED); // (ErrorCode 추가 필요)
-        }
+        // 2-1. 코드 검증
+        validateCode(key, code, ErrorCode.VERIFICATION_CODE_EXPIRED, ErrorCode.INVALID_VERIFICATION_CODE);
 
-        // 2-2. 코드가 일치하지 않음
-        if (!storedCode.equals(code)) {
-            throw new BusinessException(ErrorCode.INVALID_VERIFICATION_CODE); // (ErrorCode 추가 필요)
-        }
+        // 2-2. 검증 성공 시, 인증 코드 삭제
+        deleteKey(key);
 
-        // 2-3. 검증 성공 시, 인증 코드 삭제
-        redisTemplate.delete(key);
-
-        // 2-4. "인증 완료" 상태를 Redis에 저장 (5분 만료)
+        // 2-3. "인증 완료" 상태를 Redis에 저장
         String verifiedKey = VERIFIED_EMAIL_PREFIX + email;
-        redisTemplate.opsForValue().set(verifiedKey, "true", VERIFIED_EXPIRATION_MINUTES, TimeUnit.MINUTES);
+        storeCode(verifiedKey, "true", VERIFIED_EXPIRATION_MINUTES);
     }
 
     /**
@@ -86,11 +83,77 @@ public class EmailVerificationService {
      * 4. (회원가입 완료 시) 인증 완료 상태 삭제
      */
     public void deleteVerifiedEmailStatus(String email) {
-        String verifiedKey = VERIFIED_EMAIL_PREFIX + email;
-        redisTemplate.delete(verifiedKey);
+        deleteKey(VERIFIED_EMAIL_PREFIX + email);
     }
 
-    // 6자리 숫자 인증 코드 생성
+
+    // ============================//
+    // == 비밀번호 재설정 플로우 ==//
+    // ============================//
+
+    /**
+     * 5. 비밀번호 재설정 코드 발송
+     */
+    public void sendPasswordResetCode(String username, String email) {
+        // [리팩터링] generateRandomCode() 재사용
+        String code = generateRandomCode();
+        String key = PW_RESET_CODE_PREFIX + username; // 이메일 대신 username(ID) 기준
+
+        storeCode(key, code, PW_RESET_CODE_EXPIRATION_MINUTES);
+        emailService.sendPasswordResetCode(email, code);
+    }
+
+    /**
+     * 6. 비밀번호 재설정 코드 검증
+     */
+    public void verifyPasswordResetCode(String username, String code) {
+        String key = PW_RESET_CODE_PREFIX + username;
+        validateCode(key, code, ErrorCode.PASSWORD_RESET_CODE_EXPIRED, ErrorCode.INVALID_PASSWORD_RESET_CODE);
+    }
+
+    /**
+     * 7. 비밀번호 재설정 코드 삭제
+     */
+    public void deletePasswordResetCode(String username) {
+        deleteKey(PW_RESET_CODE_PREFIX + username);
+    }
+
+
+    //********************//
+    //== 내부 헬퍼 메서드 ==//
+    //********************//
+
+    /**
+     * Redis에 코드 저장
+     */
+    private void storeCode(String key, String code, long expirationMinutes) {
+        redisTemplate.opsForValue().set(key, code, expirationMinutes, TimeUnit.MINUTES);
+    }
+
+    /**
+     * Redis의 코드 검증
+     */
+    private void validateCode(String key, String providedCode, ErrorCode expiredErrorCode, ErrorCode invalidErrorCode) {
+        String storedCode = (String) redisTemplate.opsForValue().get(key);
+
+        if (storedCode == null) {
+            throw new BusinessException(expiredErrorCode);
+        }
+        if (!storedCode.equals(providedCode)) {
+            throw new BusinessException(invalidErrorCode);
+        }
+    }
+
+    /**
+     * Redis 키 삭제
+     */
+    private void deleteKey(String key) {
+        redisTemplate.delete(key);
+    }
+
+    /**
+     * 6자리 랜덤 인증 코드 생성 (알파벳 대문자 + 숫자)
+     */
     private String generateRandomCode() {
         StringBuilder code = new StringBuilder(CODE_LENGTH);
         for (int i = 0; i < CODE_LENGTH; i++) {
@@ -99,15 +162,16 @@ public class EmailVerificationService {
         return code.toString();
     }
 
+    /**
+     * 회원가입 시 이메일 중복 검증
+     */
     private void validateEmailDuplicate(String email) {
         userRepository.findUserDetailsByEmail(email).ifPresent(user -> {
             if (user.getProvider() == UserProvider.LOCAL) {
                 throw new BusinessException(ErrorCode.EMAIL_DUPLICATION);
             } else {
-                // (ErrorCode에 EMAIL_ALREADY_REGISTERED_AS_SOCIAL이 정의되어 있어야 함)
                 throw new BusinessException(ErrorCode.EMAIL_ALREADY_REGISTERED_AS_SOCIAL);
             }
         });
     }
-
 }

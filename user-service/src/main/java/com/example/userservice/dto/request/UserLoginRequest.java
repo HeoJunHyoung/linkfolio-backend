@@ -1,4 +1,4 @@
-package com.example.userservice.dto;
+package com.example.userservice.dto.request;
 
 import lombok.AccessLevel;
 import lombok.AllArgsConstructor;
@@ -8,12 +8,10 @@ import lombok.NoArgsConstructor;
 @Data
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 @AllArgsConstructor(access = AccessLevel.PRIVATE)
-public class UserSignUpRequest {
+public class UserLoginRequest {
 
-    private String email;
+    private String username;
 
     private String password;
-
-    private String passwordConfirm;
 
 }
