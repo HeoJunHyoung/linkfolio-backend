@@ -70,4 +70,8 @@ public class UserEntity extends BaseEntity{
         return new UserEntity(email, password, nickname, UserProvider.LOCAL, null,
                 username, name, birthdate, gender); 
     }
+
+    public void updatePassword(String newEncodedPassword) {
+        this.password = newEncodedPassword;
+    }
 }

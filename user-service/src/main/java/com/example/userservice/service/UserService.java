@@ -1,8 +1,6 @@
 package com.example.userservice.service;
 
-import com.example.userservice.dto.UserDto;
-import com.example.userservice.dto.UserResponse;
-import com.example.userservice.dto.UserSignUpRequest;
+import com.example.userservice.dto.*;
 import com.example.userservice.entity.UserEntity;
 import com.example.userservice.entity.UserProvider;
 import com.example.userservice.exception.BusinessException;
@@ -24,6 +22,7 @@ public class UserService {
     private final UserMapper userMapper;
     private final NicknameGenerator nicknameGenerator;
     private final EmailVerificationService emailVerificationService;
+    private final EmailService emailService;
 
     // 회원가입
     @Transactional
@@ -35,7 +34,7 @@ public class UserService {
         }
 
         // 2. DB 레벨의 비밀번호 / 이메일 검증
-        validatePasswordMatch(request);
+        validatePasswordMatch(request.getPassword(), request.getPasswordConfirm());
         validateEmailDuplicate(request.getEmail());
 
         // 3. 'username' 중복 검증
@@ -66,6 +65,60 @@ public class UserService {
         return userMapper.toUserResponse(userEntity);
     }
 
+    // 아이디 찾기
+    @Transactional(readOnly = true)
+    public void findId(FindIdRequest request) {
+        // 1. 이름, 이메일, LOCAL 계정 여부로 유저 조회
+        UserEntity user = userRepository.findByNameAndEmailAndProvider(
+                request.getName(),
+                request.getEmail(),
+                UserProvider.LOCAL
+        ).orElseThrow(() -> new BusinessException(ErrorCode.USER_NOT_FOUND_BY_NAME_AND_EMAIL));
+
+        // 2. 이메일로 아이디(username) 발송
+        emailService.sendUsername(user.getEmail(), user.getUsername());
+    }
+
+
+    // 비밀번호 재설정 1: 코드 발송
+    @Transactional(readOnly = true)
+    public void sendPasswordResetCode(PasswordResetSendCodeRequest request) {
+        // 1. 아이디(username)로 LOCAL 유저 조회
+        UserEntity user = userRepository.findByUsername(request.getUsername())
+                .filter(u -> u.getProvider() == UserProvider.LOCAL) // 소셜 유저 제외
+                .orElseThrow(() -> new BusinessException(ErrorCode.USER_NOT_FOUND));
+
+        // 2. 요청된 이메일과 DB의 이메일이 일치하는지 확인
+        if (!user.getEmail().equals(request.getEmail())) {
+            throw new BusinessException(ErrorCode.USER_NOT_FOUND); // 이메일 불일치 시에도 동일한 에러
+        }
+
+        // 3. 인증 코드 발송 (EmailVerificationService 호출)
+        emailVerificationService.sendPasswordResetCode(user.getUsername(), user.getEmail());
+    }
+
+    // 비밀번호 재설정 2: 확인 및 변경
+    @Transactional
+    public void resetPassword(PasswordResetConfirmRequest request) {
+        // 1. 새 비밀번호 확인
+        validatePasswordMatch(request.getNewPassword(), request.getPasswordConfirm());
+
+        // 2. Redis의 코드 검증 (EmailVerificationService 호출)
+        emailVerificationService.verifyPasswordResetCode(request.getUsername(), request.getCode());
+
+        // 3. 유저 조회
+        UserEntity user = userRepository.findByUsername(request.getUsername())
+                .orElseThrow(() -> new BusinessException(ErrorCode.USER_NOT_FOUND));
+
+        // 4. 새 비밀번호 암호화 및 저장 (dirty checking)
+        user.updatePassword(passwordEncoder.encode(request.getNewPassword()));
+        userRepository.save(user); // UserEntity에 updatePassword 메서드 필요
+
+        // 5. 사용 완료된 코드 삭제 (EmailVerificationService 호출)
+        emailVerificationService.deletePasswordResetCode(request.getUsername());
+    }
+
+
 
     // =====================
     // 서비스 내부 헬퍼 메서드
@@ -74,12 +127,12 @@ public class UserService {
     public void validateUsernameDuplicate(String username) {
         if (userRepository.existsByUsername(username)) {
             // (ErrorCode에 USERNAME_DUPLICATION 추가 필요)
-            throw new BusinessException(ErrorCode.INTERNAL_SERVER_ERROR); // 예: ErrorCode.USERNAME_DUPLICATION
+            throw new BusinessException(ErrorCode.USERNAME_DUPLICATION);
         }
     }
 
-    private void validatePasswordMatch(UserSignUpRequest request) {
-        if (!request.getPassword().equals(request.getPasswordConfirm())) {
+    private void validatePasswordMatch(String password, String passwordConfirm) {
+        if (!password.equals(passwordConfirm)) {
             throw new BusinessException(ErrorCode.PASSWORD_MISMATCH);
         }
     }
