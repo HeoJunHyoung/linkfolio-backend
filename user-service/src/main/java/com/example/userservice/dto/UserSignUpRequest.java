@@ -1,5 +1,6 @@
 package com.example.userservice.dto;
 
+import com.example.userservice.entity.Gender;
 import lombok.AccessLevel;
 import lombok.AllArgsConstructor;
 import lombok.Data;
@@ -12,8 +13,16 @@ public class UserSignUpRequest {
 
     private String email;
 
+    private String username; // 로그인 ID
+
     private String password;
 
     private String passwordConfirm;
+
+    private String name; // 실명
+
+    private String birthdate;
+
+    private Gender gender;
 
 }

@@ -32,10 +32,11 @@ public class OAuthAttributes {
     public UserEntity toEntity(String uniqueNickname) {
         return UserEntity.of(
                 email,
-                "SOCIAL_USER_PASSWORD_" + UUID.randomUUID(), // 임의의 비밀번호
+                "SOCIAL_USER_PASSWORD_" + UUID.randomUUID(),
                 uniqueNickname,
                 UserProvider.valueOf(provider.toUpperCase()),
-                providerId
+                providerId,
+                this.name
         );
     }
 }

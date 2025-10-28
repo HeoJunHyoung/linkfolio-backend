@@ -10,7 +10,7 @@ import lombok.NoArgsConstructor;
 @AllArgsConstructor(access = AccessLevel.PRIVATE)
 public class UserLoginRequest {
 
-    private String email;
+    private String username;
 
     private String password;
 

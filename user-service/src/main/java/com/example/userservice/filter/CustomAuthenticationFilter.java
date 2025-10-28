@@ -37,7 +37,7 @@ public class CustomAuthenticationFilter extends UsernamePasswordAuthenticationFi
 
             return getAuthenticationManager()
                     .authenticate(
-                            new UsernamePasswordAuthenticationToken(creds.getEmail(), creds.getPassword(), new ArrayList<>())
+                            new UsernamePasswordAuthenticationToken(creds.getUsername(), creds.getPassword(), new ArrayList<>())
                     );
         } catch (IOException e) {
             log.error("Authentication failed during request parsing", e);

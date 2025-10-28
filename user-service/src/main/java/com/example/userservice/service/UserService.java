@@ -38,18 +38,23 @@ public class UserService {
         validatePasswordMatch(request);
         validateEmailDuplicate(request.getEmail());
 
-        // 3. 객체 생성
-        UserEntity signUpUser = UserEntity.of(
+        // 3. 'username' 중복 검증
+        validateUsernameDuplicate(request.getUsername());
+
+        // 4. 객체 생성
+        UserEntity signUpUser = UserEntity.ofLocal(
                 request.getEmail(),
                 passwordEncoder.encode(request.getPassword()),
                 nicknameGenerator.generateUniqueNickname(),
-                UserProvider.LOCAL,
-                null
+                request.getUsername(),
+                request.getName(),
+                request.getBirthdate(),
+                request.getGender()
         );
 
-        userRepository.save(signUpUser);  // 4. 객체 저장
+        userRepository.save(signUpUser);  // 5. 객체 저장
 
-        // 5. 회원가입 완료 후, Redis의 "인증 완료" 상태 삭제
+        // 6. 회원가입 완료 후, Redis의 "인증 완료" 상태 삭제
         emailVerificationService.deleteVerifiedEmailStatus(request.getEmail());
     }
 
@@ -65,6 +70,14 @@ public class UserService {
     // =====================
     // 서비스 내부 헬퍼 메서드
     // =====================
+
+    public void validateUsernameDuplicate(String username) {
+        if (userRepository.existsByUsername(username)) {
+            // (ErrorCode에 USERNAME_DUPLICATION 추가 필요)
+            throw new BusinessException(ErrorCode.INTERNAL_SERVER_ERROR); // 예: ErrorCode.USERNAME_DUPLICATION
+        }
+    }
+
     private void validatePasswordMatch(UserSignUpRequest request) {
         if (!request.getPassword().equals(request.getPasswordConfirm())) {
             throw new BusinessException(ErrorCode.PASSWORD_MISMATCH);
@@ -94,6 +107,12 @@ public class UserService {
                 .orElseThrow(() -> new BusinessException(ErrorCode.USER_NOT_FOUND));
 
         return userMapper.toUserDto(userEntity); // Mapper 이용
+    }
+
+    public UserDto getUserDetailsByUsername(String username) {
+        UserEntity userEntity = userRepository.findByUsername(username)
+                .orElseThrow(() -> new BusinessException(ErrorCode.USER_NOT_FOUND));
+        return userMapper.toUserDto(userEntity);
     }
 
 
