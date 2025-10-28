@@ -1,6 +1,11 @@
 package com.example.userservice.service;
 
 import com.example.userservice.dto.*;
+import com.example.userservice.dto.request.FindUsernameRequest;
+import com.example.userservice.dto.request.PasswordResetConfirmRequest;
+import com.example.userservice.dto.request.PasswordResetSendCodeRequest;
+import com.example.userservice.dto.request.UserSignUpRequest;
+import com.example.userservice.dto.response.UserResponse;
 import com.example.userservice.entity.UserEntity;
 import com.example.userservice.entity.UserProvider;
 import com.example.userservice.exception.BusinessException;
@@ -63,7 +68,7 @@ public class UserService {
 
     // 아이디 찾기
     @Transactional(readOnly = true)
-    public String findId(FindIdRequest request) {
+    public String findUsername(FindUsernameRequest request) {
         // 1. 실명, 이메일, LOCAL 계정 여부로 유저 조회
         UserEntity user = userRepository.findByNameAndEmailAndProvider(
                 request.getName(),
@@ -71,7 +76,7 @@ public class UserService {
                 UserProvider.LOCAL
         ).orElseThrow(() -> new BusinessException(ErrorCode.USER_NOT_FOUND_BY_NAME_AND_EMAIL));
 
-        // 2. 아이디(username) 반환
+        // 2. ID(username) 반환
         return user.getUsername();
     }
 
@@ -122,12 +127,11 @@ public class UserService {
 
     public void validateUsernameDuplicate(String username) {
         if (userRepository.existsByUsername(username)) {
-            // (ErrorCode에 USERNAME_DUPLICATION 추가 필요)
             throw new BusinessException(ErrorCode.USERNAME_DUPLICATION);
         }
     }
 
-    private void validatePasswordMatch(String password, String passwordConfirm) {
+    public void validatePasswordMatch(String password, String passwordConfirm) {
         if (!password.equals(passwordConfirm)) {
             throw new BusinessException(ErrorCode.PASSWORD_MISMATCH);
         }

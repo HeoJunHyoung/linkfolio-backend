@@ -1,7 +1,7 @@
 package com.example.userservice.util;
 
 import com.example.userservice.dto.UserDto;
-import com.example.userservice.dto.UserResponse;
+import com.example.userservice.dto.response.UserResponse;
 import com.example.userservice.entity.UserEntity;
 import org.mapstruct.Mapper;
 import org.mapstruct.Mapping;

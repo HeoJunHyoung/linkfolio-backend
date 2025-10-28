@@ -50,17 +50,17 @@ public class UserEntity extends BaseEntity{
         this.password = password;
         this.provider = provider;
         this.providerId = providerId;
-        this.name = name; // [추가]
+        this.name = name;
         this.birthdate = birthdate;
         this.gender = gender;
     }
 
     public static UserEntity of(String email, String password, UserProvider provider, String providerId, String name) {
-        return new UserEntity(email, password, provider, providerId, null, name, null, null);
+        return new UserEntity(email, password, provider, providerId, name, null, null);
     }
-    public static UserEntity ofLocal(String email, String password, String username,
-                                     String name, String birthdate, Gender gender) {
-        return new UserEntity(email, password,  UserProvider.LOCAL, null, username, name, birthdate, gender);
+    public static UserEntity ofLocal(String email, String password, String username, // username(ID)
+                                     String name, String birthdate, Gender gender) { // name(실명)
+        return new UserEntity(email, password,  UserProvider.LOCAL, username, name, birthdate, gender);
     }
 
     public void updatePassword(String newEncodedPassword) {

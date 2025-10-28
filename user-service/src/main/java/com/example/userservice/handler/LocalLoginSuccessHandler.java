@@ -1,7 +1,7 @@
 package com.example.userservice.handler;
 
 import com.example.userservice.dto.AuthUser;
-import com.example.userservice.dto.TokenResponse;
+import com.example.userservice.dto.response.TokenResponse;
 import com.example.userservice.dto.UserDto;
 import com.example.userservice.service.RefreshTokenService;
 import com.example.userservice.service.UserService;
