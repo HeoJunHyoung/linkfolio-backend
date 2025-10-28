@@ -20,7 +20,6 @@ public class UserService {
     private final BCryptPasswordEncoder passwordEncoder;
     private final UserMapper userMapper;
     private final EmailVerificationService emailVerificationService;
-    private final EmailService emailService;
 
     // 회원가입
     @Transactional
@@ -64,16 +63,16 @@ public class UserService {
 
     // 아이디 찾기
     @Transactional(readOnly = true)
-    public void findId(FindIdRequest request) {
-        // 1. 이름, 이메일, LOCAL 계정 여부로 유저 조회
+    public String findId(FindIdRequest request) {
+        // 1. 실명, 이메일, LOCAL 계정 여부로 유저 조회
         UserEntity user = userRepository.findByNameAndEmailAndProvider(
                 request.getName(),
                 request.getEmail(),
                 UserProvider.LOCAL
         ).orElseThrow(() -> new BusinessException(ErrorCode.USER_NOT_FOUND_BY_NAME_AND_EMAIL));
 
-        // 2. 이메일로 아이디(username) 발송
-        emailService.sendUsername(user.getEmail(), user.getUsername());
+        // 2. 아이디(username) 반환
+        return user.getUsername();
     }
 
 

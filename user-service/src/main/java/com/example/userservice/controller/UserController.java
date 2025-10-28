@@ -97,19 +97,19 @@ public class UserController {
 
     // 아이디 찾기
     @PostMapping("/users/find-id")
-    public ResponseEntity<Void> findIdApi(@RequestBody FindIdRequest request) {
-        userService.findId(request);
-        return ResponseEntity.ok().build();
+    public ResponseEntity<String> findIdApi(@RequestBody FindIdRequest request) {
+        String username = userService.findId(request);
+        return ResponseEntity.ok(username);
     }
 
-    // 비밀번호 재설정 1: 인증 코드 발송
+    // 비밀번호 재설정 [1] 인증 코드 발송
     @PostMapping("/users/password-reset/send-code")
     public ResponseEntity<Void> sendPasswordResetCodeApi(@RequestBody PasswordResetSendCodeRequest request) {
         userService.sendPasswordResetCode(request);
         return ResponseEntity.ok().build();
     }
 
-    // 비밀번호 재설정 2: 확인 및 변경 (인증 불필요)
+    // 비밀번호 재설정 [2] 확인 및 변경 (인증 불필요)
     @PostMapping("/users/password-reset/confirm")
     public ResponseEntity<Void> resetPasswordApi(@RequestBody PasswordResetConfirmRequest request) {
         userService.resetPassword(request);
