@@ -29,11 +29,10 @@ public class OAuthAttributes {
     }
 
     // UserEntity 생성 (가입 시)
-    public UserEntity toEntity(String uniqueNickname) {
+    public UserEntity toEntity() {
         return UserEntity.of(
                 email,
                 "SOCIAL_USER_PASSWORD_" + UUID.randomUUID(),
-                uniqueNickname,
                 UserProvider.valueOf(provider.toUpperCase()),
                 providerId,
                 this.name

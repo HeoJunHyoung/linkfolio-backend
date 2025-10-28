@@ -8,7 +8,6 @@ import com.example.userservice.exception.BusinessException;
 import com.example.userservice.exception.ErrorCode;
 import com.example.userservice.repository.UserRepository;
 import com.example.userservice.service.oauth.OAuth2AttributeParser; // [Refactor] Import
-import com.example.userservice.util.NicknameGenerator;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.oauth2.client.userinfo.DefaultOAuth2UserService;
 import org.springframework.security.oauth2.client.userinfo.OAuth2UserRequest;
@@ -26,7 +25,6 @@ import java.util.Optional;
 public class CustomOAuth2UserService implements OAuth2UserService<OAuth2UserRequest, OAuth2User> {
 
     private final UserRepository userRepository;
-    private final NicknameGenerator nicknameGenerator; // (이전 리팩터링 적용됨)
 
     // 전략(Parser) Map 주입
     private final Map<String, OAuth2AttributeParser> attributeParsers;
@@ -95,8 +93,7 @@ public class CustomOAuth2UserService implements OAuth2UserService<OAuth2UserRequ
         }
 
         // 3. 신규 가입
-        String nickname = nicknameGenerator.generateUniqueNickname();
-        UserEntity newUser = attributes.toEntity(nickname);
+        UserEntity newUser = attributes.toEntity();
         return userRepository.save(newUser);
     }
 }

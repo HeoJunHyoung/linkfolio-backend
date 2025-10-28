@@ -13,9 +13,7 @@ public class UserResponse {
 
     private String email;
 
-    private String nickname;
-
-    public static UserResponse of(Long id, String email, String nickname) {
-        return new UserResponse(id, email, nickname);
+    public static UserResponse of(Long id, String email) {
+        return new UserResponse(id, email);
     }
 }

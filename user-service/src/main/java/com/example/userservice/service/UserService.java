@@ -6,7 +6,6 @@ import com.example.userservice.entity.UserProvider;
 import com.example.userservice.exception.BusinessException;
 import com.example.userservice.exception.ErrorCode;
 import com.example.userservice.repository.UserRepository;
-import com.example.userservice.util.NicknameGenerator;
 import com.example.userservice.util.UserMapper;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
@@ -20,7 +19,6 @@ public class UserService {
     private final UserRepository userRepository;
     private final BCryptPasswordEncoder passwordEncoder;
     private final UserMapper userMapper;
-    private final NicknameGenerator nicknameGenerator;
     private final EmailVerificationService emailVerificationService;
     private final EmailService emailService;
 
@@ -44,9 +42,8 @@ public class UserService {
         UserEntity signUpUser = UserEntity.ofLocal(
                 request.getEmail(),
                 passwordEncoder.encode(request.getPassword()),
-                nicknameGenerator.generateUniqueNickname(),
-                request.getUsername(),
-                request.getName(),
+                request.getUsername(), // 실명
+                request.getName(),     // 아이디(ID)
                 request.getBirthdate(),
                 request.getGender()
         );

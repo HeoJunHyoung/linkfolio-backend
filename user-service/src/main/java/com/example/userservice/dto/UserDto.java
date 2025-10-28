@@ -15,10 +15,8 @@ public class UserDto {
 
     private String password;
 
-    private String nickname;
-
-    public static UserDto of(Long id, String email, String password, String nickname) {
-        return new UserDto(id, email, password, nickname);
+    public static UserDto of(Long id, String email, String password) {
+        return new UserDto(id, email, password);
     }
 
 }
