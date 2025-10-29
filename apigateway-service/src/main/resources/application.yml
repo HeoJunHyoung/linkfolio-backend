@@ -45,6 +45,10 @@ app:
       - /user-service/users/logout
       - /user-service/users/email-verification/send
       - /user-service/users/email-verification/check
+      - /user-service/users/find-username
+      - /user-service/users/password-reset/send-code
+      - /user-service/users/password-reset/verify-code
+      - /user-service/users/password-reset/change
 
 # JWT Token Settings
 jwt:

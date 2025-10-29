@@ -50,7 +50,7 @@ public class SecurityConfig {
                         .requestMatchers("/users/signup", "/users/login", "/welcome", "/users/refresh", "/users/logout",
                                          "/users/email-verification/send", "/users/email-verification/check",
                                          "/users/check-username", "/users/check-password").permitAll()
-                        .requestMatchers("/users/find-id", "/users/password-reset/send-code", "/users/password-reset/confirm").permitAll()
+                        .requestMatchers("/users/find-username", "/users/password-reset/send-code", "/users/password-reset/verify-code", "/users/password-reset/change").permitAll()
                         .requestMatchers("/oauth2/**", "/login/oauth2/**").permitAll()
                         .anyRequest().authenticated()
                 );
