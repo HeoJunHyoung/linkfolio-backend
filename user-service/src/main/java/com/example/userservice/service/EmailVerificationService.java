@@ -30,11 +30,15 @@ public class EmailVerificationService {
     private static final String VERIFICATION_CODE_PREFIX = "VC:"; // 인증 코드
     private static final String VERIFIED_EMAIL_PREFIX = "VE:";    // 인증 완료된 이메일
     private static final long CODE_EXPIRATION_MINUTES = 3;       // 코드 만료 시간 (3분)
-    private static final long VERIFIED_EXPIRATION_MINUTES = 5;  // 인증 완료 상태 만료 시간 (5분)
+    private static final long VERIFIED_EXPIRATION_MINUTES = 3;  // 인증 완료 상태 만료 시간 (3분)
 
     // --- 비밀번호 재설정 인증 코드용 ---
     private static final String PW_RESET_CODE_PREFIX = "PW_RESET:";
-    private static final long PW_RESET_CODE_EXPIRATION_MINUTES = 5; // 5분
+    private static final long PW_RESET_CODE_EXPIRATION_MINUTES = 3; // 5분
+
+    // --- 비밀번호 재설정 '검증 완료' 상태용 ---
+    private static final String PW_VERIFIED_PREFIX = "PW_VERIFIED:";
+    private static final long PW_VERIFIED_EXPIRATION_MINUTES = 6; // 검증 후 6분 내 변경
 
 
     // ========================//
@@ -94,10 +98,9 @@ public class EmailVerificationService {
     /**
      * 5. 비밀번호 재설정 코드 발송
      */
-    public void sendPasswordResetCode(String username, String email) {
-        // [리팩터링] generateRandomCode() 재사용
+    public void sendPasswordResetCode(String email) {
         String code = generateRandomCode();
-        String key = PW_RESET_CODE_PREFIX + username; // 이메일 대신 username(ID) 기준
+        String key = PW_RESET_CODE_PREFIX + email; // 이메일 대신 username(ID) 기준
 
         storeCode(key, code, PW_RESET_CODE_EXPIRATION_MINUTES);
         emailService.sendPasswordResetCode(email, code);
@@ -106,18 +109,30 @@ public class EmailVerificationService {
     /**
      * 6. 비밀번호 재설정 코드 검증
      */
-    public void verifyPasswordResetCode(String username, String code) {
-        String key = PW_RESET_CODE_PREFIX + username;
+    public void verifyPasswordResetCode(String email, String code) {
+        String key = PW_RESET_CODE_PREFIX + email;
         validateCode(key, code, ErrorCode.PASSWORD_RESET_CODE_EXPIRED, ErrorCode.INVALID_PASSWORD_RESET_CODE);
+
+        // 검증 성공 시, 기존 인증 코드는 삭제하고 '검증 완료' 상태를 저장
+        deleteKey(key);
+        String verifiedKey = PW_VERIFIED_PREFIX + email;
+        storeCode(verifiedKey, "true", PW_VERIFIED_EXPIRATION_MINUTES);
     }
 
     /**
      * 7. 비밀번호 재설정 코드 삭제
      */
-    public void deletePasswordResetCode(String username) {
-        deleteKey(PW_RESET_CODE_PREFIX + username);
+    public void deletePasswordResetCode(String email) {
+        deleteKey(PW_RESET_CODE_PREFIX + email);
     }
 
+    /**
+     * 8. 비밀번호 재설정 관련 상태 최종 삭제 (코드 + 검증완료 상태)
+     */
+    public void deletePasswordResetState(String email) { // <-- 메서드명 변경
+        deleteKey(PW_RESET_CODE_PREFIX + email);
+        deleteKey(PW_VERIFIED_PREFIX + email);
+    }
 
     //********************//
     //== 내부 헬퍼 메서드 ==//
@@ -174,4 +189,15 @@ public class EmailVerificationService {
             }
         });
     }
+
+    /**
+     * 비밀번호 재설정이 '검증 완료' 상태인지 확인
+     */
+    public boolean isPasswordResetVerified(String email) {
+        String verifiedKey = PW_VERIFIED_PREFIX + email;
+        String status = (String) redisTemplate.opsForValue().get(verifiedKey);
+        return "true".equals(status);
+    }
+
+
 }

@@ -1,10 +1,7 @@
 package com.example.userservice.service;
 
 import com.example.userservice.dto.*;
-import com.example.userservice.dto.request.FindUsernameRequest;
-import com.example.userservice.dto.request.PasswordResetConfirmRequest;
-import com.example.userservice.dto.request.PasswordResetSendCodeRequest;
-import com.example.userservice.dto.request.UserSignUpRequest;
+import com.example.userservice.dto.request.*;
 import com.example.userservice.dto.response.UserResponse;
 import com.example.userservice.entity.UserEntity;
 import com.example.userservice.entity.UserProvider;
@@ -84,39 +81,42 @@ public class UserService {
     // 비밀번호 재설정 1: 코드 발송
     @Transactional(readOnly = true)
     public void sendPasswordResetCode(PasswordResetSendCodeRequest request) {
-        // 1. 아이디(username)로 LOCAL 유저 조회
-        UserEntity user = userRepository.findByUsername(request.getUsername())
+        // 1. 이메일로 LOCAL 유저 조회
+        UserEntity userEntity = userRepository.findUserDetailsByEmail(request.getEmail())
                 .filter(u -> u.getProvider() == UserProvider.LOCAL) // 소셜 유저 제외
                 .orElseThrow(() -> new BusinessException(ErrorCode.USER_NOT_FOUND));
 
-        // 2. 요청된 이메일과 DB의 이메일이 일치하는지 확인
-        if (!user.getEmail().equals(request.getEmail())) {
-            throw new BusinessException(ErrorCode.USER_NOT_FOUND); // 이메일 불일치 시에도 동일한 에러
-        }
-
-        // 3. 인증 코드 발송 (EmailVerificationService 호출)
-        emailVerificationService.sendPasswordResetCode(user.getUsername(), user.getEmail());
+        // 2. 인증 코드 발송 (EmailVerificationService 호출)
+        emailVerificationService.sendPasswordResetCode(userEntity.getEmail());
     }
 
-    // 비밀번호 재설정 2: 확인 및 변경
+    // 비밀번호 재설정 2: 인증 코드 검증
+    public void verifyPasswordResetCode(PasswordResetVerifyCodeRequest request) {
+        emailVerificationService.verifyPasswordResetCode(request.getEmail(), request.getCode());
+    }
+    
+    // 비밀번호 재설정 3: 비밀번호 확인 및 변경
     @Transactional
-    public void resetPassword(PasswordResetConfirmRequest request) {
+    public void resetPassword(PasswordResetChangeRequest request) { // <-- [수정] DTO 변경
         // 1. 새 비밀번호 확인
         validatePasswordMatch(request.getNewPassword(), request.getPasswordConfirm());
 
-        // 2. Redis의 코드 검증 (EmailVerificationService 호출)
-        emailVerificationService.verifyPasswordResetCode(request.getUsername(), request.getCode());
+        // 2. Redis의 '검증 완료' 상태 확인
+        if (!emailVerificationService.isPasswordResetVerified(request.getEmail())) {
+            // ErrorCode 추가 필요 (e.g., PW_RESET_NOT_VERIFIED)
+            throw new BusinessException(ErrorCode.PASSWORD_RESET_CODE_EXPIRED);
+        }
 
-        // 3. 유저 조회
-        UserEntity user = userRepository.findByUsername(request.getUsername())
+        // 3. 유저 조회 (email 기준)
+        UserEntity user = userRepository.findUserDetailsByEmail(request.getEmail())
                 .orElseThrow(() -> new BusinessException(ErrorCode.USER_NOT_FOUND));
 
-        // 4. 새 비밀번호 암호화 및 저장 (dirty checking)
+        // 4. 새 비밀번호 암호화 및 저장
         user.updatePassword(passwordEncoder.encode(request.getNewPassword()));
-        userRepository.save(user); // UserEntity에 updatePassword 메서드 필요
+        userRepository.save(user);
 
-        // 5. 사용 완료된 코드 삭제 (EmailVerificationService 호출)
-        emailVerificationService.deletePasswordResetCode(request.getUsername());
+        // 5. 사용 완료된 '검증 완료' 상태 삭제
+        emailVerificationService.deletePasswordResetState(request.getEmail()); // <-- 메서드명 변경
     }
 
 
@@ -168,5 +168,6 @@ public class UserService {
         return userMapper.toUserDto(userEntity);
     }
 
+    
 
 }
