@@ -46,6 +46,8 @@ app:
       - /user-service/users/email-verification/send
       - /user-service/users/email-verification/check
       - /user-service/users/find-username
+      - /user-service/users/check-username
+      - /user-service/users/check-password
       - /user-service/users/password-reset/send-code
       - /user-service/users/password-reset/verify-code
       - /user-service/users/password-reset/change
