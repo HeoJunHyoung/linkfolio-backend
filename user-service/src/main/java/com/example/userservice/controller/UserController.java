@@ -123,9 +123,16 @@ public class UserController {
         return ResponseEntity.ok().build();
     }
 
-    // 비밀번호 재설정 [2]: 인증 코드 확인 및 비밀번호 변경
-    @PostMapping("/users/password-reset/confirm")
-    public ResponseEntity<Void> resetPasswordApi(@RequestBody PasswordResetConfirmRequest request) {
+    // 비밀번호 재설정 [2]: 인증 코드 검증
+    @PostMapping("/users/password-reset/verify-code")
+    public ResponseEntity<Void> verifyPasswordResetCodeApi(@RequestBody PasswordResetVerifyCodeRequest request) {
+        userService.verifyPasswordResetCode(request);
+        return ResponseEntity.ok().build();
+    }
+
+    // 비밀번호 재설정 [3]: 인증 코드 확인 및 비밀번호 변경
+    @PostMapping("/users/password-reset/change")
+    public ResponseEntity<Void> resetPasswordApi(@RequestBody PasswordResetChangeRequest request) {
         userService.resetPassword(request);
         return ResponseEntity.ok().build();
     }
