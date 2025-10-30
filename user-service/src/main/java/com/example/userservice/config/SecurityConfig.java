@@ -5,6 +5,7 @@ import com.example.userservice.filter.InternalHeaderAuthenticationFilter;
 import com.example.userservice.handler.LocalLoginSuccessHandler;
 import com.example.userservice.handler.OAuth2LoginSuccessHandler;
 import com.example.userservice.service.CustomOAuth2UserService;
+import com.example.userservice.util.RedisBasedAuthorizationRequestRepository;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
@@ -33,6 +34,7 @@ public class SecurityConfig {
     private final CustomOAuth2UserService customOAuth2UserService;
     private final OAuth2LoginSuccessHandler oAuth2LoginSuccessHandler;
     private final LocalLoginSuccessHandler localLoginSuccessHandler;
+    private final RedisBasedAuthorizationRequestRepository redisBasedAuthorizationRequestRepository;
 
     @Bean
     public AuthenticationManager authenticationManager(AuthenticationConfiguration authConfig) throws Exception {
@@ -67,6 +69,7 @@ public class SecurityConfig {
         http.oauth2Login(oauth2 -> oauth2
                 .authorizationEndpoint(auth -> auth
                         .baseUri("/oauth2/authorization") // 프론트에서 호출할 인증 요청 기본 URI
+                        .authorizationRequestRepository(redisBasedAuthorizationRequestRepository)
                 )
                 .redirectionEndpoint(redirect -> redirect
                         .baseUri("/login/oauth2/code/*") // 소셜 로그인 후 콜백 URI
