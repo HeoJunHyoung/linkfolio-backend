@@ -24,33 +24,42 @@ spring:
             allow-credentials: true
 
       routes:
-        # 1. User Service Definition (With Authorization Filter Adjust)
+        # 1. User Service (인증이 필요한 API)
         - id: user-service-route
           uri: http://user-service:80
           predicates:
             - Path=/user-service/**
 
+        # 2. Auth Service (인증/인가 API)
+        - id: auth-service-route
+          uri: http://auth-service:8081 # [신규] auth-service (8081 포트)
+          predicates:
+            - Path=/auth-service/**
+
 app:
   gateway:
     excluded-urls:
-      - /user-service/users/login
-      - /user-service/users/signup
       - /user-service/welcome
       - /actuator
-      - /user-service/swagger-ui
-      - /user-service/v3/api-docs
-      - /user-service/oauth2/authorization/**
-      - /user-service/login/oauth2/code/**
-      - /user-service/users/refresh
-      - /user-service/users/logout
-      - /user-service/users/email-verification/send
-      - /user-service/users/email-verification/check
-      - /user-service/users/find-username
-      - /user-service/users/check-username
-      - /user-service/users/check-password
-      - /user-service/users/password-reset/send-code
-      - /user-service/users/password-reset/verify-code
-      - /user-service/users/password-reset/change
+      - /user-service/swagger-ui/**
+      - /user-service/v3/api-docs/**
+      - /auth-service/swagger-ui/**
+      - /auth-service/v3/api-docs/**
+
+      - /auth-service/auth/signup
+      - /auth-service/auth/login
+      - /auth-service/auth/refresh
+      - /auth-service/auth/logout
+      - /auth-service/auth/check-username
+      - /auth-service/auth/check-password
+      - /auth-service/auth/find-username
+      - /auth-service/auth/password-reset/send-code
+      - /auth-service/auth/password-reset/verify-code
+      - /auth-service/auth/password-reset/change
+      - /auth-service/auth/email-verification/send
+      - /auth-service/auth/email-verification/check
+      - /auth-service/oauth2/authorization/**
+      - /auth-service/login/oauth2/code/**
 
 # JWT Token Settings
 jwt:
