@@ -1,6 +1,6 @@
 package com.example.userservice.repository;
 
-import com.example.userservice.entity.UserEntity;
+import com.example.userservice.entity.UserProfileEntity;
 import com.example.userservice.entity.UserProvider;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
@@ -8,16 +8,16 @@ import org.springframework.data.repository.query.Param;
 
 import java.util.Optional;
 
-public interface UserRepository extends JpaRepository<UserEntity, Long> {
+public interface UserRepository extends JpaRepository<UserProfileEntity, Long> {
 
-    @Query("select u from UserEntity u where u.email = :email")
-    Optional<UserEntity> findUserDetailsByEmail(@Param("email") String email);
+    @Query("select u from UserProfileEntity u where u.email = :email")
+    Optional<UserProfileEntity> findUserDetailsByEmail(@Param("email") String email);
 
-    Optional<UserEntity> findByProviderAndProviderId(UserProvider provider, String providerId);
+    Optional<UserProfileEntity> findByProviderAndProviderId(UserProvider provider, String providerId);
 
-    Optional<UserEntity> findByUsername(String username);
+    Optional<UserProfileEntity> findByUsername(String username);
     boolean existsByUsername(String username);
 
     // 아이디 찾기용
-    Optional<UserEntity> findByNameAndEmailAndProvider(String name, String email, UserProvider provider);
+    Optional<UserProfileEntity> findByNameAndEmailAndProvider(String name, String email, UserProvider provider);
 }

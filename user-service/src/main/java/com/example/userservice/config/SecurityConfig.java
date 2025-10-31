@@ -1,16 +1,9 @@
 package com.example.userservice.config;
 
 import com.example.userservice.filter.InternalHeaderAuthenticationFilter;
-import com.example.userservice.handler.LocalLoginSuccessHandler;
-import com.example.userservice.handler.OAuth2LoginSuccessHandler;
-import com.example.userservice.service.CustomOAuth2UserService;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-import org.springframework.http.HttpMethod;
-import org.springframework.security.authentication.AuthenticationManager;
-import org.springframework.security.config.annotation.authentication.configuration.AuthenticationConfiguration;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.config.http.SessionCreationPolicy;
@@ -22,63 +15,21 @@ import org.springframework.security.web.access.intercept.AuthorizationFilter;
 @RequiredArgsConstructor
 public class SecurityConfig {
 
-    private final ObjectMapper objectMapper;
-    private final CustomOAuth2UserService customOAuth2UserService;
-    private final OAuth2LoginSuccessHandler oAuth2LoginSuccessHandler;
-    private final LocalLoginSuccessHandler localLoginSuccessHandler;
-    private final RedisBasedAuthorizationRequestRepository redisBasedAuthorizationRequestRepository;
+    // [삭제] OAuth2, Handler, RedisRepo, AuthenticationManager 등 모든 Bean 삭제
 
     @Bean
-    public AuthenticationManager authenticationManager(AuthenticationConfiguration authConfig) throws Exception {
-        return authConfig.getAuthenticationManager();
-    }
-
-    @Bean
-    public SecurityFilterChain securityFilterChain(HttpSecurity http, AuthenticationManager authenticationManager) throws Exception {
+    public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
         http
                 .csrf(csrf -> csrf.disable())
                 .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .authorizeHttpRequests(authorize -> authorize
-                        .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
-                        .requestMatchers("/swagger-ui/**", "/v3/api-docs/**", "/swagger-resources/**").permitAll()
-                        .requestMatchers("/users/signup", "/users/login", "/welcome", "/users/refresh", "/users/logout",
-                                         "/users/email-verification/send", "/users/email-verification/check",
-                                         "/users/check-username", "/users/check-password").permitAll()
-                        .requestMatchers("/users/find-username", "/users/password-reset/send-code", "/users/password-reset/verify-code", "/users/password-reset/change").permitAll()
-                        .requestMatchers("/oauth2/**", "/login/oauth2/**").permitAll()
+                        .requestMatchers("/internal/**").permitAll()
                         .anyRequest().authenticated()
                 );
 
-        // login -> users/login 으로 커스터 마이징
-        CustomAuthenticationFilter authenticationFilter = new CustomAuthenticationFilter(
-                authenticationManager,
-                objectMapper,
-                localLoginSuccessHandler // [Refactor] LocalLoginSuccessHandler 주입
-        );
-        authenticationFilter.setFilterProcessesUrl("/users/login");
-
-        // OAuth2 로그인 설정
-        http.oauth2Login(oauth2 -> oauth2
-                .authorizationEndpoint(auth -> auth
-                        .baseUri("/oauth2/authorization") // 프론트에서 호출할 인증 요청 기본 URI
-                        .authorizationRequestRepository(redisBasedAuthorizationRequestRepository)
-                )
-                .redirectionEndpoint(redirect -> redirect
-                        .baseUri("/login/oauth2/code/*") // 소셜 로그인 후 콜백 URI
-                )
-                .userInfoEndpoint(userInfo -> userInfo
-                        .userService(customOAuth2UserService) // 커스텀 유저 서비스 지정
-                )
-                .successHandler(oAuth2LoginSuccessHandler) // JWT 발급 핸들러 지정
-        );
-
-        // 필터 추가
-        http
-                .addFilter(authenticationFilter)
-                .addFilterBefore(new InternalHeaderAuthenticationFilter(), AuthorizationFilter.class);
-//                .addFilterBefore(new InternalHeaderAuthenticationFilter(), UsernamePasswordAuthenticationFilter.class);
+        // Gateway가 주입한 헤더를 읽어 인증 객체를 만드는 필터
+        http.addFilterBefore(new InternalHeaderAuthenticationFilter(), AuthorizationFilter.class);
 
         return http.build();
     }
-
 }

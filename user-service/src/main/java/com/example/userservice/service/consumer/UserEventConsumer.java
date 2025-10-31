@@ -1,8 +1,10 @@
 package com.example.userservice.service.consumer;
 
+import com.example.userservice.dto.UserCreatedEvent;
 import com.example.userservice.service.UserService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.kafka.annotation.KafkaListener;
 import org.springframework.stereotype.Component;
 
 @Slf4j
