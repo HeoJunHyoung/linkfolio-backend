@@ -7,7 +7,6 @@ import com.example.userservice.dto.response.UserResponse;
 import com.example.userservice.service.EmailVerificationService;
 import com.example.userservice.service.RefreshTokenService;
 import com.example.userservice.service.UserService;
-import com.example.userservice.util.CookieUtil;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;

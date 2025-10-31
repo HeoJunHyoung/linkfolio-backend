@@ -1,0 +1,23 @@
+package com.example.authservice.repository;
+
+import com.example.authservice.entity.AuthUserEntity;
+import com.example.authservice.entity.enumerate.UserProvider;
+import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.repository.query.Param;
+
+import java.util.Optional;
+
+public interface AuthUserRepository extends JpaRepository<AuthUserEntity, Long> {
+
+    Optional<AuthUserEntity> findByEmail(String email);
+
+    Optional<AuthUserEntity> findByProviderAndProviderId(UserProvider provider, String providerId);
+
+    // CustomUserDetailsService가 사용
+    Optional<AuthUserEntity> findByUsername(String username);
+
+    boolean existsByUsername(String username);
+
+    // '아이디 찾기'가 사용
+    Optional<AuthUserEntity> findByNameAndEmailAndProvider(String name, String email, UserProvider provider);
+}

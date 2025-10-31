@@ -1,9 +1,10 @@
-package com.example.userservice.config;
+package com.example.authservice.config;
 
-import com.example.userservice.filter.InternalHeaderAuthenticationFilter;
-import com.example.userservice.handler.LocalLoginSuccessHandler;
-import com.example.userservice.handler.OAuth2LoginSuccessHandler;
-import com.example.userservice.service.CustomOAuth2UserService;
+import com.example.authservice.filter.CustomAuthenticationFilter;
+import com.example.authservice.handler.LocalLoginSuccessHandler;
+import com.example.authservice.handler.OAuth2LoginSuccessHandler;
+import com.example.authservice.service.CustomOAuth2UserService;
+import com.example.authservice.util.RedisBasedAuthorizationRequestRepository;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Bean;
@@ -15,7 +16,6 @@ import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.web.SecurityFilterChain;
-import org.springframework.security.web.access.intercept.AuthorizationFilter;
 
 @Configuration
 @EnableWebSecurity
@@ -41,44 +41,39 @@ public class SecurityConfig {
                 .authorizeHttpRequests(authorize -> authorize
                         .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
                         .requestMatchers("/swagger-ui/**", "/v3/api-docs/**", "/swagger-resources/**").permitAll()
-                        .requestMatchers("/users/signup", "/users/login", "/welcome", "/users/refresh", "/users/logout",
-                                         "/users/email-verification/send", "/users/email-verification/check",
-                                         "/users/check-username", "/users/check-password").permitAll()
-                        .requestMatchers("/users/find-username", "/users/password-reset/send-code", "/users/password-reset/verify-code", "/users/password-reset/change").permitAll()
+                        // [수정] 모든 /auth/** 경로는 인증 없이 허용
+                        .requestMatchers("/auth/**").permitAll()
                         .requestMatchers("/oauth2/**", "/login/oauth2/**").permitAll()
                         .anyRequest().authenticated()
                 );
 
-        // login -> users/login 으로 커스터 마이징
+        // login -> auth/login 으로 커스터 마이징
         CustomAuthenticationFilter authenticationFilter = new CustomAuthenticationFilter(
                 authenticationManager,
                 objectMapper,
-                localLoginSuccessHandler // [Refactor] LocalLoginSuccessHandler 주입
+                localLoginSuccessHandler
         );
-        authenticationFilter.setFilterProcessesUrl("/users/login");
+        authenticationFilter.setFilterProcessesUrl("/auth/login"); // [수정]
 
         // OAuth2 로그인 설정
         http.oauth2Login(oauth2 -> oauth2
                 .authorizationEndpoint(auth -> auth
-                        .baseUri("/oauth2/authorization") // 프론트에서 호출할 인증 요청 기본 URI
+                        .baseUri("/oauth2/authorization")
                         .authorizationRequestRepository(redisBasedAuthorizationRequestRepository)
                 )
                 .redirectionEndpoint(redirect -> redirect
-                        .baseUri("/login/oauth2/code/*") // 소셜 로그인 후 콜백 URI
+                        .baseUri("/login/oauth2/code/*")
                 )
                 .userInfoEndpoint(userInfo -> userInfo
-                        .userService(customOAuth2UserService) // 커스텀 유저 서비스 지정
+                        .userService(customOAuth2UserService)
                 )
-                .successHandler(oAuth2LoginSuccessHandler) // JWT 발급 핸들러 지정
+                .successHandler(oAuth2LoginSuccessHandler)
         );
 
         // 필터 추가
-        http
-                .addFilter(authenticationFilter)
-                .addFilterBefore(new InternalHeaderAuthenticationFilter(), AuthorizationFilter.class);
-//                .addFilterBefore(new InternalHeaderAuthenticationFilter(), UsernamePasswordAuthenticationFilter.class);
+        http.addFilter(authenticationFilter);
+        // [삭제] InternalHeaderAuthenticationFilter (GateWay가 여기엔 헤더를 안 줌)
 
         return http.build();
     }
-
 }

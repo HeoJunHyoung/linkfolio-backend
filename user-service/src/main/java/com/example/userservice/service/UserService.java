@@ -19,9 +19,7 @@ import org.springframework.transaction.annotation.Transactional;
 public class UserService {
 
     private final UserRepository userRepository;
-    private final BCryptPasswordEncoder passwordEncoder;
     private final UserMapper userMapper;
-    private final EmailVerificationService emailVerificationService;
 
     // 회원가입
     @Transactional
