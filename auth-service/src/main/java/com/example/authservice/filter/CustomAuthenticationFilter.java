@@ -1,6 +1,6 @@
 package com.example.authservice.filter;
 
-import com.example.userservice.dto.request.UserLoginRequest;
+import com.example.authservice.dto.request.UserLoginRequest;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;

@@ -1,6 +1,7 @@
 package com.example.authservice.util;
 
-import com.example.userservice.dto.UserDto;
+
+import com.example.authservice.dto.UserDto;
 import io.jsonwebtoken.*;
 import io.jsonwebtoken.security.Keys;
 import io.jsonwebtoken.security.SecurityException;

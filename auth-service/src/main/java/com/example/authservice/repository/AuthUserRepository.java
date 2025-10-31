@@ -18,6 +18,8 @@ public interface AuthUserRepository extends JpaRepository<AuthUserEntity, Long> 
 
     boolean existsByUsername(String username);
 
+    Optional<AuthUserEntity> findByEmailAndProvider(String email, UserProvider userProvider);
+
     // '아이디 찾기'가 사용
     Optional<AuthUserEntity> findByNameAndEmailAndProvider(String name, String email, UserProvider provider);
 }

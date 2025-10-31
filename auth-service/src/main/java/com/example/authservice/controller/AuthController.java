@@ -59,9 +59,14 @@ public class AuthController {
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
         }
         Map<String, String> newTokens = refreshTokenService.reissueTokens(refreshToken);
-        cookieUtil.addRefreshTokenCookie(response, newTokens.get("refreshToken"));
-        return ResponseEntity.ok(new TokenResponse(newAccessToken));
+
+        String newAccessToken = newTokens.get("accessToken");
+        String newRefreshToken = newTokens.get("refreshToken");
+
+        cookieUtil.addRefreshTokenCookie(response, newRefreshToken); // refresh 토큰 전송
+        return ResponseEntity.ok(new TokenResponse(newAccessToken)); // access 토큰 전송
     }
+
 
     // ID(username) 찾기
     @PostMapping("/find-username")

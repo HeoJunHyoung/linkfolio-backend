@@ -1,9 +1,9 @@
 package com.example.authservice.service;
 
-import com.example.userservice.entity.UserProvider;
-import com.example.userservice.exception.BusinessException;
-import com.example.userservice.exception.ErrorCode;
-import com.example.userservice.repository.UserRepository;
+import com.example.authservice.entity.enumerate.UserProvider;
+import com.example.authservice.exception.BusinessException;
+import com.example.authservice.exception.ErrorCode;
+import com.example.authservice.repository.AuthUserRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.redis.core.RedisTemplate;
@@ -19,7 +19,7 @@ public class EmailVerificationService {
 
     private final RedisTemplate<String, Object> redisTemplate;
     private final EmailService emailService;
-    private final UserRepository userRepository;
+    private final AuthUserRepository authUserRepository;
 
     // --- 공통 상수 ---
     private static final String CHARACTERS = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
@@ -181,7 +181,7 @@ public class EmailVerificationService {
      * 회원가입 시 이메일 중복 검증
      */
     private void validateEmailDuplicate(String email) {
-        userRepository.findUserDetailsByEmail(email).ifPresent(user -> {
+        authUserRepository.findByEmail(email).ifPresent(user -> {
             if (user.getProvider() == UserProvider.LOCAL) {
                 throw new BusinessException(ErrorCode.EMAIL_DUPLICATION);
             } else {

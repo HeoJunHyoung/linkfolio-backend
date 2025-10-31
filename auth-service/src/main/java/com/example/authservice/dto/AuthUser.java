@@ -1,6 +1,6 @@
 package com.example.authservice.dto;
 
-import com.example.userservice.entity.UserEntity;
+import com.example.authservice.entity.AuthUserEntity;
 import lombok.Getter;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
@@ -35,11 +35,11 @@ public class AuthUser implements UserDetails, OAuth2User {
     }
 
     // 1. 자체 로그인 시 (UserDetailsService)
-    public static AuthUser from(UserEntity userEntity) {
+    public static AuthUser from(AuthUserEntity authUserEntity) {
         return new AuthUser(
-                userEntity.getUserId(),
-                userEntity.getEmail(),
-                userEntity.getPassword(),
+                authUserEntity.getUserId(),
+                authUserEntity.getEmail(),
+                authUserEntity.getPassword(),
                 null,
                 null
         );
@@ -57,10 +57,10 @@ public class AuthUser implements UserDetails, OAuth2User {
     }
 
     // 3. OAuth2 로그인 시 (CustomOAuth2UserService)
-    public static AuthUser fromOAuth2(UserEntity userEntity, Map<String, Object> attributes, String nameAttributeKey) {
+    public static AuthUser fromOAuth2(AuthUserEntity authUserEntity, Map<String, Object> attributes, String nameAttributeKey) {
         return new AuthUser(
-                userEntity.getUserId(),
-                userEntity.getEmail(),
+                authUserEntity.getUserId(),
+                authUserEntity.getEmail(),
                 null, // OAuth2는 비밀번호 X
                 attributes,
                 nameAttributeKey

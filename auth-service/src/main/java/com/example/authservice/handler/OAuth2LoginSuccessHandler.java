@@ -1,9 +1,10 @@
 package com.example.authservice.handler;
 
-import com.example.userservice.dto.AuthUser;
-import com.example.userservice.dto.UserDto;
-import com.example.userservice.service.RefreshTokenService;
-import com.example.userservice.service.UserService;
+import com.example.authservice.dto.AuthUser;
+import com.example.authservice.dto.UserDto;
+import com.example.authservice.service.AuthService;
+import com.example.authservice.service.RefreshTokenService;
+import com.example.authservice.util.JwtTokenProvider;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.Cookie;
 import jakarta.servlet.http.HttpServletRequest;
@@ -25,7 +26,7 @@ public class OAuth2LoginSuccessHandler implements AuthenticationSuccessHandler {
 
     private final JwtTokenProvider jwtTokenProvider;
     private final RefreshTokenService refreshTokenService;
-    private final UserService userService;
+    private final AuthService authService;
 
     @Value("${app.frontend.redirect-url}")
     private String frontendRedirectUrl;
@@ -36,7 +37,7 @@ public class OAuth2LoginSuccessHandler implements AuthenticationSuccessHandler {
         AuthUser authUser = (AuthUser) authentication.getPrincipal();
 
         // DB에서 최신 UserDto 조회 (토큰 생성용)
-        UserDto userDto = userService.getUserDetailsById(authUser.getUserId());
+        UserDto userDto = authService.getUserDetailsById(authUser.getUserId());
 
         // Access Token 및 Refresh Token 생성
         String accessToken = jwtTokenProvider.generateAccessToken(userDto);

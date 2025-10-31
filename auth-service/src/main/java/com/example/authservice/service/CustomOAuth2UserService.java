@@ -1,13 +1,13 @@
 package com.example.authservice.service;
 
-import com.example.userservice.dto.AuthUser;
-import com.example.userservice.dto.OAuthAttributes;
-import com.example.userservice.entity.UserEntity;
-import com.example.userservice.entity.UserProvider;
-import com.example.userservice.exception.BusinessException;
-import com.example.userservice.exception.ErrorCode;
-import com.example.userservice.repository.UserRepository;
-import com.example.userservice.service.oauth.OAuth2AttributeParser;
+import com.example.authservice.dto.AuthUser;
+import com.example.authservice.dto.OAuthAttributes;
+import com.example.authservice.entity.AuthUserEntity;
+import com.example.authservice.entity.enumerate.UserProvider;
+import com.example.authservice.exception.BusinessException;
+import com.example.authservice.exception.ErrorCode;
+import com.example.authservice.repository.AuthUserRepository;
+import com.example.authservice.service.oauth.OAuth2AttributeParser;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.oauth2.client.userinfo.DefaultOAuth2UserService;
 import org.springframework.security.oauth2.client.userinfo.OAuth2UserRequest;
@@ -24,7 +24,7 @@ import java.util.Optional;
 @RequiredArgsConstructor
 public class CustomOAuth2UserService implements OAuth2UserService<OAuth2UserRequest, OAuth2User> {
 
-    private final UserRepository userRepository;
+    private final AuthUserRepository authUserRepository;
 
     // 전략(Parser) Map 주입
     private final Map<String, OAuth2AttributeParser> attributeParsers;
@@ -54,7 +54,7 @@ public class CustomOAuth2UserService implements OAuth2UserService<OAuth2UserRequ
         OAuthAttributes attributes = parser.parse(userNameAttributeName, oAuth2User.getAttributes());
 
         // 5. DB에서 사용자 조회 또는 신규 생성
-        UserEntity userEntity = saveOrUpdate(attributes);
+        AuthUserEntity userEntity = saveOrUpdate(attributes);
 
         // 6. AuthUser 객체 반환 (UserDetails 구현체)
         return AuthUser.fromOAuth2(
@@ -64,13 +64,13 @@ public class CustomOAuth2UserService implements OAuth2UserService<OAuth2UserRequ
         );
     }
 
-    private UserEntity saveOrUpdate(OAuthAttributes attributes) {
+    private AuthUserEntity saveOrUpdate(OAuthAttributes attributes) {
         UserProvider provider = UserProvider.valueOf(attributes.getProvider().toUpperCase());
         String providerId = attributes.getProviderId();
         String email = attributes.getEmail();
 
         // 1. (provider, providerId)로 소셜 유저 조회
-        Optional<UserEntity> userOptional = userRepository.findByProviderAndProviderId(provider, providerId);
+        Optional<AuthUserEntity> userOptional = authUserRepository.findByProviderAndProviderId(provider, providerId);
 
         if (userOptional.isPresent()) {
             // 1-1. 이미 해당 소셜 계정으로 가입된 경우
@@ -78,12 +78,12 @@ public class CustomOAuth2UserService implements OAuth2UserService<OAuth2UserRequ
         }
 
         // 2. 해당 소셜 계정으로 가입 이력이 없는 경우, 이메일로 조회
-        Optional<UserEntity> emailUserOptional = userRepository.findUserDetailsByEmail(email);
+        Optional<AuthUserEntity> emailUserOptional = authUserRepository.findByEmail(email);
 
         if (emailUserOptional.isPresent()) {
             // 2-1. 이메일이 이미 존재하는데
-            UserEntity existingUser = emailUserOptional.get();
-            if (existingUser.getProvider() == UserProvider.LOCAL) {
+            AuthUserEntity authUserEntity = emailUserOptional.get();
+            if (authUserEntity.getProvider() == UserProvider.LOCAL) {
                 // 2-2. 로컬 계정으로 가입된 경우 -> 소셜 계정 연동 실패
                 throw new BusinessException(ErrorCode.EMAIL_ALREADY_REGISTERED_AS_LOCAL);
             } else {
@@ -93,7 +93,7 @@ public class CustomOAuth2UserService implements OAuth2UserService<OAuth2UserRequ
         }
 
         // 3. 신규 가입
-        UserEntity newUser = attributes.toEntity();
-        return userRepository.save(newUser);
+        AuthUserEntity authUserEntity = attributes.toEntity();
+        return authUserRepository.save(authUserEntity);
     }
 }

@@ -1,10 +1,11 @@
 package com.example.authservice.handler;
 
-import com.example.userservice.dto.AuthUser;
-import com.example.userservice.dto.UserDto;
-import com.example.userservice.dto.response.TokenResponse;
-import com.example.userservice.service.RefreshTokenService;
-import com.example.userservice.service.UserService;
+import com.example.authservice.dto.AuthUser;
+import com.example.authservice.dto.UserDto;
+import com.example.authservice.dto.response.TokenResponse;
+import com.example.authservice.service.AuthService;
+import com.example.authservice.service.RefreshTokenService;
+import com.example.authservice.util.JwtTokenProvider;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.Cookie;
@@ -27,7 +28,7 @@ import java.io.IOException;
 @RequiredArgsConstructor
 public class LocalLoginSuccessHandler implements AuthenticationSuccessHandler {
 
-    private final UserService userService;
+    private final AuthService authService;
     private final JwtTokenProvider jwtTokenProvider;
     private final RefreshTokenService refreshTokenService;
     private final ObjectMapper objectMapper;
@@ -38,7 +39,7 @@ public class LocalLoginSuccessHandler implements AuthenticationSuccessHandler {
                                         Authentication authResult) throws IOException, ServletException {
 
         String userIdentifier = ((AuthUser) authResult.getPrincipal()).getUsername();
-        UserDto userDetails = userService.getUserDetailsByEmail(userIdentifier);
+        UserDto userDetails = authService.getUserDetailsByEmail(userIdentifier);
 
         // Access Token 및 Refresh Token 생성
         String accessToken = jwtTokenProvider.generateAccessToken(userDetails);

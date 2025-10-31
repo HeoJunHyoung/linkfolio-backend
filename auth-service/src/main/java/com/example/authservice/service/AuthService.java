@@ -1,10 +1,11 @@
 package com.example.authservice.service;
 
 import com.example.authservice.client.UserServiceClient;
+import com.example.authservice.dto.UserDto;
+import com.example.authservice.dto.event.UserCreatedEvent;
 import com.example.authservice.dto.request.*;
-import com.example.authservice.dto.response.UserResponseDto;
 import com.example.authservice.entity.AuthUserEntity;
-import com.example.authservice.entity.UserProvider;
+import com.example.authservice.entity.enumerate.UserProvider;
 import com.example.authservice.exception.BusinessException;
 import com.example.authservice.exception.ErrorCode;
 import com.example.authservice.repository.AuthUserRepository;
@@ -12,6 +13,7 @@ import feign.FeignException;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
+import org.springframework.kafka.core.KafkaTemplate;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -25,6 +27,9 @@ public class AuthService {
     private final UserServiceClient userServiceClient;
     private final BCryptPasswordEncoder passwordEncoder;
     private final EmailVerificationService emailVerificationService;
+
+    private final KafkaTemplate<String, UserCreatedEvent> kafkaTemplate;
+    private static final String USER_EVENTS_TOPIC = "user-events";
 
     /**
      * 회원가입 (Auth-Service가 주관)
@@ -44,95 +49,41 @@ public class AuthService {
         validateUsernameDuplicate(request.getUsername());
 
         // 4. (Auth) 이메일 중복 검사 (Auth DB)
-        if (authUserRepository.existsByEmail(request.getEmail())) {
+        if (authUserRepository.findByEmailAndProvider(request.getEmail(), UserProvider.LOCAL).isPresent()) {
             // (이메일 인증 시 Feign으로 user-db도 검사했으므로, auth-db만 검사해도 됨)
             throw new BusinessException(ErrorCode.EMAIL_DUPLICATION);
         }
 
-        // 5. (User) 프로필 생성 요청 (User DB - Feign)
-        UserResponseDto userProfile;
+        // 5. (Auth) 인증 정보 생성 (Auth DB)
+        // ㄴ AuthUserEntity가 @GeneratedValue로 ID를 생성
+        AuthUserEntity authUser = AuthUserEntity.ofLocal(
+                request.getEmail(),
+                passwordEncoder.encode(request.getPassword()),
+                request.getUsername(),
+                request.getName() // 이름도 Auth DB에 저장
+        );
+        AuthUserEntity savedAuthUser = authUserRepository.save(authUser);
+
+        // 6. (Kafka) 프로필 생성을 위한 이벤트 발행
         try {
-            // Feign 호출 시 DTO 변환
-            userProfile = userServiceClient.createUserProfile(request).getBody();
-            if (userProfile == null || userProfile.getUserId() == null) {
-                log.error("UserService 프로필 생성 후 응답이 null임");
-                throw new BusinessException(ErrorCode.INTERNAL_SERVER_ERROR);
-            }
-        } catch (FeignException e) {
-            // (user-service에서 발생한 예외. (e.g. EMAIL_DUPLICATE))
-            log.error("UserService 프로필 생성 실패 (Feign): {}", e.getMessage());
-            // (이미 user-db에 이메일이 있는 경우 - email-verification에서 놓친 경우)
-            if (e.status() == HttpStatus.CONFLICT.value()) {
-                throw new BusinessException(ErrorCode.EMAIL_DUPLICATION);
-            }
-            throw new BusinessException(ErrorCode.INTERNAL_SERVER_ERROR);
+            UserCreatedEvent event = new UserCreatedEvent();
+            event.setUserId(savedAuthUser.getUserId()); // [중요] Auth DB에서 생성된 ID
+            event.setEmail(request.getEmail());
+            event.setUsername(request.getUsername());
+            event.setName(request.getName());
+            event.setBirthdate(request.getBirthdate());
+            event.setGender(request.getGender()); // UserSignUpRequest의 Gender
+            event.setProvider(UserProvider.LOCAL.name());
+
+            kafkaTemplate.send(USER_EVENTS_TOPIC, event);
+            log.info("Kafka UserCreatedEvent 발행 성공, UserId: {}", savedAuthUser.getUserId());
+
         } catch (Exception e) {
-            log.error("UserService 프로필 생성 요청 중 알 수 없는 오류: {}", e.getMessage());
-            throw new BusinessException(ErrorCode.INTERNAL_SERVER_ERROR);
+            log.error("Kafka 이벤트 발행 실패 (Auth-Service 롤백 필요), UserId: {}", savedAuthUser.getUserId(), e);
+            // Kafka 발행 실패 시, Auth DB에 저장된 authUser도 롤백되어야 함
+            // @Transactional에 의해 이 RuntimeException이 롤백을 트리거
+            throw new BusinessException(ErrorCode.KAFKA_PRODUCE_FAILED);
         }
-
-        // 6. (Auth) 인증 정보 생성 (Auth DB)
-        AuthUserEntity authUser = AuthUserEntity.ofLocal(
-                request.getEmail(),
-                passwordEncoder.encode(request.getPassword()),
-                request.getUsername()
-        );
-
-        // [수정] 5번 Feign 호출이 성공했으므로, user-service의 UserEntity.userId와
-        // auth-service의 AuthUserEntity.userId를 동기화해야 함.
-        // -> AuthUserEntity.java의 @Id @GeneratedValue를 제거하고,
-        // -> UserEntity.java의 @Id @GeneratedValue를 유지한 뒤,
-        // -> userProfile.getUserId()를 받아서 AuthUserEntity의 PK(userId)로 써야 함.
-        // (위 AuthUserEntity.java, AuthUserRepository.java 코드 수정 필요)
-
-        // --- (수정된 Entity/Repo 가정 하) ---
-        // (AuthUserEntity.java)
-        // @Id // @GeneratedValue(strategy = GenerationType.IDENTITY) <-- 제거
-        // @Column(name = "user_id")
-        // private Long userId;
-        //
-        // public AuthUserEntity(Long userId, String email, ...) { this.userId = userId; ... }
-        // public static AuthUserEntity ofLocal(Long userId, String email, ...) {
-        //    return new AuthUserEntity(userId, email, ...);
-        // }
-        // (AuthUserRepository.java)
-        // public interface AuthUserRepository extends JpaRepository<AuthUserEntity, Long> { ... }
-
-        /*
-        AuthUserEntity authUser = AuthUserEntity.ofLocal(
-                userProfile.getUserId(), // [수정]
-                request.getEmail(),
-                passwordEncoder.encode(request.getPassword()),
-                request.getUsername()
-        );
-        authUserRepository.save(authUser);
-        */
-
-        // [중요] AuthUserEntity의 PK(userId)를 userProfile.getUserId()로 맞추는 것은
-        // @MapsId를 사용하거나, AuthUserEntity의 @Id에 @GeneratedValue를 빼고
-        // 수동으로 userProfile.getUserId()를 할당해야 함.
-        // -> 여기서는 5, 6번이 분리된 동기식 Feign 호출의 한계로 두고,
-        // -> UserEntity와 AuthUserEntity가 각자 Auto-Increment ID를 갖되,
-        // -> AuthUserEntity가 userProfile.getUserId()를 '외래 키'로 갖도록 수정.
-
-        // (AuthUserEntity.java에 다음 필드 추가)
-        // @Column(name = "user_profile_id", unique = true)
-        // private Long userProfileId;
-        //
-        // (AuthUserEntity 생성자 수정)
-        // public AuthUserEntity(..., Long userProfileId) { this.userProfileId = userProfileId; }
-
-        // (다시 AuthSerivce.java)
-        AuthUserEntity authUser = AuthUserEntity.ofLocal(
-                request.getEmail(),
-                passwordEncoder.encode(request.getPassword()),
-                request.getUsername()
-                // , userProfile.getUserId() // 외래 키 설정
-        );
-        authUserRepository.save(authUser);
-
-        // [분산 트랜잭션 위험]
-        // 6번(Auth DB 저장)이 실패하면, 5번(User DB 프로필)은 롤백되지 않아 Orphaned User가 발생.
 
         // 7. (Auth) 회원가입 완료 후, Redis의 "인증 완료" 상태 삭제
         emailVerificationService.deleteVerifiedEmailStatus(request.getEmail());
@@ -221,5 +172,16 @@ public class AuthService {
 
         // 5. (Auth) 사용 완료된 '검증 완료' 상태 삭제
         emailVerificationService.deletePasswordResetState(request.getEmail());
+    }
+
+
+
+    // == 내부 헬퍼 메서드 == //
+    public UserDto getUserDetailsByEmail(String email) {
+        return authUserRepository.findByEmail(email);
+    }
+
+    public UserDto getUserDetailsById(Long userId) {
+        return authUserRepository.findById(userId);
     }
 }

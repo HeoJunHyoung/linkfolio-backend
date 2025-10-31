@@ -1,9 +1,9 @@
 package com.example.authservice.service;
 
-import com.example.userservice.dto.UserDto;
-import com.example.userservice.exception.BusinessException;
-import com.example.userservice.exception.ErrorCode;
-import com.example.userservice.util.JwtTokenProvider;
+import com.example.authservice.dto.UserDto;
+import com.example.authservice.exception.BusinessException;
+import com.example.authservice.exception.ErrorCode;
+import com.example.authservice.util.JwtTokenProvider;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.redis.core.RedisTemplate;
@@ -21,7 +21,7 @@ public class RefreshTokenService {
 
     private final RedisTemplate<String, Object> redisTemplate;
     private final JwtTokenProvider jwtTokenProvider;
-    private final UserService userService;
+    private final AuthService authService;
 
     /**
      * Refresh Token을 Redis에 저장 (기존 토큰 덮어쓰기)
@@ -69,7 +69,7 @@ public class RefreshTokenService {
 
         // --- 토큰 검증 완료 ---
 
-        UserDto userDetails = userService.getUserDetailsById(userId);
+        UserDto userDetails = authService.getUserDetailsById(userId);
         String newAccessToken = jwtTokenProvider.generateAccessToken(userDetails);
         String newRefreshToken = jwtTokenProvider.generateRefreshToken(userDetails);
 

@@ -1,6 +1,7 @@
 package com.example.authservice.service.oauth;
 
-import com.example.userservice.dto.OAuthAttributes;
+
+import com.example.authservice.dto.OAuthAttributes;
 
 import java.util.Map;
 

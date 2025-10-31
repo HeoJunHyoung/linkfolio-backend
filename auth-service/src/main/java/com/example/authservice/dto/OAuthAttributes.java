@@ -1,7 +1,7 @@
 package com.example.authservice.dto;
 
-import com.example.userservice.entity.UserEntity;
-import com.example.userservice.entity.UserProvider;
+import com.example.authservice.entity.AuthUserEntity;
+import com.example.authservice.entity.enumerate.UserProvider;
 import lombok.Builder;
 import lombok.Getter;
 
@@ -29,8 +29,8 @@ public class OAuthAttributes {
     }
 
     // UserEntity 생성 (가입 시)
-    public UserEntity toEntity() {
-        return UserEntity.of(
+    public AuthUserEntity toEntity() {
+        return AuthUserEntity.ofSocial(
                 email,
                 "SOCIAL_USER_PASSWORD_" + UUID.randomUUID(),
                 UserProvider.valueOf(provider.toUpperCase()),
