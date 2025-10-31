@@ -48,7 +48,7 @@ public class EmailVerificationService {
     /**
      * 1. 회원가입 인증 코드 발송
      */
-    public void sendCode(String email) {
+    public void sendSignUpCode(String email) {
         validateEmailDuplicate(email);
         String code = generateRandomCode();
         String key = VERIFICATION_CODE_PREFIX + email;
@@ -60,7 +60,7 @@ public class EmailVerificationService {
     /**
      * 2. 회원가입 인증 코드 검증
      */
-    public void verifyCode(String email, String code) {
+    public void verifySignUpCode(String email, String code) {
         String key = VERIFICATION_CODE_PREFIX + email;
 
         // 2-1. 코드 검증

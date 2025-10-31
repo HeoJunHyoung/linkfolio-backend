@@ -1,6 +1,6 @@
 package com.example.authservice.service.oauth;
 
-import com.example.userservice.dto.OAuthAttributes;
+import com.example.authservice.dto.OAuthAttributes;
 import org.springframework.stereotype.Component;
 
 import java.util.Map;

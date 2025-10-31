@@ -1,6 +1,5 @@
 package com.example.authservice.service;
 
-import com.example.authservice.client.UserServiceClient;
 import com.example.authservice.dto.UserDto;
 import com.example.authservice.dto.event.UserCreatedEvent;
 import com.example.authservice.dto.request.*;
@@ -24,7 +23,6 @@ import org.springframework.transaction.annotation.Transactional;
 public class AuthService {
 
     private final AuthUserRepository authUserRepository;
-    private final UserServiceClient userServiceClient;
     private final BCryptPasswordEncoder passwordEncoder;
     private final EmailVerificationService emailVerificationService;
 
@@ -89,42 +87,28 @@ public class AuthService {
         emailVerificationService.deleteVerifiedEmailStatus(request.getEmail());
     }
 
+    // (Auth) ID 중복 검사
+    public void validateUsernameDuplicate(String username) {
+        if (authUserRepository.existsByUsername(username)) {
+            throw new BusinessException(ErrorCode.USERNAME_DUPLICATION);
+        }
+    }
+
     /**
      * 아이디(username) 찾기
      */
     @Transactional(readOnly = true)
     public String findUsername(FindUsernameRequest request) {
 
-        // 1. (User) 이름+이메일로 프로필 조회 (User DB - Feign)
-        UserResponseDto userProfile;
-        try {
-            userProfile = userServiceClient.findUserByProfile(request).getBody();
-            if (userProfile == null || userProfile.getUserId() == null) {
-                throw new BusinessException(ErrorCode.USER_NOT_FOUND_BY_NAME_AND_EMAIL);
-            }
-        } catch (FeignException e) {
-            if (e.status() == HttpStatus.NOT_FOUND.value()) {
-                throw new BusinessException(ErrorCode.USER_NOT_FOUND_BY_NAME_AND_EMAIL);
-            }
-            throw new BusinessException(ErrorCode.INTERNAL_SERVER_ERROR);
-        }
-
-        // 2. (Auth) Email과 LOCAL Provider로 인증 정보 조회 (Auth DB)
-        // (UserEntity.userId와 AuthUserEntity.userId가 다를 수 있으므로 Email로 조회)
-        AuthUserEntity authUser = authUserRepository.findByEmailAndProvider(
+        // 1. (Auth) Auth DB에서 이름+이메일+LOCAL provider로 직접 조회
+        AuthUserEntity authUser = authUserRepository.findByNameAndEmailAndProvider(
+                request.getName(),
                 request.getEmail(),
                 UserProvider.LOCAL
         ).orElseThrow(() -> new BusinessException(ErrorCode.USER_NOT_FOUND_BY_NAME_AND_EMAIL));
 
-        // 3. (Auth) ID(username) 반환
+        // 2. (Auth) ID(username) 반환
         return authUser.getUsername();
-    }
-
-    // (Auth) ID 중복 검사
-    public void validateUsernameDuplicate(String username) {
-        if (authUserRepository.existsByUsername(username)) {
-            throw new BusinessException(ErrorCode.USERNAME_DUPLICATION);
-        }
     }
 
     // (Auth) 비밀번호 일치 검사
@@ -134,7 +118,9 @@ public class AuthService {
         }
     }
 
-    // (Auth) 비밀번호 재설정 [1]: 코드 발송
+    /**
+     * (Auth) 비밀번호 재설정 [1]: 코드 발송
+     */
     @Transactional(readOnly = true)
     public void sendPasswordResetCode(PasswordResetSendCodeRequest request) {
         // 1. (Auth) 이메일로 LOCAL 유저 조회
@@ -145,13 +131,17 @@ public class AuthService {
         emailVerificationService.sendPasswordResetCode(userEntity.getEmail());
     }
 
-    // (Auth) 비밀번호 재설정 [2]: 코드 검증
+    /**
+     * (Auth) 비밀번호 재설정 [2]: 코드 검증
+     */
     public void verifyPasswordResetCode(PasswordResetVerifyCodeRequest request) {
         // (EmailVerificationService가 Auth DB를 보지 않으므로, 유저 존재 유무는 생략)
         emailVerificationService.verifyPasswordResetCode(request.getEmail(), request.getCode());
     }
 
-    // (Auth) 비밀번호 재설정 [3]: 비밀번호 변경
+    /**
+     * (Auth) 비밀번호 재설정 [3]: 비밀번호 변경
+     */
     @Transactional
     public void resetPassword(PasswordResetChangeRequest request) {
         // 1. 새 비밀번호 확인
@@ -174,14 +164,16 @@ public class AuthService {
         emailVerificationService.deletePasswordResetState(request.getEmail());
     }
 
-
-
     // == 내부 헬퍼 메서드 == //
     public UserDto getUserDetailsByEmail(String email) {
-        return authUserRepository.findByEmail(email);
+        AuthUserEntity authUser = authUserRepository.findByEmail(email)
+                .orElseThrow(() -> new BusinessException(ErrorCode.USER_NOT_FOUND));
+        return UserDto.of(authUser.getUserId(), authUser.getEmail(), authUser.getPassword());
     }
 
     public UserDto getUserDetailsById(Long userId) {
-        return authUserRepository.findById(userId);
+        AuthUserEntity authUser = authUserRepository.findById(userId)
+                .orElseThrow(() -> new BusinessException(ErrorCode.USER_NOT_FOUND));
+        return UserDto.of(authUser.getUserId(), authUser.getEmail(), authUser.getPassword());
     }
 }

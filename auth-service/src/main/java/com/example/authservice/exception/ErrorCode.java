@@ -27,6 +27,8 @@ public enum ErrorCode {
     PASSWORD_RESET_CODE_EXPIRED(HttpStatus.BAD_REQUEST, "U010", "비밀번호 재설정 코드가 만료되었거나 존재하지 않습니다."),
     INVALID_PASSWORD_RESET_CODE(HttpStatus.BAD_REQUEST, "U011", "비밀번호 재설정 코드가 일치하지 않습니다."),
 
+    KAFKA_PRODUCE_FAILED(HttpStatus.INTERNAL_SERVER_ERROR, "K001", "카프카 메시지 발행에 실패했습니다."),
+
     INVALID_REFRESH_TOKEN(HttpStatus.UNAUTHORIZED, "T001", "유효하지 않은 리프레시 토큰입니다."),
     REFRESH_TOKEN_MISMATCH(HttpStatus.UNAUTHORIZED, "T002", "리프레시 토큰이 일치하지 않습니다. (탈취 의심)"),
     REFRESH_TOKEN_NOT_FOUND(HttpStatus.NOT_FOUND, "T003", "리프레시 토큰을 찾을 수 없습니다. 다시 로그인해주세요.");
