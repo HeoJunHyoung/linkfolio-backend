@@ -1,17 +1,16 @@
 package com.example.authservice.service;
 
 import com.example.authservice.dto.UserDto;
-import com.example.authservice.dto.event.UserCreatedEvent;
+import com.example.authservice.dto.event.UserRegistrationRequestedEvent;
 import com.example.authservice.dto.request.*;
 import com.example.authservice.entity.AuthUserEntity;
 import com.example.authservice.entity.enumerate.UserProvider;
 import com.example.authservice.exception.BusinessException;
 import com.example.authservice.exception.ErrorCode;
 import com.example.authservice.repository.AuthUserRepository;
-import feign.FeignException;
+import com.example.authservice.service.kafka.UserEventProducer;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.http.HttpStatus;
 import org.springframework.kafka.core.KafkaTemplate;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Service;
@@ -25,9 +24,7 @@ public class AuthService {
     private final AuthUserRepository authUserRepository;
     private final BCryptPasswordEncoder passwordEncoder;
     private final EmailVerificationService emailVerificationService;
-
-    private final KafkaTemplate<String, UserCreatedEvent> kafkaTemplate;
-    private static final String USER_EVENTS_TOPIC = "user-events";
+    private final UserEventProducer userEventProducer;
 
     /**
      * 회원가입 (Auth-Service가 주관)
@@ -48,12 +45,11 @@ public class AuthService {
 
         // 4. (Auth) 이메일 중복 검사 (Auth DB)
         if (authUserRepository.findByEmailAndProvider(request.getEmail(), UserProvider.LOCAL).isPresent()) {
-            // (이메일 인증 시 Feign으로 user-db도 검사했으므로, auth-db만 검사해도 됨)
             throw new BusinessException(ErrorCode.EMAIL_DUPLICATION);
         }
 
         // 5. (Auth) 인증 정보 생성 (Auth DB)
-        // ㄴ AuthUserEntity가 @GeneratedValue로 ID를 생성
+        // ㄴ ofLocal() 호출 시 PENDING 상태로 생성됨
         AuthUserEntity authUser = AuthUserEntity.ofLocal(
                 request.getEmail(),
                 passwordEncoder.encode(request.getPassword()),
@@ -61,26 +57,28 @@ public class AuthService {
                 request.getName() // 이름도 Auth DB에 저장
         );
         AuthUserEntity savedAuthUser = authUserRepository.save(authUser);
+        log.info("AuthUser 'PENDING' 상태로 저장됨. UserId: {}", savedAuthUser.getUserId());
+
 
         // 6. (Kafka) 프로필 생성을 위한 이벤트 발행
         try {
-            UserCreatedEvent event = new UserCreatedEvent();
+            UserRegistrationRequestedEvent event = new UserRegistrationRequestedEvent();
             event.setUserId(savedAuthUser.getUserId()); // [중요] Auth DB에서 생성된 ID
             event.setEmail(request.getEmail());
             event.setUsername(request.getUsername());
             event.setName(request.getName());
             event.setBirthdate(request.getBirthdate());
-            event.setGender(request.getGender()); // UserSignUpRequest의 Gender
+            event.setGender(request.getGender());
             event.setProvider(UserProvider.LOCAL.name());
 
-            kafkaTemplate.send(USER_EVENTS_TOPIC, event);
-            log.info("Kafka UserCreatedEvent 발행 성공, UserId: {}", savedAuthUser.getUserId());
+            // UserEventProducer 사용 (Kafka 발행 실패 시 BusinessException이 throw되어 롤백됨)
+            userEventProducer.sendUserRegistrationRequested(event);
 
         } catch (Exception e) {
             log.error("Kafka 이벤트 발행 실패 (Auth-Service 롤백 필요), UserId: {}", savedAuthUser.getUserId(), e);
-            // Kafka 발행 실패 시, Auth DB에 저장된 authUser도 롤백되어야 함
-            // @Transactional에 의해 이 RuntimeException이 롤백을 트리거
-            throw new BusinessException(ErrorCode.KAFKA_PRODUCE_FAILED);
+            // AuthService의 @Transactional에 의해 이 RuntimeException이 롤백을 트리거
+            // (UserEventProducer가 BusinessException을 던지도록 설정함)
+            throw e;
         }
 
         // 7. (Auth) 회원가입 완료 후, Redis의 "인증 완료" 상태 삭제

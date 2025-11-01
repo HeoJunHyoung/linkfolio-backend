@@ -4,7 +4,7 @@ import com.example.authservice.entity.enumerate.Gender;
 import lombok.Data;
 
 @Data
-public class UserCreatedEvent {
+public class UserRegistrationRequestedEvent {
     private Long userId;
     private String email;
     private String username;
@@ -12,5 +12,4 @@ public class UserCreatedEvent {
     private String birthdate;
     private Gender gender;
     private String provider;
-
 }

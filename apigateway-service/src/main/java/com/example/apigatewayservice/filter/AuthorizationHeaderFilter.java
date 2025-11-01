@@ -117,7 +117,6 @@ public class AuthorizationHeaderFilter implements GlobalFilter, Ordered {
     }
 
     /**
-     * [수정]
      * 에러 응답을 JSON 형식으로 반환하도록 수정
      */
     private Mono<Void> onError(ServerWebExchange exchange, ErrorCode errorCode) {
@@ -170,7 +169,6 @@ public class AuthorizationHeaderFilter implements GlobalFilter, Ordered {
     }
 
     /**
-     * [수정]
      * 예외를 잡지 않고, 호출한 곳(filter 메서드)으로 전파 (JwtException)
      */
     private Claims getClaims(String token) {

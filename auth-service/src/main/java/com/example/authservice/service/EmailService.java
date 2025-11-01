@@ -126,7 +126,7 @@ public class EmailService {
                 + "    <div style='background-color: #f4f4f4; padding: 15px; text-align: center; font-size: 24px; font-weight: bold; letter-spacing: 3px; margin: 20px 0;'>"
                 + code
                 + "    </div>"
-                + createEmailFooter() // [수정] 푸터 공통화
+                + createEmailFooter() // 푸터 공통화
                 + "  </div>"
                 + "</body>"
                 + "</html>";
