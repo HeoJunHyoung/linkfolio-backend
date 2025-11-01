@@ -12,13 +12,11 @@ import org.springframework.data.redis.connection.RedisStandaloneConfiguration;
 import org.springframework.data.redis.connection.lettuce.LettuceConnectionFactory;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.data.redis.serializer.GenericJackson2JsonRedisSerializer;
-import org.springframework.data.redis.serializer.JdkSerializationRedisSerializer;
 import org.springframework.data.redis.serializer.StringRedisSerializer;
 
 @Configuration
 @EnableCaching // 캐시 활성화
 public class RedisConfig {
-
 
     @Value("${spring.data.redis.host}")
     private String host;
@@ -32,7 +30,7 @@ public class RedisConfig {
         return new LettuceConnectionFactory(config);
     }
 
-    // ObjecMapper Bean 등록
+    // ObjectMapper Bean 등록 (JSON 직렬화 시 사용)
     @Bean
     public ObjectMapper objectMapper() {
         ObjectMapper mapper = new ObjectMapper();
@@ -42,20 +40,18 @@ public class RedisConfig {
     }
 
     @Bean
-    public RedisTemplate<String, Object> redisTemplate(RedisConnectionFactory connectionFactory) {
+    public RedisTemplate<String, Object> redisTemplate(RedisConnectionFactory connectionFactory, ObjectMapper objectMapper) { // [수정] objectMapper 주입
         RedisTemplate<String, Object> template = new RedisTemplate<>();
         template.setConnectionFactory(connectionFactory);
 
-        // JdkSerializationRedisSerializer: Java의 기본 직렬화 사용
-        // ㄴ OAuth2AuthorizationRequest와 같은 복잡한 객체를 처리할 수 있음.
-        JdkSerializationRedisSerializer serializer = new JdkSerializationRedisSerializer();
+        // 주입받은 objectMapper를 사용하여 JavaTimeModule 등이 적용된 JSON 직렬화 수행
+        GenericJackson2JsonRedisSerializer serializer = new GenericJackson2JsonRedisSerializer(objectMapper);
 
         // Key, HashKey는 StringRedisSerializer 사용 (인간이 읽을 수 있도록)
         template.setKeySerializer(new StringRedisSerializer());
         template.setHashKeySerializer(new StringRedisSerializer());
 
-        // Value, HashValue는 JdkSerializationRedisSerializer 사용
-        // (String, OAuth2AuthorizationRequest 등 Serializable 객체 처리)
+        // Value, HashValue는 JSON 직렬화 사용
         template.setValueSerializer(serializer);
         template.setHashValueSerializer(serializer);
 
@@ -63,5 +59,4 @@ public class RedisConfig {
 
         return template;
     }
-
 }

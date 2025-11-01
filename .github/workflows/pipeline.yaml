@@ -14,16 +14,14 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        service: [apigateway-service, user-service] # order-service, catalog-service
+        service: [apigateway-service, user-service, auth-service]
         include:
           - service: apigateway-service
             service-name: apigateway
           - service: user-service
             service-name: user
-#          - service: order-service
-#            service-name: order
-#          - service: catalog-service
-#            service-name: catalog
+          - service: auth-service
+            service-name: auth
     outputs:
       SHORT_SHA: ${{ steps.sha.outputs.short }}
 
@@ -84,16 +82,10 @@ jobs:
       - name: Update image tags with Kustomize
         run: |
           cd linkfolio-manifest/overlays/development
-          for SERVICE in apigateway user ; do
+          for SERVICE in apigateway user auth; do
             echo "Updating image for $SERVICE-service..."
             kustomize edit set image h6bro/service-${SERVICE}=h6bro/service-${SERVICE}:${{ env.SHORT_SHA }}
           done
-
-#          cd linkfolio-manifest/overlays/development
-#          for SERVICE in apigateway user order catalog; do
-#            echo "Updating image for $SERVICE-service..."
-#            kustomize edit set image h6bro/service-${SERVICE}=h6bro/service-${SERVICE}:${{ env.SHORT_SHA }}
-#          done
 
       - name: Commit and push changes
         run: |

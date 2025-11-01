@@ -2,6 +2,7 @@ package com.example.authservice.service;
 
 import com.example.authservice.dto.AuthUser;
 import com.example.authservice.entity.AuthUserEntity;
+import com.example.authservice.entity.enumerate.AuthStatus;
 import com.example.authservice.entity.enumerate.UserProvider;
 import com.example.authservice.exception.BusinessException;
 import com.example.authservice.exception.ErrorCode;
@@ -35,6 +36,15 @@ public class CustomUserDetailsService implements UserDetailsService {
         if (authUserEntity.getProvider() != UserProvider.LOCAL) {
             log.warn("Social user ({}) attempted local login with ID: {}", authUserEntity.getEmail(), username);
             throw new BusinessException(ErrorCode.USER_NOT_FOUND); // 소셜 유저가 ID/PW로 로그인 시도 시, 계정 정보 숨김
+        }
+
+        // SAGA 트랜잭션 상태 확인
+        // ㄴ PENDING (회원가입 중) 또는 CANCELLED (회원가입 실패/롤백) 상태인 경우 로그인 차단
+        if (authUserEntity.getStatus() != AuthStatus.COMPLETED) {
+            log.warn("Login attempt for non-completed account. Username: {}, Status: {}",
+                    username, authUserEntity.getStatus());
+            // 계정 상태에 대한 구체적인 정보를 노출하지 않기 위해 USER_NOT_FOUND 반환
+            throw new BusinessException(ErrorCode.USER_NOT_FOUND);
         }
 
         // Spring Security 인증 객체(AuthUser) 반환
