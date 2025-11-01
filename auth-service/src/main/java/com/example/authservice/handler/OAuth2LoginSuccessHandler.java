@@ -1,0 +1,64 @@
+package com.example.authservice.handler;
+
+import com.example.authservice.dto.AuthUser;
+import com.example.authservice.dto.UserDto;
+import com.example.authservice.service.AuthService;
+import com.example.authservice.service.RefreshTokenService;
+import com.example.authservice.util.CookieUtil;
+import com.example.authservice.util.JwtTokenProvider;
+import jakarta.servlet.ServletException;
+import jakarta.servlet.http.Cookie;
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletResponse;
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.web.authentication.AuthenticationSuccessHandler;
+import org.springframework.stereotype.Component;
+import org.springframework.web.util.UriComponentsBuilder;
+
+import java.io.IOException;
+
+@Slf4j
+@Component
+@RequiredArgsConstructor
+public class OAuth2LoginSuccessHandler implements AuthenticationSuccessHandler {
+
+    private final JwtTokenProvider jwtTokenProvider;
+    private final RefreshTokenService refreshTokenService;
+    private final AuthService authService;
+    private final CookieUtil cookieUtil;
+
+    @Value("${app.frontend.redirect-url}")
+    private String frontendRedirectUrl;
+
+    @Override
+    public void onAuthenticationSuccess(HttpServletRequest request, HttpServletResponse response, Authentication authentication) throws IOException, ServletException {
+
+        AuthUser authUser = (AuthUser) authentication.getPrincipal();
+
+        // DB에서 최신 UserDto 조회 (토큰 생성용)
+        UserDto userDto = authService.getUserDetailsById(authUser.getUserId());
+
+        // Access Token 및 Refresh Token 생성
+        String accessToken = jwtTokenProvider.generateAccessToken(userDto);
+        String refreshToken = jwtTokenProvider.generateRefreshToken(userDto);
+
+        // Refresh Token을 Redis에 저장
+        refreshTokenService.saveRefreshToken(userDto.getId(), refreshToken);
+        log.info("OAuth2 Login Success. JWT Tokens generated for user: {}", authUser.getUserId());
+
+        // Refresh Token을 HttpOnly 쿠키에 담아 전송
+        cookieUtil.addRefreshTokenCookie(response, refreshToken);
+
+        // 프론트엔드 리디렉션 URL 생성 (Access Token만 파라미터로)
+        String targetUrl = UriComponentsBuilder.fromUriString(frontendRedirectUrl)
+                .queryParam("token", accessToken) // Access Token은 URL 파라미터로 전달
+                .build()
+                .toUriString();
+
+        response.sendRedirect(targetUrl); // 리디렉션 응답
+    }
+
+}
