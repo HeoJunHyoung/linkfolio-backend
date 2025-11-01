@@ -1,6 +1,8 @@
 package com.example.userservice.entity;
 
-import com.example.userservice.dto.UserCreatedEvent;
+import com.example.userservice.dto.event.UserRegistrationRequestedEvent;
+import com.example.userservice.entity.enumerate.Gender;
+import com.example.userservice.entity.enumerate.UserProfileStatus;
 import jakarta.persistence.*;
 import lombok.AccessLevel;
 import lombok.Getter;
@@ -38,9 +40,13 @@ public class UserProfileEntity extends BaseEntity{
     @Column(name = "provider", nullable = false)
     private UserProvider provider;
 
+    @Enumerated(EnumType.STRING)
+    @Column(name = "status", nullable = false)
+    private UserProfileStatus status;
+
     // 생성자
     private UserProfileEntity(Long userId, String email, UserProvider provider, String username,
-                              String name, String birthdate, Gender gender) {
+                              String name, String birthdate, Gender gender, UserProfileStatus status) {
         this.userId = userId;
         this.email = email;
         this.provider = provider;
@@ -48,10 +54,11 @@ public class UserProfileEntity extends BaseEntity{
         this.name = name;
         this.birthdate = birthdate;
         this.gender = gender;
+        this.status = status;
     }
 
     // Kafka Consumer용 생성 메서드
-    public static UserProfileEntity fromEvent(UserCreatedEvent event) {
+    public static UserProfileEntity fromEvent(UserRegistrationRequestedEvent event) {
         return new UserProfileEntity(
                 event.getUserId(),
                 event.getEmail(),
@@ -59,8 +66,14 @@ public class UserProfileEntity extends BaseEntity{
                 event.getUsername(),
                 event.getName(),
                 event.getBirthdate(),
-                event.getGender() // user-service의 Gender enum 사용
+                event.getGender(),
+                UserProfileStatus.PENDING // 최초 상태는 PENDING
         );
+    }
+
+    // 상태 업데이트 메서드
+    public void updateStatus(UserProfileStatus status) {
+        this.status = status;
     }
 
 }

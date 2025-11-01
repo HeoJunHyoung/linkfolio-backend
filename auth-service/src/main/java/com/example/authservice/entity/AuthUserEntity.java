@@ -1,5 +1,6 @@
 package com.example.authservice.entity;
 
+import com.example.authservice.entity.enumerate.AuthStatus;
 import com.example.authservice.entity.enumerate.UserProvider;
 import jakarta.persistence.*;
 import lombok.AccessLevel;
@@ -14,7 +15,7 @@ import java.time.LocalDateTime;
 public class AuthUserEntity extends BaseEntity{
 
     @Id @GeneratedValue(strategy = GenerationType.IDENTITY)
-    @Column(name = "user_id") // [수정] 이 ID를 user-service와 공유
+    @Column(name = "user_id") // 이 ID를 user-service와 공유
     private Long userId;
 
     // 로그인할 때 사용하는 ID
@@ -38,27 +39,37 @@ public class AuthUserEntity extends BaseEntity{
     @Column(name = "provider_id", unique = true)
     private String providerId;
 
+    @Enumerated(EnumType.STRING)
+    @Column(name = "status", nullable = false)
+    private AuthStatus status;
 
     // 생성자
     private AuthUserEntity(String email, String password, UserProvider provider,
-                           String username, String providerId, String name) {
+                           String username, String providerId, String name, AuthStatus status) {
         this.email = email;
         this.password = password;
         this.provider = provider;
         this.username = username;
         this.providerId = providerId;
         this.name = name;
+        this.status = status;
     }
 
-    // 'ofLocal' (자체 회원가입용) - username, name 포함
+    // 'ofLocal' (자체 회원가입용)
     public static AuthUserEntity ofLocal(String email, String password, String username, String name) {
-        return new AuthUserEntity(email, password, UserProvider.LOCAL, username, null, name);
+        // SAGA 시작 상태인 PENDING으로 생성
+        return new AuthUserEntity(email, password, UserProvider.LOCAL, username, null, name, AuthStatus.PENDING);
     }
 
-    // 'ofSocial' (소셜 로그인용) - name 포함
+    // 'ofSocial' (소셜 로그인용)
     public static AuthUserEntity ofSocial(String email, String password, UserProvider provider, String providerId, String name) {
-        // 소셜 유저는 username(로그인 ID)이 없으므로 null
-        return new AuthUserEntity(email, password, provider, providerId, null, name);
+        // 소셜 로그인은 SAGA와 무관하므로 COMPLETED로 생성
+        return new AuthUserEntity(email, password, provider, providerId, null, name, AuthStatus.COMPLETED);
+    }
+
+    // SAGA 상태 업데이트용 메서드
+    public void updateStatus(AuthStatus status) {
+        this.status = status;
     }
 
     public void updatePassword(String newEncodedPassword) {

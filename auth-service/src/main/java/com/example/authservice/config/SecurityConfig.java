@@ -41,7 +41,7 @@ public class SecurityConfig {
                 .authorizeHttpRequests(authorize -> authorize
                         .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
                         .requestMatchers("/swagger-ui/**", "/v3/api-docs/**", "/swagger-resources/**").permitAll()
-                        // [수정] 모든 /auth/** 경로는 인증 없이 허용
+                        // 모든 /auth/** 경로는 인증 없이 허용
                         .requestMatchers("/auth/**").permitAll()
                         .requestMatchers("/oauth2/**", "/login/oauth2/**").permitAll()
                         .anyRequest().authenticated()
@@ -53,7 +53,7 @@ public class SecurityConfig {
                 objectMapper,
                 localLoginSuccessHandler
         );
-        authenticationFilter.setFilterProcessesUrl("/auth/login"); // [수정]
+        authenticationFilter.setFilterProcessesUrl("/auth/login");
 
         // OAuth2 로그인 설정
         http.oauth2Login(oauth2 -> oauth2

@@ -23,12 +23,12 @@ public class JwtTokenProvider {
     private final JwtParser jwtParser; // 재사용을 위한 JwtParser 인스턴스
 
     public JwtTokenProvider(@Value("${jwt.secret}") String secret,
-                            @Value("${jwt.access_expiration_time}") String accessExpirationTime,   // [수정] 주입 프로퍼티 변경
-                            @Value("${jwt.refresh_expiration_time}") String refreshExpirationTime) { // [추가] Refresh 만료 시간 주입
+                            @Value("${jwt.access_expiration_time}") String accessExpirationTime,   // 주입 프로퍼티 변경
+                            @Value("${jwt.refresh_expiration_time}") String refreshExpirationTime) { // Refresh 만료 시간 주입
         byte[] secretKeyBytes = secret.getBytes(StandardCharsets.UTF_8);
         this.secretKey = Keys.hmacShaKeyFor(secretKeyBytes);
-        this.accessExpirationTimeMillis = Long.parseLong(accessExpirationTime); // [수정] 필드명 변경
-        this.refreshExpirationTimeMillis = Long.parseLong(refreshExpirationTime); // [추가] 필드 초기화
+        this.accessExpirationTimeMillis = Long.parseLong(accessExpirationTime); // 필드명 변경
+        this.refreshExpirationTimeMillis = Long.parseLong(refreshExpirationTime); // 필드 초기화
 
         this.jwtParser = Jwts.parser()
                 .verifyWith(this.secretKey)
