@@ -4,6 +4,7 @@ import com.example.authservice.dto.AuthUser;
 import com.example.authservice.dto.UserDto;
 import com.example.authservice.service.AuthService;
 import com.example.authservice.service.RefreshTokenService;
+import com.example.authservice.util.CookieUtil;
 import com.example.authservice.util.JwtTokenProvider;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.Cookie;
@@ -27,6 +28,7 @@ public class OAuth2LoginSuccessHandler implements AuthenticationSuccessHandler {
     private final JwtTokenProvider jwtTokenProvider;
     private final RefreshTokenService refreshTokenService;
     private final AuthService authService;
+    private final CookieUtil cookieUtil;
 
     @Value("${app.frontend.redirect-url}")
     private String frontendRedirectUrl;
@@ -48,7 +50,7 @@ public class OAuth2LoginSuccessHandler implements AuthenticationSuccessHandler {
         log.info("OAuth2 Login Success. JWT Tokens generated for user: {}", authUser.getUserId());
 
         // Refresh Token을 HttpOnly 쿠키에 담아 전송
-        addRefreshTokenToCookie(response, refreshToken);
+        cookieUtil.addRefreshTokenCookie(response, refreshToken);
 
         // 프론트엔드 리디렉션 URL 생성 (Access Token만 파라미터로)
         String targetUrl = UriComponentsBuilder.fromUriString(frontendRedirectUrl)
@@ -57,23 +59,6 @@ public class OAuth2LoginSuccessHandler implements AuthenticationSuccessHandler {
                 .toUriString();
 
         response.sendRedirect(targetUrl); // 리디렉션 응답
-    }
-
-    /**
-     * Refresh Token을 HttpOnly 쿠키로 변환하는 헬퍼 메서드
-     */
-    private void addRefreshTokenToCookie(HttpServletResponse response, String refreshToken) {
-        Cookie refreshTokenCookie = new Cookie("refresh_token", refreshToken);
-
-        refreshTokenCookie.setHttpOnly(true);
-        // refreshTokenCookie.setSecure(true); // TODO: HTTPS 환경에서는 true로 설정 필요
-        refreshTokenCookie.setPath("/");
-
-        int maxAgeInSeconds = (int) (jwtTokenProvider.getRefreshExpirationTimeMillis() / 1000);
-        refreshTokenCookie.setMaxAge(maxAgeInSeconds);
-
-        response.addCookie(refreshTokenCookie);
-        log.debug("Refresh Token 쿠키 설정 완료.");
     }
 
 }

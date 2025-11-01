@@ -5,6 +5,7 @@ import com.example.authservice.dto.UserDto;
 import com.example.authservice.dto.response.TokenResponse;
 import com.example.authservice.service.AuthService;
 import com.example.authservice.service.RefreshTokenService;
+import com.example.authservice.util.CookieUtil;
 import com.example.authservice.util.JwtTokenProvider;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import jakarta.servlet.ServletException;
@@ -32,6 +33,7 @@ public class LocalLoginSuccessHandler implements AuthenticationSuccessHandler {
     private final JwtTokenProvider jwtTokenProvider;
     private final RefreshTokenService refreshTokenService;
     private final ObjectMapper objectMapper;
+    private final CookieUtil cookieUtil;
 
     @Override
     public void onAuthenticationSuccess(HttpServletRequest request,
@@ -50,27 +52,12 @@ public class LocalLoginSuccessHandler implements AuthenticationSuccessHandler {
         log.info("Local Login Success. Access & Refresh Token generated for user: {}", userDetails.getId());
 
         // 1. Refresh Token을 HttpOnly 쿠키에 담아 전송
-        addRefreshTokenToCookie(response, refreshToken);
+        cookieUtil.addRefreshTokenCookie(response, refreshToken);
 
         // 2. Access Token을 JSON Body로 응답
         response.setContentType("application/json;charset=UTF-8");
         response.setStatus(HttpServletResponse.SC_OK);
         response.getWriter().write(objectMapper.writeValueAsString(new TokenResponse(accessToken)));
-    }
-
-    private void addRefreshTokenToCookie(HttpServletResponse response, String refreshToken) {
-        Cookie refreshTokenCookie = new Cookie("refresh_token", refreshToken); // 쿠키 이름 지정
-
-        refreshTokenCookie.setHttpOnly(true);
-        // refreshTokenCookie.setSecure(true); // TODO: HTTPS 환경에서는 true로 설정 필요
-        refreshTokenCookie.setPath("/"); // 쿠키가 전송될 경로 (전체 경로로 설정)
-
-        // 쿠키 만료 시간 설정 (초 단위)
-        int maxAgeInSeconds = (int) (jwtTokenProvider.getRefreshExpirationTimeMillis() / 1000);
-        refreshTokenCookie.setMaxAge(maxAgeInSeconds);
-
-        response.addCookie(refreshTokenCookie);
-        log.debug("Refresh Token 쿠키 설정 완료.");
     }
 
 }
