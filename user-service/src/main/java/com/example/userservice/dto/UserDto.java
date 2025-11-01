@@ -13,10 +13,8 @@ public class UserDto {
 
     private String email;
 
-    private String password;
-
-    public static UserDto of(Long id, String email, String password) {
-        return new UserDto(id, email, password);
+    public static UserDto of(Long id, String email) {
+        return new UserDto(id, email);
     }
 
 }
