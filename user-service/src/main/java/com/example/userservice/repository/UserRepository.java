@@ -10,14 +10,4 @@ import java.util.Optional;
 
 public interface UserRepository extends JpaRepository<UserProfileEntity, Long> {
 
-    @Query("select u from UserProfileEntity u where u.email = :email")
-    Optional<UserProfileEntity> findUserDetailsByEmail(@Param("email") String email);
-
-    Optional<UserProfileEntity> findByProviderAndProviderId(UserProvider provider, String providerId);
-
-    Optional<UserProfileEntity> findByUsername(String username);
-    boolean existsByUsername(String username);
-
-    // 아이디 찾기용
-    Optional<UserProfileEntity> findByNameAndEmailAndProvider(String name, String email, UserProvider provider);
 }
