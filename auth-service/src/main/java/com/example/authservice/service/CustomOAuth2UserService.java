@@ -2,13 +2,16 @@ package com.example.authservice.service;
 
 import com.example.authservice.dto.AuthUser;
 import com.example.authservice.dto.OAuthAttributes;
+import com.example.authservice.dto.event.UserRegistrationRequestedEvent;
 import com.example.authservice.entity.AuthUserEntity;
 import com.example.authservice.entity.enumerate.UserProvider;
 import com.example.authservice.exception.BusinessException;
 import com.example.authservice.exception.ErrorCode;
 import com.example.authservice.repository.AuthUserRepository;
+import com.example.authservice.service.kafka.UserEventProducer;
 import com.example.authservice.service.oauth.OAuth2AttributeParser;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.oauth2.client.userinfo.DefaultOAuth2UserService;
 import org.springframework.security.oauth2.client.userinfo.OAuth2UserRequest;
 import org.springframework.security.oauth2.client.userinfo.OAuth2UserService;
@@ -22,10 +25,11 @@ import java.util.Optional;
 
 @Service
 @RequiredArgsConstructor
+@Slf4j
 public class CustomOAuth2UserService implements OAuth2UserService<OAuth2UserRequest, OAuth2User> {
 
     private final AuthUserRepository authUserRepository;
-
+    private final UserEventProducer userEventProducer;
     // 전략(Parser) Map 주입
     private final Map<String, OAuth2AttributeParser> attributeParsers;
 
@@ -92,8 +96,32 @@ public class CustomOAuth2UserService implements OAuth2UserService<OAuth2UserRequ
             }
         }
 
-        // 3. 신규 가입
+        // 3. 신규 가입 (SAGA 트랜잭션 시작)
+        // ㄴ attributes.toEntity()는 AuthUserEntity.ofSocial()을 호출하며, 이 메서드가 AuthStatus.PENDING으로 저장
         AuthUserEntity authUserEntity = attributes.toEntity();
-        return authUserRepository.save(authUserEntity);
+        AuthUserEntity savedAuthUser = authUserRepository.save(authUserEntity);
+        log.info("신규 소셜 유저 PENDING 상태로 저장됨. UserId: {}", savedAuthUser.getUserId());
+
+        // 4. Kafka 이벤트 생성 (AuthService.signUp과 동일)
+        UserRegistrationRequestedEvent event = new UserRegistrationRequestedEvent();
+        event.setUserId(savedAuthUser.getUserId());
+        event.setEmail(attributes.getEmail());
+        event.setUsername(null); // 소셜 로그인은 username(ID)이 없음
+        event.setName(attributes.getName());
+        event.setBirthdate(null); // 소셜은 기본 정보로 제공하지 않음
+        event.setGender(null);    // "
+        event.setProvider(provider.name());
+
+        // 5. SAGA 시작 (Kafka 이벤트 발행)
+        try {
+            userEventProducer.sendUserRegistrationRequested(event);
+            log.info("신규 소셜 유저 등록. SAGA(프로필 생성) 시작. UserId: {}", savedAuthUser.getUserId());
+        } catch (Exception e) {
+            log.error("신규 소셜 유저 SAGA 시작 실패 (Kafka 발행 실패), UserId: {}", savedAuthUser.getUserId(), e);
+            // BusinessException을 던져 OAuth2 로그인 흐름 전체를 롤백
+            throw new BusinessException(ErrorCode.KAFKA_PRODUCE_FAILED);
+        }
+
+        return savedAuthUser; // PENDING 상태의 유저 반환
     }
 }
