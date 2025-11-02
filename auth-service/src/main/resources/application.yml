@@ -35,7 +35,9 @@ spring:
       key-deserializer: org.apache.kafka.common.serialization.StringDeserializer
       value-deserializer: org.springframework.kafka.support.serializer.JsonDeserializer
       properties:
-        spring.json.trusted.packages: "com.example.userservice.dto.event,com.example.authservice.dto.event" # # user-service가 보낸 DTO 패키지를 신뢰하도록 설정
+        spring.json.trusted.packages: "com.example.userservice.dto.event,com.example.authservice.dto.event" # # user-service가 보낸 DTO 패키지를 신뢰
+        spring.json.type.mapping: "com.example.userservice.dto.event.UserProfileCreationSuccessEvent:com.example.authservice.dto.event.UserProfileCreationSuccessEvent, \
+                                          com.example.userservice.dto.event.UserProfileCreationFailureEvent:com.example.authservice.dto.event.UserProfileCreationFailureEvent"
     producer: #  Producer 설정 (user-service로 요청을 보내기 위함)
       bootstrap-servers: ${SPRING_KAFKA_PRODUCER_BOOTSTRAP_SERVERS}
       key-serializer: org.apache.kafka.common.serialization.StringSerializer
