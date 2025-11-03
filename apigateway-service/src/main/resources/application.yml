@@ -1,5 +1,6 @@
 server:
   port: 8000
+  forward-headers-strategy: NATIVE
 
 spring:
   application:
@@ -75,3 +76,15 @@ springdoc:
   gateway:
     discovery:
       enabled: true
+
+    # 각 마이크로서비스의 context-path가 포함된 명세서 경로 지정
+    routes:
+      - id: user-service-route
+        path: /user-service/v3/api-docs
+      - id: auth-service-route
+        path: /auth-service/v3/api-docs
+
+  # 게이트웨이의 공인 주소(ngrok)를 명시하여 Mixed Content 문제 해결
+  servers:
+    - url: https://impressionless-connaturally-jonie.ngrok-free.dev
+      description: NGrok Development Server
