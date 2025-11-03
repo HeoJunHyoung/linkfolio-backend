@@ -114,3 +114,4 @@ app:
     user-service-url: http://user-service:80 # k8s ?? ??? ?? (?? 80)
   frontend:
     redirect-url: ${APP_FRONTEND_REDIRECT_URL} # ex) http://127.0.0.1:5173/auth/callback
+
