@@ -72,6 +72,6 @@ springdoc:
   swagger-ui:
     path: /swagger-ui.html
 
-  api-docs:
-    groups:
-      enabled: true # Grouping Activate
+  gateway:
+    discovery:
+      enabled: true
