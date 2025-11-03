@@ -65,3 +65,13 @@ app:
 jwt:
   secret: ${JWT_SECRET}
   expiration_time: 86400000
+
+# Swagger
+springdoc:
+  # Gateway's Swagger UI Path
+  swagger-ui:
+    path: /swagger-ui.html
+
+  api-docs:
+    groups:
+      enabled: true # Grouping Activate
