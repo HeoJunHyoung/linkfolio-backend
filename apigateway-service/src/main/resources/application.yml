@@ -81,6 +81,18 @@ springdoc:
       - name: 2. User Service
         url: https://impressionless-connaturally-jonie.ngrok-free.dev/user-service/v3/api-docs
 
+# Swagger
+#springdoc:
+#  swagger-ui:
+#    path: /swagger-ui.html
+#    urls:
+#      - name: 1. Auth Service
+#        url: /auth-service/v3/api-docs
+#      - name: 2. User Service
+#        url: /user-service/v3/api-docs
+
+
+
   # 게이트웨이의 공인 주소(ngrok)를 명시하여 Mixed Content 문제 해결
   servers:
     - url: https://impressionless-connaturally-jonie.ngrok-free.dev

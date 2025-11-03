@@ -115,3 +115,5 @@ app:
   frontend:
     redirect-url: ${APP_FRONTEND_REDIRECT_URL} # ex) http://127.0.0.1:5173/auth/callback
 
+springdoc:
+  override-with-generic-response: false
