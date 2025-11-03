@@ -13,6 +13,7 @@ spring:
             allowed-origins:
               - 'http://localhost:5173' # React 앱의 주소
               - 'http://127.0.0.1:5173'
+              - 'https://impressionless-connaturally-jonie.ngrok-free.dev'
 
             allowed-methods:
               - GET
@@ -78,11 +79,11 @@ springdoc:
       enabled: false
 
     # 각 마이크로서비스의 context-path가 포함된 명세서 경로 명시적으로 지정 (다른 서비스들이 context-path가 있어서 경로 불일치 발생하고 있어서 명시적으로 지정)
-    routes:
-      - id: user-service-route
-        path: /v3/api-docs
-      - id: auth-service-route
-        path: /v3/api-docs
+  routes:
+    - id: user-service-route
+      path: /user-service/v3/api-docs
+    - id: auth-service-route
+      path: /auth-service/v3/api-docs
 
   # 게이트웨이의 공인 주소(ngrok)를 명시하여 Mixed Content 문제 해결
   servers:
