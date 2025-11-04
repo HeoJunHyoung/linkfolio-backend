@@ -3,6 +3,7 @@ package com.example.userservice.entity;
 import com.example.userservice.dto.event.UserRegistrationRequestedEvent;
 import com.example.userservice.entity.enumerate.Gender;
 import com.example.userservice.entity.enumerate.UserProfileStatus;
+import com.example.userservice.entity.enumerate.UserProvider;
 import jakarta.persistence.*;
 import lombok.AccessLevel;
 import lombok.Getter;

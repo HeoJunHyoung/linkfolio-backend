@@ -44,9 +44,7 @@ public class AuthService {
         validateUsernameDuplicate(request.getUsername());
 
         // 4. (Auth) 이메일 중복 검사 (Auth DB)
-        if (authUserRepository.findByEmailAndProvider(request.getEmail(), UserProvider.LOCAL).isPresent()) {
-            throw new BusinessException(ErrorCode.EMAIL_DUPLICATION);
-        }
+        validateEmailDuplicate(request.getEmail());
 
         // 5. (Auth) 인증 정보 생성 (Auth DB)
         // ㄴ ofLocal() 호출 시 PENDING 상태로 생성됨
@@ -83,6 +81,12 @@ public class AuthService {
 
         // 7. (Auth) 회원가입 완료 후, Redis의 "인증 완료" 상태 삭제
         emailVerificationService.deleteVerifiedEmailStatus(request.getEmail());
+    }
+
+    private void validateEmailDuplicate(String email) {
+        if (authUserRepository.findByEmailAndProvider(email, UserProvider.LOCAL).isPresent()) {
+            throw new BusinessException(ErrorCode.EMAIL_DUPLICATION);
+        }
     }
 
     // (Auth) ID 중복 검사

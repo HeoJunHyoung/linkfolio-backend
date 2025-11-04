@@ -13,9 +13,10 @@ spring:
             cors-configurations:
               '[/**]': # 모든 경로(/**)에 대해 적용
                 allowed-origins:
-                  - 'http://localhost:5173' # React 앱의 주소
-                  - 'http://127.0.0.1:5173'
                   - 'https://impressionless-connaturally-jonie.ngrok-free.dev'
+                  - 'http://localhost:3000' # Next.js 로컬 주소
+                  - 'https://linkfolio-three.vercel.app' # Next.js 개발 주소
+                  - 'https://linkfolio.vercel.app' # 소셜 리디렉션 주소
 
                 allowed-methods:
                   - GET
