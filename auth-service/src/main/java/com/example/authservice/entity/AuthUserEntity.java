@@ -64,7 +64,7 @@ public class AuthUserEntity extends BaseEntity{
     // 'ofSocial' (소셜 로그인용)
     public static AuthUserEntity ofSocial(String email, String password, UserProvider provider, String providerId, String name) {
         // 소셜 로그인은 SAGA와 무관하므로 COMPLETED로 생성
-        return new AuthUserEntity(email, password, provider, providerId, null, name, AuthStatus.COMPLETED);
+        return new AuthUserEntity(email, password, provider, null, providerId, name, AuthStatus.COMPLETED);
     }
 
     // SAGA 상태 업데이트용 메서드
