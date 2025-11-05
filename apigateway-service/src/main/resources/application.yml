@@ -65,6 +65,7 @@ app:
       - /auth-service/auth/email-verification/check
       - /auth-service/oauth2/authorization/**
       - /auth-service/login/oauth2/code/**
+      - /auth-service/error
 
 # JWT Token Settings
 jwt:
