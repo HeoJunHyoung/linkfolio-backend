@@ -1,13 +1,16 @@
 package com.example.authservice.dto;
 
 import com.example.authservice.entity.AuthUserEntity;
+import com.example.authservice.entity.enumerate.Role;
 import lombok.Getter;
 import org.springframework.security.core.GrantedAuthority;
+import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.oauth2.core.user.OAuth2User;
 
 import java.util.Collection;
 import java.util.Collections;
+import java.util.List;
 import java.util.Map;
 
 // UserDetails와 OAuth2User를 모두 구현
@@ -17,6 +20,7 @@ public class AuthUser implements UserDetails, OAuth2User {
     private final Long userId;
     private final String email;
     private final String password; // 로그인 시에만 사용
+    private final Role role;
 
     // OAuth2 사용자 정보를 담을 필드
     private Map<String, Object> attributes;
@@ -26,12 +30,13 @@ public class AuthUser implements UserDetails, OAuth2User {
     /**
      * DB 조회를 통해 인증 객체를 생성할 때 사용 (로그인 시)
      */
-    private AuthUser(Long userId, String email, String password, Map<String, Object> attributes, String nameAttributeKey) {
+    private AuthUser(Long userId, String email, String password, Map<String, Object> attributes, String nameAttributeKey, Role role) {
         this.userId = userId;
         this.email = email;
         this.password = password;
         this.attributes = attributes;
         this.nameAttributeKey = nameAttributeKey;
+        this.role = role;
     }
 
     // 1. 자체 로그인 시 (UserDetailsService)
@@ -41,18 +46,20 @@ public class AuthUser implements UserDetails, OAuth2User {
                 authUserEntity.getEmail(),
                 authUserEntity.getPassword(),
                 null,
-                null
+                null,
+                authUserEntity.getRole()
         );
     }
 
     // 2. 게이트웨이 헤더 신뢰 시 (InternalHeaderAuthenticationFilter)
-    public static AuthUser fromGatewayHeader(Long userId, String email) {
+    public static AuthUser fromGatewayHeader(Long userId, String email, Role role) {
         return new AuthUser(
                 userId,
                 email,
                 null, // API 요청 시에는 비밀번호가 필요 없음
                 null,
-                null
+                null,
+                role
         );
     }
 
@@ -63,7 +70,8 @@ public class AuthUser implements UserDetails, OAuth2User {
                 authUserEntity.getEmail(),
                 null, // OAuth2는 비밀번호 X
                 attributes,
-                nameAttributeKey
+                nameAttributeKey,
+                authUserEntity.getRole()
         );
     }
 
@@ -71,7 +79,12 @@ public class AuthUser implements UserDetails, OAuth2User {
 
     @Override
     public Collection<? extends GrantedAuthority> getAuthorities() {
-        return Collections.emptyList(); // 권한(Role) 미사용
+        // 권한(Role) 반환
+        if (this.role == null) {
+            return Collections.emptyList();
+        }
+        // Spring Security는 "ROLE_" 접두사를 사용
+        return List.of(new SimpleGrantedAuthority("ROLE_" + this.role.name()));
     }
 
     @Override

@@ -1,6 +1,7 @@
 package com.example.authservice.entity;
 
 import com.example.authservice.entity.enumerate.AuthStatus;
+import com.example.authservice.entity.enumerate.Role;
 import com.example.authservice.entity.enumerate.UserProvider;
 import jakarta.persistence.*;
 import lombok.AccessLevel;
@@ -43,9 +44,13 @@ public class AuthUserEntity extends BaseEntity{
     @Column(name = "status", nullable = false)
     private AuthStatus status;
 
+    @Enumerated(EnumType.STRING)
+    @Column(name = "role", nullable = false)
+    private Role role;
+
     // 생성자
     private AuthUserEntity(String email, String password, UserProvider provider,
-                           String username, String providerId, String name, AuthStatus status) {
+                           String username, String providerId, String name, AuthStatus status, Role role) {
         this.email = email;
         this.password = password;
         this.provider = provider;
@@ -53,18 +58,19 @@ public class AuthUserEntity extends BaseEntity{
         this.providerId = providerId;
         this.name = name;
         this.status = status;
+        this.role = role;
     }
 
     // 'ofLocal' (자체 회원가입용)
     public static AuthUserEntity ofLocal(String email, String password, String username, String name) {
         // SAGA 시작 상태인 PENDING으로 생성
-        return new AuthUserEntity(email, password, UserProvider.LOCAL, username, null, name, AuthStatus.PENDING);
+        return new AuthUserEntity(email, password, UserProvider.LOCAL, username, null, name, AuthStatus.PENDING, Role.USER);
     }
 
     // 'ofSocial' (소셜 로그인용)
     public static AuthUserEntity ofSocial(String email, String password, UserProvider provider, String providerId, String name) {
         // 소셜 로그인은 SAGA와 무관하므로 COMPLETED로 생성
-        return new AuthUserEntity(email, password, provider, null, providerId, name, AuthStatus.COMPLETED);
+        return new AuthUserEntity(email, password, provider, null, providerId, name, AuthStatus.COMPLETED, Role.USER);
     }
 
     // SAGA 상태 업데이트용 메서드

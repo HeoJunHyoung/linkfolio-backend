@@ -1,6 +1,7 @@
 package com.example.userservice.filter;
 
 import com.example.userservice.dto.AuthUser;
+import com.example.userservice.entity.enumerate.Role;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
@@ -21,14 +22,21 @@ public class InternalHeaderAuthenticationFilter extends OncePerRequestFilter {
         // 1. 게이트웨이가 주입한 헤더 추출
         String userId = request.getHeader("X-User-Id");
         String email = request.getHeader("X-User-Email");
+        String roleHeader = request.getHeader("X-User-Role");
 
-        // 2. 두 헤더가 모두 존재하면, 신뢰하고 AuthUser 객체 생성
-        if (userId != null && !userId.isEmpty() && email != null && !email.isEmpty()) {
+        // 2. 세 헤더가 모두 존재하면, 신뢰하고 AuthUser 객체 생성
+        if (userId != null && !userId.isEmpty() &&
+                email != null && !email.isEmpty() &&
+                roleHeader != null && !roleHeader.isEmpty()) {
+
             try {
+                Role role = Role.valueOf(roleHeader); //  Convert string to enum
+
                 // 3. [Refactor] 생성자 대신 정적 팩토리 메서드 사용
                 UserDetails userDetails = AuthUser.fromGatewayHeader(
                         Long.parseLong(userId),
-                        email
+                        email,
+                        role
                 );
 
                 // 4. SecurityContextHolder에 인증 객체 등록
@@ -40,7 +48,7 @@ public class InternalHeaderAuthenticationFilter extends OncePerRequestFilter {
                 SecurityContextHolder.getContext().setAuthentication(authentication);
 
             } catch (Exception e) {
-                // ID 파싱 실패 등 예외 발생 시 Context를 비움
+                // ID 파싱 실패, Role enum 변환 실패 등 예외 발생 시 Context를 비움
                 logger.warn("Failed to process internal headers", e);
                 SecurityContextHolder.clearContext();
             }

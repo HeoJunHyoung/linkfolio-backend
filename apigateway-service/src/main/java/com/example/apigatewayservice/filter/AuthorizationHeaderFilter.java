@@ -40,6 +40,7 @@ public class AuthorizationHeaderFilter implements GlobalFilter, Ordered {
 
     private static final String INTERNAL_USER_ID_HEADER = "X-User-Id";
     private static final String INTERNAL_USER_EMAIL_HEADER = "X-User-Email";
+    private static final String INTERNAL_USER_ROLE_HEADER = "X-User-Role";
     private static final String BEARER_PREFIX = "Bearer ";
 
     @Value("${jwt.secret}")
@@ -89,15 +90,16 @@ public class AuthorizationHeaderFilter implements GlobalFilter, Ordered {
             // 5. Claims에서 사용자 정보 추출
             String userId = claims.getSubject();
             String email = claims.get("email", String.class);
+            String role = claims.get("role", String.class);
 
             // 6. Claims 검증
-            if (isInvalidPayload(userId, email)) {
+            if (isInvalidPayload(userId, email, role)) {
                 log.warn("Invalid JWT payload: userId or email is missing.");
                 return onError(exchange, ErrorCode.INVALID_JWT_PAYLOAD);
             }
 
             // 7. [보안] 스푸핑 공격을 방지하도록 헤더 수정 후, 내부 서비스로 전달
-            ServerHttpRequest newRequest = buildInternalRequest(request, userId, email);
+            ServerHttpRequest newRequest = buildInternalRequest(request, userId, email, role);
 
             // 8. 다음 필터 체인 실행
             return chain.filter(exchange.mutate().request(newRequest).build());
@@ -177,19 +179,21 @@ public class AuthorizationHeaderFilter implements GlobalFilter, Ordered {
                 .getPayload();
     }
 
-    private boolean isInvalidPayload(String userId, String email) {
-        return userId == null || userId.isEmpty() || email == null || email.isEmpty();
+    private boolean isInvalidPayload(String userId, String email, String role) {
+        return userId == null || userId.isEmpty() || email == null || email.isEmpty() || role == null || role.isEmpty();
     }
 
-    private ServerHttpRequest buildInternalRequest(ServerHttpRequest request, String userId, String email) {
+    private ServerHttpRequest buildInternalRequest(ServerHttpRequest request, String userId, String email, String role) {
         return request.mutate()
                 .headers(httpHeaders -> {
                     httpHeaders.remove(INTERNAL_USER_ID_HEADER);
                     httpHeaders.remove(INTERNAL_USER_EMAIL_HEADER);
+                    httpHeaders.remove(INTERNAL_USER_ROLE_HEADER);
                     httpHeaders.remove(HttpHeaders.AUTHORIZATION);
 
                     httpHeaders.add(INTERNAL_USER_ID_HEADER, userId);
                     httpHeaders.add(INTERNAL_USER_EMAIL_HEADER, email);
+                    httpHeaders.add(INTERNAL_USER_ROLE_HEADER, role);
                 })
                 .build();
     }

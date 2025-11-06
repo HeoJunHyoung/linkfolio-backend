@@ -42,6 +42,7 @@ public class JwtTokenProvider {
         return Jwts.builder()
                 .subject(userDetails.getId().toString())
                 .claim("email", userDetails.getEmail()) // Access Token에는 이메일 포함
+                .claim("role", userDetails.getRole().name()) //  Role 포함
                 .expiration(expirationDate)
                 .signWith(secretKey)
                 .compact();
@@ -94,9 +95,9 @@ public class JwtTokenProvider {
         return claims.getSubject();
     }
 
-    public String getEmailFromToken(String token) {
-        Claims claims = getClaimsFromTokenEvenIfExpired(token); // 내부 호출 변경
-        return claims.get("email", String.class);
+    public String getRoleFromToken(String token) {
+        Claims claims = getClaimsFromTokenEvenIfExpired(token);
+        return claims.get("role", String.class);
     }
 
     public long getRefreshExpirationTimeMillis() {

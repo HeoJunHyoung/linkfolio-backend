@@ -111,6 +111,7 @@ public class CustomOAuth2UserService implements OAuth2UserService<OAuth2UserRequ
         event.setBirthdate(null); // 소셜은 기본 정보로 제공하지 않음
         event.setGender(null);    // "
         event.setProvider(provider.name());
+        event.setRole(savedAuthUser.getRole());
 
         // 5. SAGA 시작 (Kafka 이벤트 발행)
         try {

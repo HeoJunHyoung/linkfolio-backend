@@ -68,6 +68,7 @@ public class AuthService {
             event.setBirthdate(request.getBirthdate());
             event.setGender(request.getGender());
             event.setProvider(UserProvider.LOCAL.name());
+            event.setRole(savedAuthUser.getRole());
 
             // UserEventProducer 사용 (Kafka 발행 실패 시 BusinessException이 throw되어 롤백됨)
             userEventProducer.sendUserRegistrationRequested(event);
@@ -170,12 +171,12 @@ public class AuthService {
     public UserDto getUserDetailsByEmail(String email) {
         AuthUserEntity authUser = authUserRepository.findByEmail(email)
                 .orElseThrow(() -> new BusinessException(ErrorCode.USER_NOT_FOUND));
-        return UserDto.of(authUser.getUserId(), authUser.getEmail(), authUser.getPassword());
+        return UserDto.of(authUser.getUserId(), authUser.getEmail(), authUser.getPassword(), authUser.getRole());
     }
 
     public UserDto getUserDetailsById(Long userId) {
         AuthUserEntity authUser = authUserRepository.findById(userId)
                 .orElseThrow(() -> new BusinessException(ErrorCode.USER_NOT_FOUND));
-        return UserDto.of(authUser.getUserId(), authUser.getEmail(), authUser.getPassword());
+        return UserDto.of(authUser.getUserId(), authUser.getEmail(), authUser.getPassword(), authUser.getRole());
     }
 }

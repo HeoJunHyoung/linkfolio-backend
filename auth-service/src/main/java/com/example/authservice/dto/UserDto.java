@@ -1,5 +1,6 @@
 package com.example.authservice.dto;
 
+import com.example.authservice.entity.enumerate.Role;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
@@ -15,8 +16,10 @@ public class UserDto {
 
     private String password;
 
-    public static UserDto of(Long id, String email, String password) {
-        return new UserDto(id, email, password);
+    private Role role;
+
+    public static UserDto of(Long id, String email, String password, Role role) {
+        return new UserDto(id, email, password, role);
     }
 
 }

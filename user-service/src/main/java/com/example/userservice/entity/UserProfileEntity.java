@@ -2,6 +2,7 @@ package com.example.userservice.entity;
 
 import com.example.userservice.dto.event.UserRegistrationRequestedEvent;
 import com.example.userservice.entity.enumerate.Gender;
+import com.example.userservice.entity.enumerate.Role;
 import com.example.userservice.entity.enumerate.UserProfileStatus;
 import com.example.userservice.entity.enumerate.UserProvider;
 import jakarta.persistence.*;
@@ -45,9 +46,13 @@ public class UserProfileEntity extends BaseEntity{
     @Column(name = "status", nullable = false)
     private UserProfileStatus status;
 
+    @Enumerated(EnumType.STRING)
+    @Column(name = "role", nullable = false)
+    private Role role;
+
     // 생성자
     private UserProfileEntity(Long userId, String email, UserProvider provider, String username,
-                              String name, String birthdate, Gender gender, UserProfileStatus status) {
+                              String name, String birthdate, Gender gender, UserProfileStatus status, Role role) {
         this.userId = userId;
         this.email = email;
         this.provider = provider;
@@ -56,6 +61,7 @@ public class UserProfileEntity extends BaseEntity{
         this.birthdate = birthdate;
         this.gender = gender;
         this.status = status;
+        this.role = role;
     }
 
     // Kafka Consumer용 생성 메서드
@@ -68,7 +74,8 @@ public class UserProfileEntity extends BaseEntity{
                 event.getName(),
                 event.getBirthdate(),
                 event.getGender(),
-                UserProfileStatus.PENDING // 최초 상태는 PENDING
+                UserProfileStatus.PENDING, // 최초 상태는 PENDING
+                event.getRole()
         );
     }
 
