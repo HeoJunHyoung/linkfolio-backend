@@ -6,6 +6,7 @@ import lombok.AccessLevel;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
+import org.hibernate.annotations.ColumnDefault;
 
 @Entity
 @Table(name = "`portfolio`")
@@ -42,8 +43,13 @@ public class PortfolioEntity extends BaseEntity {
     @Column(name = "content")
     private String content; // 포트폴리오 내용 (PR 등)
 
+    // --- 포트폴리오 상태 관리 ---
+    @Column(name = "is_published", nullable = false)
+    @ColumnDefault("false") // DB 기본값
+    private boolean isPublished = false; // JPA 기본값
+
     @Builder
-    public PortfolioEntity(Long userId, String name, String email, String birthdate, Gender gender, String photoUrl, String oneLiner, String content) {
+    public PortfolioEntity(Long userId, String name, String email, String birthdate, Gender gender, String photoUrl, String oneLiner, String content, boolean isPublished) {
         this.userId = userId;
         this.name = name;
         this.email = email;
@@ -52,6 +58,7 @@ public class PortfolioEntity extends BaseEntity {
         this.photoUrl = photoUrl;
         this.oneLiner = oneLiner;
         this.content = content;
+        this.isPublished = isPublished;
     }
 
     // Kafka 이벤트 또는 Feign으로 캐시된 정보 갱신
@@ -67,5 +74,10 @@ public class PortfolioEntity extends BaseEntity {
         this.photoUrl = photoUrl;
         this.oneLiner = oneLiner;
         this.content = content;
+
+        // 사용자가 한 번이라도 저장하면 '발행' 상태로 간주
+        if (!this.isPublished) {
+            this.isPublished = true;
+        }
     }
 }
