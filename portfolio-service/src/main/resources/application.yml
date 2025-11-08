@@ -23,6 +23,12 @@ spring:
       hibernate:
         format_sql: ${JPA_FORMAT_SQL}
 
+  # --- Redis ---
+  data:
+    redis:
+      host: ${REDIS_HOST}
+      port: ${REDIS_PORT}
+
   # --- Kafka Configuration ---
   kafka:
     bootstrap-servers: ${SPRING_KAFKA_BOOTSTRAP_SERVERS}

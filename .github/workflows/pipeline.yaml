@@ -22,6 +22,8 @@ jobs:
             service-name: user
           - service: auth-service
             service-name: auth
+          - service: portfolio-service
+            service-name: portfolio
     outputs:
       SHORT_SHA: ${{ steps.sha.outputs.short }}
 
@@ -82,7 +84,7 @@ jobs:
       - name: Update image tags with Kustomize
         run: |
           cd linkfolio-manifest/overlays/development
-          for SERVICE in apigateway user auth; do
+          for SERVICE in apigateway user auth portfolio; do
             echo "Updating image for $SERVICE-service..."
             kustomize edit set image h6bro/service-${SERVICE}=h6bro/service-${SERVICE}:${{ env.SHORT_SHA }}
           done
