@@ -1,3 +1,4 @@
+// portfolio-service/src/main/java/com/example/portfolioservice/service/kafka/PortfolioEventHandler.java
 package com.example.portfolioservice.service.kafka;
 
 import com.example.portfolioservice.config.KafkaTopics;
@@ -19,18 +20,18 @@ public class PortfolioEventHandler {
 
     private final PortfolioRepository portfolioRepository;
 
-
     /**
-     * [Event] user-service에서 프로필 변경 시, 캐시된 데이터 동기화
+     * [Event] user-service에서 프로필 생성 또는 변경 시, 캐시된 데이터 동기화
      */
     @Transactional
     @KafkaListener(topics = KafkaTopics.USER_PROFILE_UPDATED, groupId = "portfolio-consumer-group")
     public void handleUserProfileUpdate(UserProfileUpdatedEvent event) {
-        log.info("[Kafka] 프로필 업데이트 이벤트 수신. UserId: {}", event.getUserId());
+        log.info("[Kafka] 프로필 생성/업데이트 이벤트 수신. UserId: {}", event.getUserId());
 
         Optional<PortfolioEntity> optionalPortfolio = portfolioRepository.findById(event.getUserId());
 
         if (optionalPortfolio.isPresent()) {
+            // [1] Update
             PortfolioEntity portfolio = optionalPortfolio.get();
             portfolio.updateCache(
                     event.getName(),
@@ -41,9 +42,17 @@ public class PortfolioEventHandler {
             portfolioRepository.save(portfolio);
             log.info("포트폴리오 캐시(DB) 동기화 완료. UserId: {}", event.getUserId());
         } else {
-            // 아직 마이페이지에 한 번도 들어오지 않아 포트폴리오가 생성되기 전.
-            // (나중에 /me 호출 시 어차피 Feign으로 최신 데이터를 가져와 생성하므로 아무것도 안함)
-            log.warn("업데이트할 포트폴리오가 아직 생성되지 않음(Lazy Creation 대기 중). UserId: {}", event.getUserId());
+            // [2] Create: 회원가입 직후(SAGA 완료) 발생한 이벤트.
+            PortfolioEntity newPortfolio = PortfolioEntity.builder()
+                    .userId(event.getUserId())
+                    .name(event.getName())
+                    .email(event.getEmail())
+                    .birthdate(event.getBirthdate())
+                    .gender(event.getGender())
+                    .isPublished(false) // [중요] 초기 상태는 false
+                    .build();
+            portfolioRepository.save(newPortfolio);
+            log.info("신규 포트폴리오 초기 레코드 생성 완료. UserId: {}", event.getUserId());
         }
     }
 }
