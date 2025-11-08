@@ -37,9 +37,8 @@ public class PortfolioController {
     @Operation(summary = "내 포트폴리오 생성/수정 (마이페이지)", description = "사용자 입력 정보(사진, 자기소개, PR)를 저장합니다.")
     @SecurityRequirement(name = "Bearer Authentication")
     @PutMapping("/me")
-    public ResponseEntity<PortfolioResponse> createOrUpdateMyPortfolioApi(
-            @AuthenticationPrincipal AuthUser authUser,
-            @RequestBody PortfolioRequest request) {
+    public ResponseEntity<PortfolioResponse> createOrUpdateMyPortfolioApi(@AuthenticationPrincipal AuthUser authUser,
+                                                                          @RequestBody PortfolioRequest request) {
         PortfolioResponse response = portfolioService.createOrUpdateMyPortfolio(authUser.getUserId(), request);
         return ResponseEntity.ok(response);
     }

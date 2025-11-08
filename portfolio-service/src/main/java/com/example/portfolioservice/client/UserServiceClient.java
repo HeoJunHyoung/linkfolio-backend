@@ -9,9 +9,6 @@ import org.springframework.web.bind.annotation.PathVariable;
 // url: application.yml의 app.feign.user-service-url 값
 @FeignClient(name = "user-service", url = "${app.feign.user-service-url}")
 public interface UserServiceClient {
-
-    // user-service의 UserController에 이 API가 구현되어 있어야 함.
-    // GET /user-service/internal/users/{userId}
     @GetMapping("/user-service/internal/users/{userId}")
     InternalUserProfileResponse getUserProfile(@PathVariable("userId") Long userId);
 }

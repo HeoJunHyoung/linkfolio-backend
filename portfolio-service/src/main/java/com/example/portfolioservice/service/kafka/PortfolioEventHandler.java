@@ -2,12 +2,10 @@ package com.example.portfolioservice.service.kafka;
 
 import com.example.portfolioservice.config.KafkaTopics;
 import com.example.portfolioservice.dto.event.UserProfileUpdatedEvent;
-import com.example.portfolioservice.dto.event.UserRegistrationRequestedEvent;
 import com.example.portfolioservice.entity.PortfolioEntity;
 import com.example.portfolioservice.repository.PortfolioRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.kafka.annotation.KafkaListener;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;

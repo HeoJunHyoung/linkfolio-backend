@@ -33,8 +33,7 @@ spring:
       group-id: "portfolio-consumer-group" # ??? ??? ??
       properties:
         spring.json.trusted.packages: "com.example.authservice.dto.event,com.example.userservice.dto.event,com.example.portfolioservice.dto.event"
-        spring.json.type.mapping: "com.example.authservice.dto.event.UserRegistrationRequestedEvent:com.example.portfolioservice.dto.event.UserRegistrationRequestedEvent, \
-                                          com.example.userservice.dto.event.UserProfileUpdatedEvent:com.example.portfolioservice.dto.event.UserProfileUpdatedEvent" # user-service? ?? ??? ??
+        spring.json.type.mapping: "com.example.userservice.dto.event.UserProfileUpdatedEvent:com.example.portfolioservice.dto.event.UserProfileUpdatedEvent" # user-service? ?? ??? ??
 
 # --- Feign Client Configuration ---
 app:
