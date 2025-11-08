@@ -1,5 +1,6 @@
 package com.example.userservice.controller;
 
+import com.example.userservice.client.dto.InternalUserProfileResponse;
 import com.example.userservice.dto.*;
 import com.example.userservice.dto.response.UserResponse;
 import com.example.userservice.service.UserService;
@@ -60,4 +61,10 @@ public class UserController {
         return ResponseEntity.status(HttpStatus.OK).body(userResponse);
     }
 
+    @Operation(summary = "내부용 프로필 조회 (Feign용)", hidden = true) // Swagger 숨김 처리
+    @GetMapping("/internal/users/{userId}")
+    public ResponseEntity<InternalUserProfileResponse> getInternalUserProfileApi(@PathVariable("userId") Long userId) {
+        InternalUserProfileResponse response = userService.getInternalUserProfile(userId);
+        return ResponseEntity.ok(response);
+    }
 }

@@ -1,5 +1,6 @@
 package com.example.userservice.service;
 
+import com.example.userservice.client.dto.InternalUserProfileResponse;
 import com.example.userservice.dto.*;
 import com.example.userservice.dto.event.UserRegistrationRequestedEvent;
 import com.example.userservice.dto.response.UserResponse;
@@ -30,11 +31,17 @@ public class UserService {
         return userMapper.toUserResponse(userProfileEntity);
     }
 
+    // FeignClient 호출을 위한 내부 프로필 조회
+    public InternalUserProfileResponse getInternalUserProfile(Long userId) {
+        UserProfileEntity userProfileEntity = userRepository.findById(userId)
+                .orElseThrow(() -> new BusinessException(ErrorCode.USER_NOT_FOUND));
+        return userMapper.toInternalResponse(userProfileEntity);
+    }
+
     // Kafka Consumer가 호출할 프로필 생성 메서드
     @Transactional
     public void createUserProfile(UserRegistrationRequestedEvent event) {
         // 1. 멱등성 보장 (이미 처리된 이벤트인지 확인)
-        // (참고: DB 제약조건(PK)에 의해 중복 저장은 막히지만, SAGA 응답을 위해 명시적으로 확인)
         if (userRepository.existsById(event.getUserId())) {
             log.warn("이미 존재하는 UserId로 프로필 생성을 시도했습니다 (멱등성): {}", event.getUserId());
             // 이미 성공한 것으로 간주하고, Exception을 발생시키지 않는다.

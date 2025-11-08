@@ -3,6 +3,7 @@ package com.example.authservice.service;
 import com.example.authservice.dto.UserDto;
 import com.example.authservice.dto.event.UserRegistrationRequestedEvent;
 import com.example.authservice.dto.request.*;
+import com.example.authservice.dto.response.FindUsernameResponse;
 import com.example.authservice.entity.AuthUserEntity;
 import com.example.authservice.entity.enumerate.UserProvider;
 import com.example.authservice.exception.BusinessException;
@@ -101,7 +102,7 @@ public class AuthService {
      * 아이디(username) 찾기
      */
     @Transactional(readOnly = true)
-    public String findUsername(FindUsernameRequest request) {
+    public FindUsernameResponse findUsername(FindUsernameRequest request) {
 
         // 1. (Auth) Auth DB에서 이름+이메일+LOCAL provider로 직접 조회
         AuthUserEntity authUser = authUserRepository.findByNameAndEmailAndProvider(
@@ -110,9 +111,10 @@ public class AuthService {
                 UserProvider.LOCAL
         ).orElseThrow(() -> new BusinessException(ErrorCode.USER_NOT_FOUND_BY_NAME_AND_EMAIL));
 
-        // 2. (Auth) ID(username) 반환
-        return authUser.getUsername();
+        // 2. (Auth) DTO로 변환하여 반환
+        return FindUsernameResponse.of(authUser.getUsername());
     }
+
 
     // (Auth) 비밀번호 일치 검사
     public void validatePasswordMatch(String password, String passwordConfirm) {
