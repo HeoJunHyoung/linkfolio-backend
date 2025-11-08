@@ -84,4 +84,10 @@ public class UserProfileEntity extends BaseEntity{
         this.status = status;
     }
 
+    public void updateUserProfile(String name, String birthdate, Gender gender) {
+        this.name = name;
+        this.birthdate = birthdate;
+        this.gender = gender;
+    }
+
 }
