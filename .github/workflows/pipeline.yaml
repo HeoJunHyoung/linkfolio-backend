@@ -14,7 +14,7 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        service: [apigateway-service, user-service, auth-service]
+        service: [apigateway-service, user-service, auth-service, portfolio-service]
         include:
           - service: apigateway-service
             service-name: apigateway

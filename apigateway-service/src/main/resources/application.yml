@@ -41,6 +41,12 @@ spring:
               predicates:
                 - Path=/auth-service/**
 
+            # 3. Portfolio Service
+            - id: portfolio-service-route
+              uri: http://portfolio-service:80
+              predicates:
+                - Path=/portfolio-service/**
+
 app:
   gateway:
     excluded-urls:
@@ -66,6 +72,8 @@ app:
       - /auth-service/oauth2/authorization/**
       - /auth-service/login/oauth2/code/**
       - /auth-service/error
+      - /portfolio-service/portfolios
+      - /portfolio-service/portfolios/**
 
 # JWT Token Settings
 jwt:
@@ -82,16 +90,6 @@ springdoc:
         url: https://impressionless-connaturally-jonie.ngrok-free.dev/auth-service/v3/api-docs
       - name: 2. User Service
         url: https://impressionless-connaturally-jonie.ngrok-free.dev/user-service/v3/api-docs
-
-# Swagger
-#springdoc:
-#  swagger-ui:
-#    path: /swagger-ui.html
-#    urls:
-#      - name: 1. Auth Service
-#        url: /auth-service/v3/api-docs
-#      - name: 2. User Service
-#        url: /user-service/v3/api-docs
 
 
 
