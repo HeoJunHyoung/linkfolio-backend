@@ -1,0 +1,45 @@
+server:
+  port: 8082 # user-service(8080), auth-service(8081)? ??? ?? ??
+  servlet:
+    context-path: /portfolio-service
+
+spring:
+  application:
+    name: portfolio-service
+
+  # --- Database (MySQL) Configuration ---
+  datasource:
+    driver-class-name: com.mysql.cj.jdbc.Driver
+    url: jdbc:mysql://${DB_HOST}/${MYSQL_DATABASE}?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC&useUnicode=true&characterEncoding=UTF-8
+    username: ${MYSQL_USER}
+    password: ${MYSQL_PASSWORD}
+
+  # --- JPA / Hibernate Configuration ---
+  jpa:
+    hibernate:
+      ddl-auto: ${JPA_DDL_AUTO} # development: update, production: validate
+    show-sql: ${JPA_SHOW_SQL}
+    properties:
+      hibernate:
+        format_sql: ${JPA_FORMAT_SQL}
+
+  # --- Kafka Configuration ---
+  kafka:
+    bootstrap-servers: ${SPRING_KAFKA_BOOTSTRAP_SERVERS}
+    consumer:
+      bootstrap-servers: ${SPRING_KAFKA_CONSUMER_BOOTSTRAP_SERVERS}
+      key-deserializer: org.apache.kafka.common.serialization.StringDeserializer
+      value-deserializer: org.springframework.kafka.support.serializer.JsonDeserializer
+      group-id: "portfolio-consumer-group" # ??? ??? ??
+      properties:
+        spring.json.trusted.packages: "com.example.authservice.dto.event,com.example.userservice.dto.event,com.example.portfolioservice.dto.event"
+        spring.json.type.mapping: "com.example.userservice.dto.event.UserProfilePublishedEvent:com.example.portfolioservice.dto.event.UserProfileUpdatedEvent"
+
+# --- Feign Client Configuration ---
+app:
+  feign:
+    user-service-url: http://user-service:80 # k8s ?? ??? ??
+
+# --- Swagger (OpenAPI) ---
+springdoc:
+  override-with-generic-response: false

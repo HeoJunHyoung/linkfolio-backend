@@ -1,6 +1,7 @@
 package com.example.authservice.controller;
 
 import com.example.authservice.dto.request.*;
+import com.example.authservice.dto.response.FindUsernameResponse;
 import com.example.authservice.dto.response.TokenResponse;
 import com.example.authservice.service.AuthService;
 import com.example.authservice.service.RefreshTokenService;
@@ -103,13 +104,14 @@ public class AuthController {
 
     @Operation(summary = "아이디(username) 찾기", description = "실명과 이메일로 가입된 ID(username)를 찾습니다.")
     @ApiResponses(value = {
-            @ApiResponse(responseCode = "200", description = "ID 찾기 성공", content = @Content(schema = @Schema(implementation = String.class))),
+            @ApiResponse(responseCode = "200", description = "ID 찾기 성공",
+                    content = @Content(schema = @Schema(implementation = FindUsernameResponse.class))), //
             @ApiResponse(responseCode = "404", description = "정보 불일치 (로컬 계정 없음) [U001_1]", content = @Content)
     })
     @PostMapping("/find-username")
-    public ResponseEntity<String> findUsernameApi(@RequestBody FindUsernameRequest request) {
-        String username = authService.findUsername(request);
-        return ResponseEntity.ok(username);
+    public ResponseEntity<FindUsernameResponse> findUsernameApi(@RequestBody FindUsernameRequest request) {
+        FindUsernameResponse response = authService.findUsername(request);
+        return ResponseEntity.ok(response);
     }
 
 
