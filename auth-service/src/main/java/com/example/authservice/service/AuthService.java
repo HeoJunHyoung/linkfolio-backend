@@ -1,13 +1,14 @@
 package com.example.authservice.service;
 
 import com.example.authservice.dto.UserDto;
-import com.example.authservice.dto.event.UserRegistrationRequestedEvent;
 import com.example.authservice.dto.request.*;
 import com.example.authservice.dto.response.FindUsernameResponse;
 import com.example.authservice.entity.AuthUserEntity;
 import com.example.authservice.exception.ErrorCode;
 import com.example.authservice.repository.AuthUserRepository;
 import com.example.authservice.service.kafka.UserEventProducer;
+import com.example.commonmodule.dto.event.UserRegistrationRequestedEvent;
+import com.example.commonmodule.entity.enumerate.UserProvider;
 import com.example.commonmodule.exception.BusinessException;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;

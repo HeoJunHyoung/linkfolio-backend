@@ -1,15 +1,14 @@
 package com.example.userservice.service;
 
+import com.example.commonmodule.dto.event.UserProfilePublishedEvent;
+import com.example.commonmodule.dto.event.UserRegistrationRequestedEvent;
 import com.example.userservice.client.dto.InternalUserProfileResponse;
 import com.example.userservice.config.KafkaTopics;
-import com.example.userservice.dto.event.UserProfilePublishedEvent;
-import com.example.userservice.dto.event.UserRegistrationRequestedEvent;
 import com.example.userservice.dto.request.UserProfileUpdateRequest;
 import com.example.userservice.dto.response.UserResponse;
 import com.example.userservice.entity.UserProfileEntity;
 import com.example.userservice.entity.enumerate.UserProfileStatus;
 import com.example.commonmodule.exception.BusinessException;
-import com.example.commonmodule.exception.ErrorCode;
 import com.example.userservice.repository.UserRepository;
 import com.example.userservice.util.UserMapper;
 import lombok.RequiredArgsConstructor;
@@ -59,8 +58,16 @@ public class UserService {
         // 4. Kafka 이벤트 발행 (데이터 동기화)
         //    (portfolio-service 등이 이 이벤트를 수신하여 캐시를 갱신)
         try {
-            UserProfilePublishedEvent event = UserProfilePublishedEvent.fromEntity(updatedProfile);
-            kafkaTemplate.send(KafkaTopics.USER_PROFILE_UPDATED, event);
+
+            UserProfilePublishedEvent publishedEvent = UserProfilePublishedEvent.builder()
+                    .userId(updatedProfile.getUserId())
+                    .name(updatedProfile.getName())
+                    .email(updatedProfile.getEmail())
+                    .birthdate(updatedProfile.getBirthdate())
+                    .gender(updatedProfile.getGender())
+                    .build();
+
+            kafkaTemplate.send(KafkaTopics.USER_PROFILE_UPDATED, publishedEvent);
             log.info("프로필 '수정' 완료. 데이터 전파(Fan-out) 이벤트 발행. UserId: {}", updatedProfile.getUserId());
         } catch (Exception e) {
             log.error("프로필 수정은 완료했으나 Kafka 이벤트 발행 실패, 롤백 필요. UserId: {}", userId, e);

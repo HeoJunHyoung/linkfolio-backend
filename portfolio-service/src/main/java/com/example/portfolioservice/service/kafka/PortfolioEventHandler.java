@@ -1,8 +1,8 @@
 // portfolio-service/src/main/java/com/example/portfolioservice/service/kafka/PortfolioEventHandler.java
 package com.example.portfolioservice.service.kafka;
 
+import com.example.commonmodule.dto.event.UserProfilePublishedEvent;
 import com.example.portfolioservice.config.KafkaTopics;
-import com.example.portfolioservice.dto.event.UserProfileUpdatedEvent;
 import com.example.portfolioservice.entity.PortfolioEntity;
 import com.example.portfolioservice.repository.PortfolioRepository;
 import lombok.RequiredArgsConstructor;
@@ -25,7 +25,7 @@ public class PortfolioEventHandler {
      */
     @Transactional
     @KafkaListener(topics = KafkaTopics.USER_PROFILE_UPDATED, groupId = "portfolio-consumer-group")
-    public void handleUserProfileUpdate(UserProfileUpdatedEvent event) {
+    public void handleUserProfileUpdate(UserProfilePublishedEvent event) {
         log.info("[Kafka] 프로필 생성/업데이트 이벤트 수신. UserId: {}", event.getUserId());
 
         Optional<PortfolioEntity> optionalPortfolio = portfolioRepository.findById(event.getUserId());

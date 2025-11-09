@@ -1,9 +1,9 @@
 package com.example.userservice.entity;
 
+import com.example.commonmodule.dto.event.UserRegistrationRequestedEvent;
 import com.example.commonmodule.entity.BaseEntity;
 import com.example.commonmodule.entity.enumerate.Gender;
 import com.example.commonmodule.entity.enumerate.Role;
-import com.example.userservice.dto.event.UserRegistrationRequestedEvent;
 import com.example.userservice.entity.enumerate.UserProfileStatus;
 import com.example.commonmodule.entity.enumerate.UserProvider;
 import jakarta.persistence.*;

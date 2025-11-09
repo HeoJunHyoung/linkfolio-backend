@@ -26,7 +26,7 @@ public class GlobalExceptionHandler {
      */
     @ExceptionHandler(Exception.class)
     protected ResponseEntity<ErrorResponse> handleException(Exception e) {
-        ErrorCode errorCode = ErrorCode.INTERNAL_SERVER_ERROR;
+        CommonErrorCode errorCode = CommonErrorCode.INTERNAL_SERVER_ERROR;
         ErrorResponse response = ErrorResponse.of(errorCode);
         log.error("UnhandledException occurred: {}", e.getMessage(), e);
 

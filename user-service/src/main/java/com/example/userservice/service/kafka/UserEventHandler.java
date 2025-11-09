@@ -1,10 +1,10 @@
 package com.example.userservice.service.kafka;
 
+import com.example.commonmodule.dto.event.UserProfileCreationFailureEvent;
+import com.example.commonmodule.dto.event.UserProfileCreationSuccessEvent;
+import com.example.commonmodule.dto.event.UserProfilePublishedEvent;
+import com.example.commonmodule.dto.event.UserRegistrationRequestedEvent;
 import com.example.userservice.config.KafkaTopics;
-import com.example.userservice.dto.event.UserProfileCreationFailureEvent;
-import com.example.userservice.dto.event.UserProfileCreationSuccessEvent;
-import com.example.userservice.dto.event.UserProfilePublishedEvent;
-import com.example.userservice.dto.event.UserRegistrationRequestedEvent;
 import com.example.userservice.entity.UserProfileEntity;
 import com.example.userservice.service.UserService;
 import lombok.RequiredArgsConstructor;
@@ -36,7 +36,14 @@ public class UserEventHandler {
             log.info("프로필 생성 성공. SAGA Success 이벤트 발행. UserId: {}", event.getUserId());
 
             // 2-B. [전파용] 데이터 동기화 이벤트를 portfolio-service (및 기타)로 발행
-            UserProfilePublishedEvent publishedEvent = UserProfilePublishedEvent.fromEntity(savedProfile);
+            UserProfilePublishedEvent publishedEvent = UserProfilePublishedEvent.builder()
+                    .userId(savedProfile.getUserId())
+                    .name(savedProfile.getName())
+                    .email(savedProfile.getEmail())
+                    .birthdate(savedProfile.getBirthdate())
+                    .gender(savedProfile.getGender())
+                    .build();
+
             kafkaTemplate.send(KafkaTopics.USER_PROFILE_UPDATED, publishedEvent);
             log.info("프로필 생성 성공. 데이터 전파(Fan-out) 이벤트 발행. UserId: {}", event.getUserId());
 
