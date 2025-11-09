@@ -1,10 +1,11 @@
 package com.example.userservice.entity;
 
+import com.example.commonmodule.entity.BaseEntity;
+import com.example.commonmodule.entity.enumerate.Gender;
+import com.example.commonmodule.entity.enumerate.Role;
 import com.example.userservice.dto.event.UserRegistrationRequestedEvent;
-import com.example.userservice.entity.enumerate.Gender;
-import com.example.userservice.entity.enumerate.Role;
 import com.example.userservice.entity.enumerate.UserProfileStatus;
-import com.example.userservice.entity.enumerate.UserProvider;
+import com.example.commonmodule.entity.enumerate.UserProvider;
 import jakarta.persistence.*;
 import lombok.AccessLevel;
 import lombok.Getter;
@@ -14,7 +15,7 @@ import lombok.NoArgsConstructor;
 @Table(name = "`user_profile`")
 @Getter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
-public class UserProfileEntity extends BaseEntity{
+public class UserProfileEntity extends BaseEntity {
 
     @Id
     @Column(name = "user_id")

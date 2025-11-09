@@ -4,8 +4,6 @@ import com.example.authservice.dto.AuthUser;
 import com.example.authservice.dto.OAuthAttributes;
 import com.example.authservice.dto.event.UserRegistrationRequestedEvent;
 import com.example.authservice.entity.AuthUserEntity;
-import com.example.authservice.entity.enumerate.UserProvider;
-import com.example.authservice.exception.BusinessException;
 import com.example.authservice.exception.ErrorCode;
 import com.example.authservice.repository.AuthUserRepository;
 import com.example.authservice.service.kafka.UserEventProducer;

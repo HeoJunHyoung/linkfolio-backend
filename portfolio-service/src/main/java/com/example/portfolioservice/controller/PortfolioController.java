@@ -1,6 +1,6 @@
 package com.example.portfolioservice.controller;
 
-import com.example.portfolioservice.dto.AuthUser;
+import com.example.commonmodule.dto.security.AuthUser;
 import com.example.portfolioservice.dto.request.PortfolioRequest;
 import com.example.portfolioservice.dto.response.PortfolioCardResponse;
 import com.example.portfolioservice.dto.response.PortfolioResponse;

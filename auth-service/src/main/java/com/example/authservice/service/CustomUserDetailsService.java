@@ -3,8 +3,6 @@ package com.example.authservice.service;
 import com.example.authservice.dto.AuthUser;
 import com.example.authservice.entity.AuthUserEntity;
 import com.example.authservice.entity.enumerate.AuthStatus;
-import com.example.authservice.entity.enumerate.UserProvider;
-import com.example.authservice.exception.BusinessException;
 import com.example.authservice.exception.ErrorCode;
 import com.example.authservice.repository.AuthUserRepository;
 import lombok.RequiredArgsConstructor;

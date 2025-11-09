@@ -1,19 +1,19 @@
 package com.example.authservice.entity;
 
 import com.example.authservice.entity.enumerate.AuthStatus;
-import com.example.authservice.entity.enumerate.Role;
-import com.example.authservice.entity.enumerate.UserProvider;
+import com.example.commonmodule.entity.BaseEntity;
+import com.example.commonmodule.entity.enumerate.Role;
+import com.example.commonmodule.entity.enumerate.UserProvider;
 import jakarta.persistence.*;
 import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
-import java.time.LocalDateTime;
 
 @Entity
 @Table(name = "`auth_user`")
 @Getter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
-public class AuthUserEntity extends BaseEntity{
+public class AuthUserEntity extends BaseEntity {
 
     @Id @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name = "user_id") // 이 ID를 user-service와 공유

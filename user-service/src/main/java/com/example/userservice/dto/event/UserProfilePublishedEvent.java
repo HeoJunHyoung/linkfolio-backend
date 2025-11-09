@@ -1,8 +1,8 @@
 // user-service/src/main/java/com/example/userservice/dto/event/UserProfilePublishedEvent.java
 package com.example.userservice.dto.event;
 
+import com.example.commonmodule.entity.enumerate.Gender;
 import com.example.userservice.entity.UserProfileEntity;
-import com.example.userservice.entity.enumerate.Gender;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;

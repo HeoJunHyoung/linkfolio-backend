@@ -33,6 +33,7 @@
         <module>user-service</module>
         <module>auth-service</module>
         <module>portfolio-service</module>
+        <module>common-module</module>
     </modules>
 
     <properties>

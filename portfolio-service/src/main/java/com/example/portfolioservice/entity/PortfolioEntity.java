@@ -1,6 +1,7 @@
 package com.example.portfolioservice.entity;
 
-import com.example.portfolioservice.entity.enumerate.Gender;
+import com.example.commonmodule.entity.BaseEntity;
+import com.example.commonmodule.entity.enumerate.Gender;
 import jakarta.persistence.*;
 import lombok.AccessLevel;
 import lombok.Builder;

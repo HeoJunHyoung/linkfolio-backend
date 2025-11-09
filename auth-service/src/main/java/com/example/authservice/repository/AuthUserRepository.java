@@ -1,9 +1,7 @@
 package com.example.authservice.repository;
 
 import com.example.authservice.entity.AuthUserEntity;
-import com.example.authservice.entity.enumerate.UserProvider;
 import org.springframework.data.jpa.repository.JpaRepository;
-import org.springframework.data.repository.query.Param;
 
 import java.util.Optional;
 
