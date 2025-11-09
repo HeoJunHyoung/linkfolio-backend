@@ -6,7 +6,7 @@ import org.springframework.http.HttpStatus;
 
 @Getter
 @RequiredArgsConstructor
-public enum ErrorCode {
+public enum ErrorCode implements com.example.commonmodule.exception.ErrorCode {
 
     MISSING_AUTH_HEADER(HttpStatus.UNAUTHORIZED, "A001", "Authorization 헤더가 누락되었습니다."),
     INVALID_AUTH_FORMAT(HttpStatus.UNAUTHORIZED, "A002", "유효하지 않은 Authorization 헤더 형식입니다. (Bearer prefix 필요)"),

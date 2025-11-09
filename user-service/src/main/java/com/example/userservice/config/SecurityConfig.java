@@ -1,6 +1,6 @@
 package com.example.userservice.config;
 
-import com.example.userservice.filter.InternalHeaderAuthenticationFilter;
+import com.example.commonmodule.filter.InternalHeaderAuthenticationFilter;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;

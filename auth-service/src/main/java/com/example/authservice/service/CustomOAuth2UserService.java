@@ -2,14 +2,14 @@ package com.example.authservice.service;
 
 import com.example.authservice.dto.AuthUser;
 import com.example.authservice.dto.OAuthAttributes;
-import com.example.authservice.dto.event.UserRegistrationRequestedEvent;
 import com.example.authservice.entity.AuthUserEntity;
-import com.example.authservice.entity.enumerate.UserProvider;
-import com.example.authservice.exception.BusinessException;
 import com.example.authservice.exception.ErrorCode;
 import com.example.authservice.repository.AuthUserRepository;
 import com.example.authservice.service.kafka.UserEventProducer;
 import com.example.authservice.service.oauth.OAuth2AttributeParser;
+import com.example.commonmodule.dto.event.UserRegistrationRequestedEvent;
+import com.example.commonmodule.entity.enumerate.UserProvider;
+import com.example.commonmodule.exception.BusinessException;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.oauth2.client.userinfo.DefaultOAuth2UserService;

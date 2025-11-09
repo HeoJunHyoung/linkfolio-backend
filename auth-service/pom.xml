@@ -130,6 +130,12 @@
             <artifactId>spring-kafka</artifactId>
         </dependency>
 
+        <dependency>
+            <groupId>com.example</groupId>
+            <artifactId>common-module</artifactId>
+            <version>${project.version}</version>
+        </dependency>
+
     </dependencies>
 
     <dependencyManagement>

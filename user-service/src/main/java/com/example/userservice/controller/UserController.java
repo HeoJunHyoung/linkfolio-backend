@@ -1,7 +1,7 @@
 package com.example.userservice.controller;
 
+import com.example.commonmodule.dto.security.AuthUser;
 import com.example.userservice.client.dto.InternalUserProfileResponse;
-import com.example.userservice.dto.*;
 import com.example.userservice.dto.request.UserProfileUpdateRequest;
 import com.example.userservice.dto.response.UserResponse;
 import com.example.userservice.service.UserService;

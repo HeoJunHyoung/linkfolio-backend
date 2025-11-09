@@ -6,7 +6,7 @@ import org.springframework.cloud.openfeign.EnableFeignClients;
 import org.springframework.data.jpa.repository.config.EnableJpaAuditing;
 import org.springframework.scheduling.annotation.EnableAsync;
 
-@SpringBootApplication
+@SpringBootApplication(scanBasePackages = "com.example")
 @EnableJpaAuditing
 @EnableFeignClients
 public class PortfolioServiceApplication {

@@ -1,13 +1,13 @@
 package com.example.authservice.service.kafka;
 
 import com.example.authservice.config.KafkaTopics;
-import com.example.authservice.dto.event.UserProfileCreationFailureEvent;
-import com.example.authservice.dto.event.UserProfileCreationSuccessEvent;
 import com.example.authservice.entity.AuthUserEntity;
 import com.example.authservice.entity.enumerate.AuthStatus;
-import com.example.authservice.exception.BusinessException;
 import com.example.authservice.exception.ErrorCode;
 import com.example.authservice.repository.AuthUserRepository;
+import com.example.commonmodule.dto.event.UserProfileCreationFailureEvent;
+import com.example.commonmodule.dto.event.UserProfileCreationSuccessEvent;
+import com.example.commonmodule.exception.BusinessException;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.kafka.annotation.KafkaListener;

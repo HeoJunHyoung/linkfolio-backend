@@ -1,6 +1,6 @@
 package com.example.authservice.dto;
 
-import com.example.authservice.entity.enumerate.Role;
+import com.example.commonmodule.entity.enumerate.Role;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;

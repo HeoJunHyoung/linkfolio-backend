@@ -1,7 +1,6 @@
 package com.example.authservice.service;
 
 import com.example.authservice.dto.UserDto;
-import com.example.authservice.exception.BusinessException;
 import com.example.authservice.exception.ErrorCode;
 import com.example.authservice.util.JwtTokenProvider;
 import lombok.RequiredArgsConstructor;

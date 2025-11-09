@@ -1,6 +1,6 @@
 package com.example.userservice.dto.request;
 
-import com.example.userservice.entity.enumerate.Gender;
+import com.example.commonmodule.entity.enumerate.Gender;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 

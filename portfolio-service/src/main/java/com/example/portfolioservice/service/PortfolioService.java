@@ -1,10 +1,10 @@
 package com.example.portfolioservice.service;
 
+import com.example.commonmodule.exception.BusinessException;
 import com.example.portfolioservice.dto.request.PortfolioRequest;
 import com.example.portfolioservice.dto.response.PortfolioCardResponse;
 import com.example.portfolioservice.dto.response.PortfolioResponse;
 import com.example.portfolioservice.entity.PortfolioEntity;
-import com.example.portfolioservice.exception.BusinessException;
 import com.example.portfolioservice.exception.ErrorCode;
 import com.example.portfolioservice.repository.PortfolioRepository;
 import com.example.portfolioservice.util.PortfolioMapper;

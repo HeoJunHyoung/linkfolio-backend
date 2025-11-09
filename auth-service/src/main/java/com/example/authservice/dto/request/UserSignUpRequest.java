@@ -1,6 +1,6 @@
 package com.example.authservice.dto.request;
 
-import com.example.authservice.entity.enumerate.Gender;
+import com.example.commonmodule.entity.enumerate.Gender;
 import lombok.AccessLevel;
 import lombok.AllArgsConstructor;
 import lombok.Data;

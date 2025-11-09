@@ -1,7 +1,7 @@
 package com.example.authservice.dto;
 
 import com.example.authservice.entity.AuthUserEntity;
-import com.example.authservice.entity.enumerate.UserProvider;
+import com.example.commonmodule.entity.enumerate.UserProvider;
 import lombok.Builder;
 import lombok.Getter;
 
