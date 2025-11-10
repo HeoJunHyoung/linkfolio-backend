@@ -1,5 +1,6 @@
 package com.example.userservice.client.dto;
 
+import com.example.commonmodule.entity.enumerate.Gender;
 import lombok.Builder;
 import lombok.Data;
 
