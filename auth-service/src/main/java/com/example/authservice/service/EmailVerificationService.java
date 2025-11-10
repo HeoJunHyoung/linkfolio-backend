@@ -2,6 +2,8 @@ package com.example.authservice.service;
 
 import com.example.authservice.exception.ErrorCode;
 import com.example.authservice.repository.AuthUserRepository;
+import com.example.commonmodule.entity.enumerate.UserProvider;
+import com.example.commonmodule.exception.BusinessException;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.redis.core.RedisTemplate;

@@ -1,6 +1,6 @@
 package com.example.portfolioservice.config;
 
-import com.example.portfolioservice.filter.InternalHeaderAuthenticationFilter;
+import com.example.commonmodule.filter.InternalHeaderAuthenticationFilter;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;

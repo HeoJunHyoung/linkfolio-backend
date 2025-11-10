@@ -1,6 +1,7 @@
 package com.example.authservice.dto;
 
 import com.example.authservice.entity.AuthUserEntity;
+import com.example.commonmodule.entity.enumerate.Role;
 import lombok.Getter;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;

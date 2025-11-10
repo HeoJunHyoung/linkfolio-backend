@@ -1,6 +1,6 @@
 package com.example.portfolioservice.dto.response;
 
-import com.example.portfolioservice.entity.enumerate.Gender;
+import com.example.commonmodule.entity.enumerate.Gender;
 import lombok.Builder;
 import lombok.Data;
 
