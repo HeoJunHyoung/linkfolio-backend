@@ -9,4 +9,7 @@ public interface KafkaTopics {
 
     // User -> Auth (프로필 생성 실패 - 보상)
     String USER_PROFILE_CREATED_FAILURE = "user-profile-created-failure";
+
+    // User -> Auth (프로필 변경 사항 전파)
+    String USER_PROFILE_UPDATED = "user-profile-updated";
 }

@@ -81,4 +81,8 @@ public class AuthUserEntity extends BaseEntity {
     public void updatePassword(String newEncodedPassword) {
         this.password = newEncodedPassword;
     }
+
+    public void updateName(String name) {
+        this.name = name;
+    }
 }
