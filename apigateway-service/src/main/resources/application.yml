@@ -3,6 +3,8 @@ server:
   forward-headers-strategy: NATIVE
 
 spring:
+  main:
+    web-application-type: reactive
   application:
     name: apigateway-service
   cloud:
