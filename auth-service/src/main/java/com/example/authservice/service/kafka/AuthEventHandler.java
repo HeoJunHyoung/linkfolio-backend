@@ -7,6 +7,7 @@ import com.example.authservice.exception.ErrorCode;
 import com.example.authservice.repository.AuthUserRepository;
 import com.example.commonmodule.dto.event.UserProfileCreationFailureEvent;
 import com.example.commonmodule.dto.event.UserProfileCreationSuccessEvent;
+import com.example.commonmodule.dto.event.UserProfilePublishedEvent;
 import com.example.commonmodule.exception.BusinessException;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -72,4 +73,29 @@ public class AuthEventHandler {
                     authUser.getStatus(), event.getUserId());
         }
     }
+
+    @Transactional
+    @KafkaListener(topics = KafkaTopics.USER_PROFILE_UPDATED, groupId = "auth-consumer-group")
+    public void handleUserProfileUpdate(UserProfilePublishedEvent event) {
+        log.info("[Data Sync] 프로필 업데이트 이벤트 수신. UserId: {}", event.getUserId());
+
+        // SAGA 실패로 CANCELLED 상태인 유저는 업데이트할 필요 없음
+        AuthUserEntity authUser = authUserRepository.findById(event.getUserId())
+                .orElse(null); // SAGA 실패로 롤백된 유저는 없을 수 있으므로 orElse(null)
+
+        if (authUser == null) {
+            log.warn("[Data Sync] 이벤트를 수신했으나 AuthUser가 존재하지 않음 (SAGA 롤백된 유저일 수 있음). UserId: {}", event.getUserId());
+            return;
+        }
+
+        // 멱등성: 이름이 실제로 변경되었을 때만 DB 업데이트 수행
+        if (event.getName() != null && !event.getName().equals(authUser.getName())) {
+            authUser.updateName(event.getName());
+            authUserRepository.save(authUser);
+            log.info("[Data Sync] AuthUser 'name' 필드 동기화 완료. UserId: {}", event.getUserId());
+        } else {
+            log.info("[Data Sync] 이름 변경 사항 없음. 스킵. UserId: {}", event.getUserId());
+        }
+    }
+
 }

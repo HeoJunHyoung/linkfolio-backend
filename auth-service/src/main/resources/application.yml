@@ -37,7 +37,8 @@ spring:
       properties:
         spring.json.trusted.packages: "com.example.commonmodule.dto.event"
         spring.json.type.mapping: "com.example.commonmodule.dto.event.UserProfileCreationSuccessEvent:com.example.commonmodule.dto.event.UserProfileCreationSuccessEvent, \
-                                                com.example.commonmodule.dto.event.UserProfileCreationFailureEvent:com.example.commonmodule.dto.event.UserProfileCreationFailureEvent"
+                                                        com.example.commonmodule.dto.event.UserProfileCreationFailureEvent:com.example.commonmodule.dto.event.UserProfileCreationFailureEvent, \
+                                                        com.example.commonmodule.dto.event.UserProfilePublishedEvent:com.example.commonmodule.dto.event.UserProfilePublishedEvent"
 
     producer: #  Producer 설정 (user-service로 요청을 보내기 위함)
       bootstrap-servers: ${SPRING_KAFKA_PRODUCER_BOOTSTRAP_SERVERS}
