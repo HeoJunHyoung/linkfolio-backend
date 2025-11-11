@@ -14,4 +14,5 @@ public class PortfolioCardResponse {
     private String photoUrl;
     private String oneLiner; // 한 마디
     private String content;
+    private String position;
 }
