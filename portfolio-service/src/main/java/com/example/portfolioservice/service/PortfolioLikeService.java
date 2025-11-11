@@ -70,17 +70,12 @@ public class PortfolioLikeService {
             return; // 멱등성
         }
 
-        // 1. Portfolio 엔티티에서 likeCount 업데이트 (편의 메서드 사용)
+        // 1. Portfolio 엔티티에서 likeCount 업데이트 및 연관관계 제거
         portfolio.removeLike(portfolioLike);
 
         // 2. PortfolioLike 엔티티 삭제
-        //    (CascadeType.ALL과 orphanRemoval=true로 인해 portfolio.removeLike()만 호출해도
-        //     portfolioLikeRepository.delete(portfolioLike)가 실행될 수 있으나,
-        //     엔티티 소유권을 명확히 하기 위해 둘 다 호출하는 것이 안전할 수 있습니다.
-        //     혹은 portfolio.removeLike() 내부에서 likeCount만 변경하고, 여기서 직접 delete합니다.)
-        // [정정] removeLike는 likeCount만 변경하고, delete는 Repository가 직접 수행
-        portfolio.updateLikeCount(-1); // likeCount만 변경
-        portfolioLikeRepository.delete(portfolioLike); // Repository가 직접 삭제
+        // ㄴ portfolio.removeLike()가 리스트에서만 제거하므로, Repository를 통한 DB 삭제는 별도 수행
+        portfolioLikeRepository.delete(portfolioLike);
 
         log.info("관심 취소 완료. UserId: {}, PortfolioId: {}", authUserId, portfolioId);
     }
