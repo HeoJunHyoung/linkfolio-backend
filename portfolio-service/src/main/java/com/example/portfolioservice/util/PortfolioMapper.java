@@ -7,24 +7,22 @@ import org.mapstruct.Mapper;
 import org.mapstruct.Mapping;
 import org.mapstruct.Named;
 
-import java.time.LocalDate;
-import java.time.Period;
-import java.time.format.DateTimeFormatter;
-import java.util.Arrays;         // 1. import 추가
-import java.util.Collections;  // 2. import 추가
-import java.util.List;         // 3. import 추가
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.List;
 
 @Mapper(componentModel = "spring")
 public interface PortfolioMapper {
 
     // Entity -> 상세 응답 DTO
+    @Mapping(source = "hashtags", target = "hashtags", qualifiedByName = "stringToHashtagList")
     PortfolioResponse toPortfolioResponse(PortfolioEntity entity);
 
     // Entity -> 카드 응답 DTO
     @Mapping(source = "hashtags", target = "hashtags", qualifiedByName = "stringToHashtagList")
     PortfolioCardResponse toPortfolioCardResponse(PortfolioEntity entity);
 
-    // 쉼표로 구분된 문자열을 List<String>으로 변환하는 헬퍼 메서드 추가
+    // 쉼표로 구분된 문자열을 List<String>으로 변환하는 헬퍼 메서드 (재사용)
     @Named("stringToHashtagList")
     default List<String> stringToHashtagList(String hashtags) {
         if (hashtags == null || hashtags.isEmpty()) {
