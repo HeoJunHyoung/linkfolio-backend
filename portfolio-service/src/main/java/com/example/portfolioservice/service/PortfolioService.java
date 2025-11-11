@@ -48,7 +48,6 @@ public class PortfolioService {
     @Transactional // 쓰기 작업이므로 readOnly=false
     public PortfolioResponse createOrUpdateMyPortfolio(Long authUserId, PortfolioRequest request) {
 
-        // 자가 치유 로직(findOrCreate...) 대신, 단순 조회로 변경
         PortfolioEntity portfolio = portfolioRepository.findById(authUserId)
                 .orElseThrow(() -> {
                     log.warn("PortfolioEntity가 존재하지 않음 (createOrUpdate). Kafka 이벤트 처리 지연 또는 실패. UserId: {}", authUserId);
@@ -60,7 +59,8 @@ public class PortfolioService {
         portfolio.updateUserInput(
                 request.getPhotoUrl(),
                 request.getOneLiner(),
-                request.getContent()
+                request.getContent(),
+                request.getPosition()
         );
 
         // 3. DB 저장 (Update) (2차 저장)

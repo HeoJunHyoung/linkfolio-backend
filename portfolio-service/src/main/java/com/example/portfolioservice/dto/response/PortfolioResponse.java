@@ -17,6 +17,7 @@ public class PortfolioResponse {
     private String photoUrl;
     private String oneLiner;
     private String content;
+    private String position;
 
     // UI 분기 처리를 위한 상태
     private boolean isPublished;

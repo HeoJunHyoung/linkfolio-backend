@@ -44,13 +44,16 @@ public class PortfolioEntity extends BaseEntity {
     @Column(name = "content")
     private String content; // 포트폴리오 내용 (PR 등)
 
+    @Column(name = "position")
+    private String position; // 포지션 (예: 프론트엔드 / 백엔드)
+
     // --- 포트폴리오 상태 관리 ---
     @Column(name = "is_published", nullable = false)
     @ColumnDefault("false") // DB 기본값
     private boolean isPublished = false; // JPA 기본값
 
     @Builder
-    public PortfolioEntity(Long userId, String name, String email, String birthdate, Gender gender, String photoUrl, String oneLiner, String content, boolean isPublished) {
+    public PortfolioEntity(Long userId, String name, String email, String birthdate, Gender gender, String photoUrl, String oneLiner, String content, String position, boolean isPublished) {
         this.userId = userId;
         this.name = name;
         this.email = email;
@@ -59,6 +62,7 @@ public class PortfolioEntity extends BaseEntity {
         this.photoUrl = photoUrl;
         this.oneLiner = oneLiner;
         this.content = content;
+        this.position = position;
         this.isPublished = isPublished;
     }
 
@@ -71,10 +75,11 @@ public class PortfolioEntity extends BaseEntity {
     }
 
     // 사용자가 입력한 포트폴리오 정보 갱신
-    public void updateUserInput(String photoUrl, String oneLiner, String content) {
+    public void updateUserInput(String photoUrl, String oneLiner, String content, String position) {
         this.photoUrl = photoUrl;
         this.oneLiner = oneLiner;
         this.content = content;
+        this.position = position;
 
         // 사용자가 한 번이라도 저장하면 '발행' 상태로 간주
         if (!this.isPublished) {
