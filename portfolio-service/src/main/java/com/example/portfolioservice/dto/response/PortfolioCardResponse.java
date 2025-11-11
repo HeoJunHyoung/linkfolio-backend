@@ -9,8 +9,10 @@ import lombok.Data;
 public class PortfolioCardResponse {
     private Long userId;
     private String name;
-    private String birthdate;
+    private String age;
     private Gender gender;
     private String photoUrl;
     private String oneLiner; // 한 마디
+    private String content;
+    private String position;
 }

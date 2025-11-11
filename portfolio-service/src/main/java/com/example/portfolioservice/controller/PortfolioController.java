@@ -12,6 +12,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Slice;
 import org.springframework.data.web.PageableDefault;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
@@ -45,8 +46,8 @@ public class PortfolioController {
 
     @Operation(summary = "포트폴리오 카드 목록 조회 (메인 페이지)", description = "인증 불필요. 캐시된 정보로 응답합니다.")
     @GetMapping("/portfolios")
-    public ResponseEntity<Page<PortfolioCardResponse>> getPortfolioListApi(@PageableDefault(size = 20) Pageable pageable) {
-        Page<PortfolioCardResponse> response = portfolioService.getPortfolioList(pageable);
+    public ResponseEntity<Slice<PortfolioCardResponse>> getPortfolioListApi(@PageableDefault(size = 8) Pageable pageable) {
+        Slice<PortfolioCardResponse> response = portfolioService.getPortfolioList(pageable);
         return ResponseEntity.ok(response);
     }
 

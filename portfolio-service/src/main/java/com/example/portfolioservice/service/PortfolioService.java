@@ -12,6 +12,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Slice;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -48,7 +49,6 @@ public class PortfolioService {
     @Transactional // 쓰기 작업이므로 readOnly=false
     public PortfolioResponse createOrUpdateMyPortfolio(Long authUserId, PortfolioRequest request) {
 
-        // 자가 치유 로직(findOrCreate...) 대신, 단순 조회로 변경
         PortfolioEntity portfolio = portfolioRepository.findById(authUserId)
                 .orElseThrow(() -> {
                     log.warn("PortfolioEntity가 존재하지 않음 (createOrUpdate). Kafka 이벤트 처리 지연 또는 실패. UserId: {}", authUserId);
@@ -60,7 +60,8 @@ public class PortfolioService {
         portfolio.updateUserInput(
                 request.getPhotoUrl(),
                 request.getOneLiner(),
-                request.getContent()
+                request.getContent(),
+                request.getPosition()
         );
 
         // 3. DB 저장 (Update) (2차 저장)
@@ -72,9 +73,9 @@ public class PortfolioService {
     /**
      * 포트폴리오 카드 목록 조회 (메인 페이지 - 인증 불필요)
      */
-    public Page<PortfolioCardResponse> getPortfolioList(Pageable pageable) {
+    public Slice<PortfolioCardResponse> getPortfolioList(Pageable pageable) {
         // Feign 호출 없이, '발행(isPublished=true)'된 데이터만 조회
-        Page<PortfolioEntity> page = portfolioRepository.findAllByIsPublished(true, pageable);
+        Slice<PortfolioEntity> page = portfolioRepository.findAllByIsPublished(true, pageable);
         return page.map(portfolioMapper::toPortfolioCardResponse);
     }
 
