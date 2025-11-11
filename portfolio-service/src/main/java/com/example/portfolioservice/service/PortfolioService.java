@@ -87,6 +87,7 @@ public class PortfolioService {
     /**
      * 포트폴리오 상세 조회 (상세보기 - 인증 불필요)
      */
+    @Transactional
     public PortfolioDetailsResponse getPortfolioDetails(Long userId, AuthUser authUser) {
         // Feign 호출 없이, 캐시된 DB 데이터만으로 응답
         PortfolioEntity portfolio = portfolioRepository.findById(userId)
