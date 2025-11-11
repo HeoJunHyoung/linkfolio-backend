@@ -9,6 +9,7 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import org.hibernate.annotations.ColumnDefault;
 
+import java.util.ArrayList;
 import java.util.List;
 
 @Entity
@@ -57,6 +58,21 @@ public class PortfolioEntity extends BaseEntity {
     @ColumnDefault("false") // DB 기본값
     private boolean isPublished = false; // JPA 기본값
 
+    @Column(name = "view_count", nullable = false)
+    @ColumnDefault("0")
+    private Long viewCount = 0L;
+
+    @Column(name = "like_count", nullable = false)
+    @ColumnDefault("0")
+    private Long likeCount = 0L;
+
+    @OneToMany(mappedBy = "portfolio", cascade = CascadeType.ALL, orphanRemoval = true)
+    private List<PortfolioLikeEntity> portfolioLikes = new ArrayList<>();
+
+
+
+
+    // == 생성자 == //
     @Builder
     public PortfolioEntity(Long userId, String name, String email, String birthdate, Gender gender, String photoUrl, String oneLiner, String content, String position, String hashtags, boolean isPublished) {
         this.userId = userId;
@@ -70,6 +86,8 @@ public class PortfolioEntity extends BaseEntity {
         this.position = position;
         this.hashtags = hashtags;
         this.isPublished = isPublished;
+        this.viewCount = 0L;
+        this.likeCount = 0L;
     }
 
     // Kafka 이벤트 또는 Feign으로 캐시된 정보 갱신
@@ -78,6 +96,15 @@ public class PortfolioEntity extends BaseEntity {
         this.email = email;
         this.birthdate = birthdate;
         this.gender = gender;
+    }
+
+    // --- 내부 헬퍼 메서드 --- //
+    public void increaseViewCount() {
+        this.viewCount++;
+    }
+
+    public void updateLikeCount(int delta) {
+        this.likeCount = Math.max(0, this.likeCount + delta); // 0 미만이 되지 않도록 보장
     }
 
     // 사용자가 입력한 포트폴리오 정보 갱신
@@ -98,5 +125,16 @@ public class PortfolioEntity extends BaseEntity {
         if (!this.isPublished) {
             this.isPublished = true;
         }
+    }
+
+    // --- 연관관계 편의 메서드 --- //
+    public void addLike(PortfolioLikeEntity portfolioLike) {
+        this.portfolioLikes.add(portfolioLike);
+        updateLikeCount(1);
+    }
+
+    public void removeLike(PortfolioLikeEntity portfolioLike) {
+        this.portfolioLikes.remove(portfolioLike);
+        updateLikeCount(-1);
     }
 }

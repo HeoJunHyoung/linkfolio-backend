@@ -1,20 +1,23 @@
 package com.example.portfolioservice.service;
 
+import com.example.commonmodule.dto.security.AuthUser;
 import com.example.commonmodule.exception.BusinessException;
 import com.example.portfolioservice.dto.request.PortfolioRequest;
 import com.example.portfolioservice.dto.response.PortfolioCardResponse;
-import com.example.portfolioservice.dto.response.PortfolioResponse;
+import com.example.portfolioservice.dto.response.PortfolioDetailsResponse;
 import com.example.portfolioservice.entity.PortfolioEntity;
 import com.example.portfolioservice.exception.ErrorCode;
+import com.example.portfolioservice.repository.PortfolioLikeRepository;
 import com.example.portfolioservice.repository.PortfolioRepository;
 import com.example.portfolioservice.util.PortfolioMapper;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Slice;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+
+import java.util.List;
 
 @Service
 @RequiredArgsConstructor
@@ -24,12 +27,13 @@ public class PortfolioService {
 
     private final PortfolioRepository portfolioRepository;
     private final PortfolioMapper portfolioMapper;
+    private final PortfolioLikeRepository portfolioLikeRepository;
 
     /**
      * 내 포트폴리오 조회 (마이페이지)
      */
     @Transactional(readOnly = true)
-    public PortfolioResponse getMyPortfolio(Long authUserId) {
+    public PortfolioDetailsResponse getMyPortfolio(Long authUserId) {
         // Kafka 이벤트 처리가 완료되어 엔티티가 존재한다고 가정
         PortfolioEntity portfolio = portfolioRepository.findById(authUserId)
                 .orElseThrow(() -> {
@@ -47,7 +51,7 @@ public class PortfolioService {
      * 포트폴리오 생성/수정 (마이페이지 [등록하기] 또는 [수정하기] 버튼)
      */
     @Transactional
-    public PortfolioResponse createOrUpdateMyPortfolio(Long authUserId, PortfolioRequest request) {
+    public PortfolioDetailsResponse createOrUpdateMyPortfolio(Long authUserId, PortfolioRequest request) {
 
         PortfolioEntity portfolio = portfolioRepository.findById(authUserId)
                 .orElseThrow(() -> {
@@ -83,7 +87,7 @@ public class PortfolioService {
     /**
      * 포트폴리오 상세 조회 (상세보기 - 인증 불필요)
      */
-    public PortfolioResponse getPortfolioDetails(Long userId) {
+    public PortfolioDetailsResponse getPortfolioDetails(Long userId, AuthUser authUser) {
         // Feign 호출 없이, 캐시된 DB 데이터만으로 응답
         PortfolioEntity portfolio = portfolioRepository.findById(userId)
                 .orElseThrow(() -> new BusinessException(ErrorCode.PORTFOLIO_NOT_FOUND));
@@ -94,6 +98,28 @@ public class PortfolioService {
             throw new BusinessException(ErrorCode.PORTFOLIO_NOT_FOUND);
         }
 
-        return portfolioMapper.toPortfolioResponse(portfolio);
+        portfolio.increaseViewCount();
+
+        boolean isLiked = false;
+        if (authUser != null) {
+            // 로그인한 상태라면, Like 테이블을 조회하여 관심 여부 확인
+            isLiked = portfolioLikeRepository.existsByUserIdAndPortfolio(authUser.getUserId(), portfolio);
+        }
+
+        List<String> hashtags = portfolioMapper.stringToHashtagList(portfolio.getHashtags());
+        return PortfolioDetailsResponse.builder()
+                .userId(portfolio.getUserId())
+                .name(portfolio.getName())
+                .email(portfolio.getEmail())
+                .birthdate(portfolio.getBirthdate())
+                .gender(portfolio.getGender())
+                .photoUrl(portfolio.getPhotoUrl())
+                .oneLiner(portfolio.getOneLiner())
+                .content(portfolio.getContent())
+                .position(portfolio.getPosition())
+                .hashtags(hashtags)
+                .isPublished(portfolio.isPublished())
+                .isLiked(isLiked)
+                .build();
     }
 }
