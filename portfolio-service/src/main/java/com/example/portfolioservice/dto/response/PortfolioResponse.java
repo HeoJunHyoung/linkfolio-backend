@@ -4,6 +4,8 @@ import com.example.commonmodule.entity.enumerate.Gender;
 import lombok.Builder;
 import lombok.Data;
 
+import java.util.List;
+
 @Data
 @Builder
 public class PortfolioResponse {
@@ -18,6 +20,7 @@ public class PortfolioResponse {
     private String oneLiner;
     private String content;
     private String position;
+    private List<String> hashtags;
 
     // UI 분기 처리를 위한 상태
     private boolean isPublished;
