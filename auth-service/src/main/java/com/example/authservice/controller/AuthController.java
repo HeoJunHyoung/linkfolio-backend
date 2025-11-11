@@ -150,6 +150,20 @@ public class AuthController {
         return ResponseEntity.ok().build();
     }
 
+    @Operation(summary = "마이페이지 비밀번호 변경", description = "현재 로그인된 사용자의 비밀번호를 변경합니다. (인증 필요)")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "비밀번호 변경 성공"),
+            @ApiResponse(responseCode = "400", description = "기존 비밀번호 불일치 또는 새 비밀번호 불일치 [U002]", content = @Content),
+            @ApiResponse(responseCode = "401", description = "인증 실패 (게이트웨이)", content = @Content),
+            @ApiResponse(responseCode = "404", description = "사용자 없음 [U001]", content = @Content)
+    })
+    @SecurityRequirement(name = "Bearer Authentication")
+    @PatchMapping("/password")
+    public ResponseEntity<Void> changePasswordApi(@RequestHeader(value = "X-User-Id") Long userId,
+                                                  @RequestBody PasswordChangeRequest request) {
+        authService.changePassword(userId, request);
+        return ResponseEntity.ok().build();
+    }
 
     @Operation(summary = "로그아웃", description = "서버의 Refresh Token을 만료시키고 쿠키를 삭제합니다.")
     @ApiResponse(responseCode = "200", description = "로그아웃 성공")
@@ -157,9 +171,6 @@ public class AuthController {
     @PostMapping("/logout")
     public ResponseEntity<Void> logout(@RequestHeader(value = "X-User-Id", required = false) Long gatewayUserId,
                                        HttpServletResponse response) {
-        // 참고: 로그아웃은 게이트웨이를 통과하지 않고 바로 호출될 수도 (토큰 만료 등)
-        // 게이트웨이가 준 ID가 있으면 그걸 쓰고, 없으면 쿠키의 RT로 파싱 (RefreshTokenService가 담당)
-        // 여기서는 단순화하여 RT 쿠키만 만료시킴
 
         if (gatewayUserId != null) {
             refreshTokenService.deleteRefreshToken(gatewayUserId);
