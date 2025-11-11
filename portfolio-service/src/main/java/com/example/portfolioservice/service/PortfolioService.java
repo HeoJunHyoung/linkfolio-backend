@@ -12,6 +12,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Slice;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -72,9 +73,9 @@ public class PortfolioService {
     /**
      * 포트폴리오 카드 목록 조회 (메인 페이지 - 인증 불필요)
      */
-    public Page<PortfolioCardResponse> getPortfolioList(Pageable pageable) {
+    public Slice<PortfolioCardResponse> getPortfolioList(Pageable pageable) {
         // Feign 호출 없이, '발행(isPublished=true)'된 데이터만 조회
-        Page<PortfolioEntity> page = portfolioRepository.findAllByIsPublished(true, pageable);
+        Slice<PortfolioEntity> page = portfolioRepository.findAllByIsPublished(true, pageable);
         return page.map(portfolioMapper::toPortfolioCardResponse);
     }
 
