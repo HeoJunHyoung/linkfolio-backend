@@ -25,6 +25,7 @@ public class AuthService {
     private final BCryptPasswordEncoder passwordEncoder;
     private final EmailVerificationService emailVerificationService;
     private final UserEventProducer userEventProducer;
+    private final RefreshTokenService refreshTokenService;
 
     /**
      * 회원가입 (Auth-Service가 주관)
@@ -166,6 +167,33 @@ public class AuthService {
 
         // 5. (Auth) 사용 완료된 '검증 완료' 상태 삭제
         emailVerificationService.deletePasswordResetState(request.getEmail());
+    }
+
+
+    // 마이페이지 > 회원 정보 변경 > 비밀번호 변경
+    @Transactional
+    public void changePassword(Long userId, PasswordChangeRequest request) {
+        // 1. (Auth) 유저 조회
+        AuthUserEntity user = authUserRepository.findById(userId)
+                .orElseThrow(() -> new BusinessException(ErrorCode.USER_NOT_FOUND));
+
+        // 2. (Auth) 기존 비밀번호 검증
+        if (!passwordEncoder.matches(request.getCurrentPassword(), user.getPassword())) {
+            // '비밀번호 불일치' 코드를 재사용
+            throw new BusinessException(ErrorCode.PASSWORD_MISMATCH);
+        }
+
+        // 3. (Auth) 새 비밀번호 일치 검증 (기존 메서드 재사용)
+        validatePasswordMatch(request.getNewPassword(), request.getNewPasswordConfirm());
+
+        // 4. (Auth) 새 비밀번호 암호화 및 저장
+        user.updatePassword(passwordEncoder.encode(request.getNewPassword()));
+        authUserRepository.save(user);
+
+        // 5. (Security) 비밀번호 변경 시, 모든 Refresh Token 강제 만료 -> 사용자는 모든 디바이스에서 다시 로그인해야 함.
+        // TODO 이거 클라우드 환경으로 전환 후 적용해야 할 듯?
+        // refreshTokenService.deleteRefreshToken(userId);
+        log.info("마이페이지 비밀번호 변경 완료. Refresh Token 강제 만료. UserId: {}", userId);
     }
 
     // == 내부 헬퍼 메서드 == //
