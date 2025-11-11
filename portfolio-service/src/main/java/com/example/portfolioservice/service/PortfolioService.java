@@ -46,7 +46,7 @@ public class PortfolioService {
     /**
      * 포트폴리오 생성/수정 (마이페이지 [등록하기] 또는 [수정하기] 버튼)
      */
-    @Transactional // 쓰기 작업이므로 readOnly=false
+    @Transactional
     public PortfolioResponse createOrUpdateMyPortfolio(Long authUserId, PortfolioRequest request) {
 
         PortfolioEntity portfolio = portfolioRepository.findById(authUserId)
@@ -61,7 +61,8 @@ public class PortfolioService {
                 request.getPhotoUrl(),
                 request.getOneLiner(),
                 request.getContent(),
-                request.getPosition()
+                request.getPosition(),
+                request.getHashtags()
         );
 
         // 3. DB 저장 (Update) (2차 저장)

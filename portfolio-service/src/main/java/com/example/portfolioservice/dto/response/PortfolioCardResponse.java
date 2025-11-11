@@ -1,18 +1,18 @@
 package com.example.portfolioservice.dto.response;
 
-import com.example.commonmodule.entity.enumerate.Gender;
 import lombok.Builder;
 import lombok.Data;
+
+import java.util.List;
 
 @Data
 @Builder
 public class PortfolioCardResponse {
     private Long userId;
     private String name;
-    private String age;
-    private Gender gender;
-    private String photoUrl;
-    private String oneLiner; // 한 마디
-    private String content;
+    private String email;
     private String position;
+    private String photoUrl;
+    private String oneLiner;
+    private List<String> hashtags;
 }
