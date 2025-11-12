@@ -77,7 +77,7 @@ app:
       - /auth-service/login/oauth2/code/**
       - /auth-service/error
       - /portfolio-service/portfolios
-      - /portfolio-service/portfolios/**
+      - /portfolio-service/portfolios/{portfolioId:\d+}
 
 # JWT Token Settings
 jwt:

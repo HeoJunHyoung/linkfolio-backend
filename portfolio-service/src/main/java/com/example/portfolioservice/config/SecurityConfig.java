@@ -34,7 +34,7 @@ public class SecurityConfig {
 
                         // 메인 페이지 목록 및 상세 조회는 인증 없이 허용
                         .requestMatchers(HttpMethod.GET, "/portfolios").permitAll()
-                        .requestMatchers(HttpMethod.GET, "/portfolios/{userId:\\d+}").permitAll() // like가 아닌 숫자 ID만 허용
+                        .requestMatchers(HttpMethod.GET, "/portfolios/{portfolioId:\\d+}").permitAll()
 
                         // 그 외 모든 요청은 기본적으로 인증 필요
                         .anyRequest().authenticated()
