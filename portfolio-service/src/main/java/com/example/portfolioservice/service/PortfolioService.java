@@ -34,12 +34,9 @@ public class PortfolioService {
      */
     @Transactional(readOnly = true)
     public PortfolioDetailsResponse getMyPortfolio(Long authUserId) {
-        // Kafka 이벤트 처리가 완료되어 엔티티가 존재한다고 가정
-        PortfolioEntity portfolio = portfolioRepository.findById(authUserId)
+        PortfolioEntity portfolio = portfolioRepository.findByUserId(authUserId)
                 .orElseThrow(() -> {
-                    // Kafka 이벤트가 아직 처리되지 않았거나 실패한 경우 (또는 드물게 아직 처리 전)
                     log.warn("PortfolioEntity가 존재하지 않음. Kafka 이벤트 처리 지연 또는 실패. UserId: {}", authUserId);
-                    // PORTFOLIO_NOT_FOUND가 P001 코드로 "포트폴리오를 찾을 수 없거나 발행되지 않았습니다."를 반환
                     return new BusinessException(ErrorCode.PORTFOLIO_NOT_FOUND);
                 });
 
@@ -53,7 +50,7 @@ public class PortfolioService {
     @Transactional
     public PortfolioDetailsResponse createOrUpdateMyPortfolio(Long authUserId, PortfolioRequest request) {
 
-        PortfolioEntity portfolio = portfolioRepository.findById(authUserId)
+        PortfolioEntity portfolio = portfolioRepository.findByUserId(authUserId)
                 .orElseThrow(() -> {
                     log.warn("PortfolioEntity가 존재하지 않음 (createOrUpdate). Kafka 이벤트 처리 지연 또는 실패. UserId: {}", authUserId);
                     return new BusinessException(ErrorCode.PORTFOLIO_NOT_FOUND);
@@ -88,14 +85,14 @@ public class PortfolioService {
      * 포트폴리오 상세 조회 (상세보기 - 인증 불필요)
      */
     @Transactional
-    public PortfolioDetailsResponse getPortfolioDetails(Long userId, AuthUser authUser) {
+    public PortfolioDetailsResponse getPortfolioDetails(Long portfolioId, AuthUser authUser) {
         // Feign 호출 없이, 캐시된 DB 데이터만으로 응답
-        PortfolioEntity portfolio = portfolioRepository.findById(userId)
+        PortfolioEntity portfolio = portfolioRepository.findById(portfolioId)
                 .orElseThrow(() -> new BusinessException(ErrorCode.PORTFOLIO_NOT_FOUND));
 
         // 발행(isPublished=true)되지 않은 포트폴리오는 찾을 수 없는 것으로 처리
         if (!portfolio.isPublished()) {
-            log.warn("아직 발행되지 않은 포트폴리오 접근 시도. UserId: {}", userId);
+            log.warn("아직 발행되지 않은 포트폴리오 접근 시도. UserId: {}", portfolioId);
             throw new BusinessException(ErrorCode.PORTFOLIO_NOT_FOUND);
         }
 
@@ -104,7 +101,7 @@ public class PortfolioService {
         boolean isLiked = false;
         if (authUser != null) {
             // 로그인한 상태라면, Like 테이블을 조회하여 관심 여부 확인
-            isLiked = portfolioLikeRepository.existsByUserIdAndPortfolio(authUser.getUserId(), portfolio);
+            isLiked = portfolioLikeRepository.existsByLikerIdAndPortfolio(authUser.getUserId(), portfolio);
         }
 
         List<String> hashtags = portfolioMapper.stringToHashtagList(portfolio.getHashtags());

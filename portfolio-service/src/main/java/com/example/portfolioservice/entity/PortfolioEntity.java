@@ -19,8 +19,12 @@ import java.util.List;
 public class PortfolioEntity extends BaseEntity {
 
     @Id
-    @Column(name = "user_id") // user-service의 PK와 동일
-    private Long userId;
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @Column(name = "portfolio_id")
+    private Long portfolioId;
+
+    @Column(name = "user_id", unique = true, nullable = false)
+    private Long userId; // 2. 소유자를 나타내는 'userId' 컬럼 (Unique 제약조건으로 1:1 유지)
 
     // --- user-service에서 캐싱(비정규화)된 정보 ---
     @Column(name = "name", nullable = false)
@@ -70,8 +74,6 @@ public class PortfolioEntity extends BaseEntity {
     private List<PortfolioLikeEntity> portfolioLikes = new ArrayList<>();
 
 
-
-
     // == 생성자 == //
     @Builder
     public PortfolioEntity(Long userId, String name, String email, String birthdate, Gender gender, String photoUrl, String oneLiner, String content, String position, String hashtags, boolean isPublished) {
@@ -90,7 +92,7 @@ public class PortfolioEntity extends BaseEntity {
         this.likeCount = 0L;
     }
 
-    // Kafka 이벤트 또는 Feign으로 캐시된 정보 갱신
+    // Kafka 이벤트로 캐시된 정보 갱신
     public void updateCache(String name, String email, String birthdate, Gender gender) {
         this.name = name;
         this.email = email;

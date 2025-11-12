@@ -54,10 +54,10 @@ public class PortfolioController {
     }
 
     @Operation(summary = "특정 포트폴리오 상세 조회 (상세보기)", description = "인증 불필요. 캐시된 정보로 응답합니다.")
-    @GetMapping("/portfolios/{userId}")
-    public ResponseEntity<PortfolioDetailsResponse> getPortfolioDetailsApi(@PathVariable("userId") Long userId,
+    @GetMapping("/portfolios/{portfolioId}")
+    public ResponseEntity<PortfolioDetailsResponse> getPortfolioDetailsApi(@PathVariable("portfolioId") Long portfolioId,
                                                                            @AuthenticationPrincipal AuthUser authUser) { // 만약 로그인 안됐으면 알아서 null 값 처리 해줌 (SecurityConfig에 permitAll() 설정 해줬음)
-        PortfolioDetailsResponse response = portfolioService.getPortfolioDetails(userId, authUser);
+        PortfolioDetailsResponse response = portfolioService.getPortfolioDetails(portfolioId, authUser);
         return ResponseEntity.ok(response);
     }
 

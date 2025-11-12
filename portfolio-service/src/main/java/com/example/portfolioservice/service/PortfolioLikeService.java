@@ -38,7 +38,7 @@ public class PortfolioLikeService {
         }
 
         // 이미 좋아요를 눌렀는지 확인
-        if (portfolioLikeRepository.existsByUserIdAndPortfolio(authUserId, portfolio)) {
+        if (portfolioLikeRepository.existsByLikerIdAndPortfolio(authUserId, portfolio)) {
             log.warn("이미 관심 추가된 포트폴리오입니다. UserId: {}, PortfolioId: {}", authUserId, portfolioId);
             return; // 멱등성을 위해 에러 대신 정상 반환
         }
@@ -62,7 +62,7 @@ public class PortfolioLikeService {
                 .orElseThrow(() -> new BusinessException(ErrorCode.PORTFOLIO_NOT_FOUND));
 
         // 삭제할 PortfolioLike 엔티티 조회
-        PortfolioLikeEntity portfolioLike = portfolioLikeRepository.findByUserIdAndPortfolio(authUserId, portfolio)
+        PortfolioLikeEntity portfolioLike = portfolioLikeRepository.findByLikerIdIdAndPortfolio(authUserId, portfolio)
                 .orElse(null);
 
         if (portfolioLike == null) {
@@ -85,7 +85,7 @@ public class PortfolioLikeService {
      */
     @Transactional(readOnly = true)
     public Slice<PortfolioCardResponse> getMyLikedPortfolios(Long authUserId, Pageable pageable) {
-        Slice<PortfolioLikeEntity> likes = portfolioLikeRepository.findAllByUserId(authUserId, pageable);
+        Slice<PortfolioLikeEntity> likes = portfolioLikeRepository.findAllByLikerId(authUserId, pageable);
 
         // PortfolioLikeEntity Slice -> PortfolioEntity Slice -> PortfolioCardResponse Slice로 변환
         return likes.map(portfolioLike -> portfolioMapper.toPortfolioCardResponse(portfolioLike.getPortfolio()));

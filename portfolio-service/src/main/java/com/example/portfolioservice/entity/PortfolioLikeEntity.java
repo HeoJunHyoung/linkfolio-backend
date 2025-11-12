@@ -10,7 +10,7 @@ import lombok.NoArgsConstructor;
 @Table(name = "portfolio_like", uniqueConstraints = {
         @UniqueConstraint(
                 name = "uk_user_portfolio",
-                columnNames = {"user_id", "portfolio_id"}
+                columnNames = {"liker_id", "portfolio_id"}
         )
 })
 @Entity
@@ -22,21 +22,21 @@ public class PortfolioLikeEntity extends BaseEntity {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @Column(name = "user_id", nullable = false)
-    private Long userId; // 관심을 누른 사용자의 ID
+    @Column(name = "liker_id", nullable = false)
+    private Long likerId; // 관심을 누른 사용자의 ID
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "portfolio_id", nullable = false)
     private PortfolioEntity portfolio;
 
     // 생성자
-    private PortfolioLikeEntity(Long userId, PortfolioEntity portfolio) {
-        this.userId = userId;
+    private PortfolioLikeEntity(Long likerId, PortfolioEntity portfolio) {
+        this.likerId = likerId;
         this.portfolio = portfolio;
     }
 
     // 정적 팩토리 메서드
-    public static PortfolioLikeEntity of(Long userId, PortfolioEntity portfolio) {
-        return new PortfolioLikeEntity(userId, portfolio);
+    public static PortfolioLikeEntity of(Long likerId, PortfolioEntity portfolio) {
+        return new PortfolioLikeEntity(likerId, portfolio);
     }
 }
