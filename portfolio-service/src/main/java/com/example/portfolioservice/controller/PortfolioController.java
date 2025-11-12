@@ -46,10 +46,11 @@ public class PortfolioController {
         return ResponseEntity.ok(response);
     }
 
-    @Operation(summary = "포트폴리오 카드 목록 조회 (메인 페이지)", description = "인증 불필요. 캐시된 정보로 응답합니다.")
+    @Operation(summary = "포트폴리오 카드 목록 조회 (메인 페이지)", description = "인증 불필요. position(직군)으로 필터링 가능.")
     @GetMapping("/portfolios")
-    public ResponseEntity<Slice<PortfolioCardResponse>> getPortfolioListApi(@PageableDefault(size = 8) Pageable pageable) {
-        Slice<PortfolioCardResponse> response = portfolioService.getPortfolioList(pageable);
+    public ResponseEntity<Slice<PortfolioCardResponse>> getPortfolioListApi(@PageableDefault(size = 8) Pageable pageable,
+                                                                            @RequestParam(required = false) String position) {
+        Slice<PortfolioCardResponse> response = portfolioService.getPortfolioList(pageable, position);
         return ResponseEntity.ok(response);
     }
 

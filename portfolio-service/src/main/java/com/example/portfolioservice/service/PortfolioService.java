@@ -75,9 +75,8 @@ public class PortfolioService {
     /**
      * 포트폴리오 카드 목록 조회 (메인 페이지 - 인증 불필요)
      */
-    public Slice<PortfolioCardResponse> getPortfolioList(Pageable pageable) {
-        // Feign 호출 없이, '발행(isPublished=true)'된 데이터만 조회
-        Slice<PortfolioEntity> page = portfolioRepository.findAllByIsPublished(true, pageable);
+    public Slice<PortfolioCardResponse> getPortfolioList(Pageable pageable, String position) {
+        Slice<PortfolioEntity> page = portfolioRepository.searchPortfolioList(position, pageable);
         return page.map(portfolioMapper::toPortfolioCardResponse);
     }
 
