@@ -118,6 +118,8 @@ public class PortfolioService {
                 .hashtags(hashtags)
                 .isPublished(portfolio.isPublished())
                 .isLiked(isLiked)
+                .viewCount(portfolio.getViewCount())
+                .likeCount(portfolio.getLikeCount())
                 .build();
     }
 }

@@ -24,6 +24,8 @@ public class PortfolioDetailsResponse {
 
     // UI 분기 처리를 위한 상태
     private boolean isPublished;
-
     private boolean isLiked;
+
+    private Long viewCount;
+    private Long likeCount;
 }

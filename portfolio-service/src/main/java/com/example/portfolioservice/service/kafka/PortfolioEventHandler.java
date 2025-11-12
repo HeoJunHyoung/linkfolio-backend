@@ -28,7 +28,7 @@ public class PortfolioEventHandler {
     public void handleUserProfileUpdate(UserProfilePublishedEvent event) {
         log.info("[Kafka] 프로필 생성/업데이트 이벤트 수신. UserId: {}", event.getUserId());
 
-        Optional<PortfolioEntity> optionalPortfolio = portfolioRepository.findById(event.getUserId());
+        Optional<PortfolioEntity> optionalPortfolio = portfolioRepository.findByUserId(event.getUserId());
 
         if (optionalPortfolio.isPresent()) {
             // [1] Update

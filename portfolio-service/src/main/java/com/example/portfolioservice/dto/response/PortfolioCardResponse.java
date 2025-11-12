@@ -15,4 +15,7 @@ public class PortfolioCardResponse {
     private String photoUrl;
     private String oneLiner;
     private List<String> hashtags;
+
+    private Long viewCount;
+    private Long likeCount;
 }
