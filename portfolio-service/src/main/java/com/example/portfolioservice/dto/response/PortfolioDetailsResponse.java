@@ -8,7 +8,7 @@ import java.util.List;
 
 @Data
 @Builder
-public class PortfolioResponse {
+public class PortfolioDetailsResponse {
     // 고정 정보 (캐시)
     private Long userId;
     private String name;
@@ -24,4 +24,8 @@ public class PortfolioResponse {
 
     // UI 분기 처리를 위한 상태
     private boolean isPublished;
+    private boolean isLiked;
+
+    private Long viewCount;
+    private Long likeCount;
 }

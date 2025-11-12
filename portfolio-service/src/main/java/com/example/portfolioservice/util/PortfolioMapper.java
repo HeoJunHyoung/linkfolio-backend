@@ -1,7 +1,7 @@
 package com.example.portfolioservice.util;
 
 import com.example.portfolioservice.dto.response.PortfolioCardResponse;
-import com.example.portfolioservice.dto.response.PortfolioResponse;
+import com.example.portfolioservice.dto.response.PortfolioDetailsResponse;
 import com.example.portfolioservice.entity.PortfolioEntity;
 import org.mapstruct.Mapper;
 import org.mapstruct.Mapping;
@@ -16,7 +16,7 @@ public interface PortfolioMapper {
 
     // Entity -> 상세 응답 DTO
     @Mapping(source = "hashtags", target = "hashtags", qualifiedByName = "stringToHashtagList")
-    PortfolioResponse toPortfolioResponse(PortfolioEntity entity);
+    PortfolioDetailsResponse toPortfolioResponse(PortfolioEntity entity);
 
     // Entity -> 카드 응답 DTO
     @Mapping(source = "hashtags", target = "hashtags", qualifiedByName = "stringToHashtagList")
