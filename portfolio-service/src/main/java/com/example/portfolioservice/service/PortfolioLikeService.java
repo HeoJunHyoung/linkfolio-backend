@@ -62,7 +62,7 @@ public class PortfolioLikeService {
                 .orElseThrow(() -> new BusinessException(ErrorCode.PORTFOLIO_NOT_FOUND));
 
         // 삭제할 PortfolioLike 엔티티 조회
-        PortfolioLikeEntity portfolioLike = portfolioLikeRepository.findByLikerIdIdAndPortfolio(authUserId, portfolio)
+        PortfolioLikeEntity portfolioLike = portfolioLikeRepository.findByLikerIdAndPortfolio(authUserId, portfolio)
                 .orElse(null);
 
         if (portfolioLike == null) {
