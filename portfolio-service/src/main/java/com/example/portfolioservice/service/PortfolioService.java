@@ -120,6 +120,8 @@ public class PortfolioService {
                 .isLiked(isLiked)
                 .viewCount(portfolio.getViewCount())
                 .likeCount(portfolio.getLikeCount())
+                .createdAt(portfolio.getCreatedAt())
+                .lastModifiedAt(portfolio.getLastModifiedAt())
                 .build();
     }
 }

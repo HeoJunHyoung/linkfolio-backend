@@ -4,6 +4,7 @@ import com.example.commonmodule.entity.enumerate.Gender;
 import lombok.Builder;
 import lombok.Data;
 
+import java.time.LocalDateTime;
 import java.util.List;
 
 @Data
@@ -28,4 +29,7 @@ public class PortfolioDetailsResponse {
 
     private Long viewCount;
     private Long likeCount;
+
+    private LocalDateTime createdAt;
+    private LocalDateTime lastModifiedAt;
 }
