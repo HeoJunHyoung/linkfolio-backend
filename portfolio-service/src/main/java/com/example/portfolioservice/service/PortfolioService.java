@@ -76,8 +76,7 @@ public class PortfolioService {
      * 포트폴리오 카드 목록 조회 (메인 페이지 - 인증 불필요)
      */
     public Slice<PortfolioCardResponse> getPortfolioList(Pageable pageable, String position) {
-        Slice<PortfolioEntity> page = portfolioRepository.searchPortfolioList(position, pageable);
-        return page.map(portfolioMapper::toPortfolioCardResponse);
+        return portfolioRepository.searchPortfolioList(position, pageable);
     }
 
     /**
