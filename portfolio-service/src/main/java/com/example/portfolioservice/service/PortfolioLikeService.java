@@ -84,10 +84,7 @@ public class PortfolioLikeService {
      * 내 관심 포트폴리오 목록 조회
      */
     @Transactional(readOnly = true)
-    public Slice<PortfolioCardResponse> getMyLikedPortfolios(Long authUserId, Pageable pageable) {
-        Slice<PortfolioLikeEntity> likes = portfolioLikeRepository.findAllByLikerId(authUserId, pageable);
-
-        // PortfolioLikeEntity Slice -> PortfolioEntity Slice -> PortfolioCardResponse Slice로 변환
-        return likes.map(portfolioLike -> portfolioMapper.toPortfolioCardResponse(portfolioLike.getPortfolio()));
+    public Slice<PortfolioCardResponse> getMyLikedPortfolios(Long authUserId, String position, Pageable pageable) {
+        return portfolioLikeRepository.searchMyLikedPortfolios(authUserId, position, pageable);
     }
 }

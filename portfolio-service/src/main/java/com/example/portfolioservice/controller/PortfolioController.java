@@ -84,10 +84,14 @@ public class PortfolioController {
     @Operation(summary = "내 관심 포트폴리오 목록 조회", description = "현재 로그인한 사용자가 관심을 누른 포트폴리오 목록을 조회합니다.")
     @SecurityRequirement(name = "Bearer Authentication")
     @GetMapping("/me/likes")
-    public ResponseEntity<Slice<PortfolioCardResponse>> getMyLikedPortfoliosApi(
-            @AuthenticationPrincipal AuthUser authUser,
-            @PageableDefault(size = 8) Pageable pageable) {
-        Slice<PortfolioCardResponse> response = portfolioLikeService.getMyLikedPortfolios(authUser.getUserId(), pageable);
+    public ResponseEntity<Slice<PortfolioCardResponse>> getMyLikedPortfoliosApi(@AuthenticationPrincipal AuthUser authUser,
+                                                                                @RequestParam(required = false) String position,
+                                                                                @PageableDefault(size = 8) Pageable pageable) {
+        Slice<PortfolioCardResponse> response = portfolioLikeService.getMyLikedPortfolios(
+                authUser.getUserId(),
+                position,
+                pageable
+        );
         return ResponseEntity.ok(response);
     }
 
