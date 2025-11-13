@@ -1,41 +1,32 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
          xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd">
     <modelVersion>4.0.0</modelVersion>
+
     <parent>
         <groupId>org.springframework.boot</groupId>
         <artifactId>spring-boot-starter-parent</artifactId>
         <version>3.5.7</version>
-        <relativePath/> </parent>
+        <relativePath/>
+    </parent>
+
     <groupId>com.example</groupId>
     <artifactId>portfolio-service</artifactId>
     <version>0.0.1-SNAPSHOT</version>
     <name>portfolio-service</name>
     <description>Portfolio Service (Manages user portfolios and items)</description>
-    <url/>
-    <licenses>
-        <license/>
-    </licenses>
-    <developers>
-        <developer/>
-    </developers>
-    <scm>
-        <connection/>
-        <developerConnection/>
-        <tag/>
-        <url/>
-    </scm>
 
     <properties>
         <java.version>17</java.version>
         <spring-cloud.version>2025.0.0</spring-cloud.version>
         <org.mapstruct.version>1.5.5.Final</org.mapstruct.version>
         <querydsl.version>5.1.0</querydsl.version>
-        <!-- [수정 1] jakarta.persistence-api 버전을 프로퍼티로 추가 -->
         <jakarta.persistence-api.version>3.1.0</jakarta.persistence-api.version>
     </properties>
 
     <dependencies>
+        <!-- Spring Boot 기본 의존성 -->
         <dependency>
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter-web</artifactId>
@@ -44,18 +35,18 @@
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter-validation</artifactId>
         </dependency>
-
         <dependency>
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter-data-jpa</artifactId>
         </dependency>
+
         <dependency>
             <groupId>com.mysql</groupId>
             <artifactId>mysql-connector-j</artifactId>
             <scope>runtime</scope>
         </dependency>
 
-        <!-- QueryDSL 의존성 -->
+        <!-- QueryDSL -->
         <dependency>
             <groupId>com.querydsl</groupId>
             <artifactId>querydsl-jpa</artifactId>
@@ -70,21 +61,19 @@
             <scope>provided</scope>
         </dependency>
 
+        <!-- Security / Kafka / Redis / Actuator -->
         <dependency>
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter-security</artifactId>
         </dependency>
-
         <dependency>
             <groupId>org.springframework.kafka</groupId>
             <artifactId>spring-kafka</artifactId>
         </dependency>
-
         <dependency>
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter-data-redis</artifactId>
         </dependency>
-
         <dependency>
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter-actuator</artifactId>
@@ -94,24 +83,26 @@
             <artifactId>micrometer-registry-prometheus</artifactId>
         </dependency>
 
+        <!-- Lombok / MapStruct -->
         <dependency>
             <groupId>org.projectlombok</groupId>
             <artifactId>lombok</artifactId>
             <optional>true</optional>
         </dependency>
-
         <dependency>
             <groupId>org.mapstruct</groupId>
             <artifactId>mapstruct</artifactId>
             <version>${org.mapstruct.version}</version>
         </dependency>
 
+        <!-- Swagger(OpenAPI) -->
         <dependency>
             <groupId>org.springdoc</groupId>
             <artifactId>springdoc-openapi-starter-webmvc-ui</artifactId>
             <version>2.5.0</version>
         </dependency>
 
+        <!-- Test -->
         <dependency>
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter-test</artifactId>
@@ -128,17 +119,18 @@
             <scope>test</scope>
         </dependency>
 
+        <!-- Feign Client -->
         <dependency>
             <groupId>org.springframework.cloud</groupId>
             <artifactId>spring-cloud-starter-openfeign</artifactId>
         </dependency>
 
+        <!-- ✅ 공통 모듈 (BaseEntity 포함) -->
         <dependency>
             <groupId>com.example</groupId>
             <artifactId>common-module</artifactId>
             <version>${project.version}</version>
         </dependency>
-
     </dependencies>
 
     <dependencyManagement>
@@ -155,10 +147,14 @@
 
     <build>
         <plugins>
+            <!-- ✅ QueryDSL + MapStruct + Lombok Annotation Processor 설정 -->
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-compiler-plugin</artifactId>
                 <configuration>
+                    <compilerArgs>
+                        <arg>-Aquerydsl.mappedSuperclass=true</arg>
+                    </compilerArgs>
                     <annotationProcessorPaths>
                         <!-- QueryDSL APT -->
                         <path>
@@ -168,11 +164,18 @@
                             <version>${querydsl.version}</version>
                         </path>
 
-                        <!-- [수정 2] QueryDSL이 @Entity를 찾도록 경로 추가 -->
+                        <!-- JPA API -->
                         <path>
                             <groupId>jakarta.persistence</groupId>
                             <artifactId>jakarta.persistence-api</artifactId>
                             <version>${jakarta.persistence-api.version}</version>
+                        </path>
+
+                        <!-- ✅ 공통 모듈(BaseEntity) 포함 -->
+                        <path>
+                            <groupId>com.example</groupId>
+                            <artifactId>common-module</artifactId>
+                            <version>${project.version}</version>
                         </path>
 
                         <!-- MapStruct -->
@@ -181,6 +184,7 @@
                             <artifactId>mapstruct-processor</artifactId>
                             <version>${org.mapstruct.version}</version>
                         </path>
+
                         <!-- Lombok -->
                         <path>
                             <groupId>org.projectlombok</groupId>
@@ -196,6 +200,7 @@
                 </configuration>
             </plugin>
 
+            <!-- Spring Boot Plugin -->
             <plugin>
                 <groupId>org.springframework.boot</groupId>
                 <artifactId>spring-boot-maven-plugin</artifactId>
@@ -210,5 +215,4 @@
             </plugin>
         </plugins>
     </build>
-
 </project>
