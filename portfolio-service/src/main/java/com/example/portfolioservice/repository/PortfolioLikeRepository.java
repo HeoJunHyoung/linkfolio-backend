@@ -7,7 +7,7 @@ import org.springframework.data.jpa.repository.JpaRepository;
 
 import java.util.Optional;
 
-public interface PortfolioLikeRepository extends JpaRepository<PortfolioLikeEntity, Long> {
+public interface PortfolioLikeRepository extends JpaRepository<PortfolioLikeEntity, Long>, PortfolioLikeRepositoryCustom {
 
     // 특정 사용자가 특정 포트폴리오를 좋아하는지 확인
     boolean existsByLikerIdAndPortfolio(Long likerId, com.example.portfolioservice.entity.PortfolioEntity portfolio);
