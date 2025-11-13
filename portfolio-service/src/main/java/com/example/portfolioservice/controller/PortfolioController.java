@@ -13,6 +13,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Slice;
+import org.springframework.data.domain.Sort;
 import org.springframework.data.web.PageableDefault;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -46,10 +47,11 @@ public class PortfolioController {
         return ResponseEntity.ok(response);
     }
 
-    @Operation(summary = "포트폴리오 카드 목록 조회 (메인 페이지)", description = "인증 불필요. 캐시된 정보로 응답합니다.")
+    @Operation(summary = "포트폴리오 카드 목록 조회 (메인 페이지)", description = "인증 불필요. 필터링 및 정렬(sort) 지원. (예: ?position=백엔드&sort=likeCount,desc)")
     @GetMapping("/portfolios")
-    public ResponseEntity<Slice<PortfolioCardResponse>> getPortfolioListApi(@PageableDefault(size = 8) Pageable pageable) {
-        Slice<PortfolioCardResponse> response = portfolioService.getPortfolioList(pageable);
+    public ResponseEntity<Slice<PortfolioCardResponse>> getPortfolioListApi(@PageableDefault(size = 8, sort = "createdAt", direction = Sort.Direction.DESC) Pageable pageable,
+                                                                            @RequestParam(required = false) String position) {
+        Slice<PortfolioCardResponse> response = portfolioService.getPortfolioList(pageable, position);
         return ResponseEntity.ok(response);
     }
 
