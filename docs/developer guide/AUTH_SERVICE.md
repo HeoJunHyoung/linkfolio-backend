@@ -109,3 +109,22 @@
 * `spring-boot-starter-mail`: 이메일 인증 코드 발송.
 * `spring-kafka`: SAGA 트랜잭션 이벤트 발행 및 수신.
 * `common-module`: 공통 DTO, 예외, Enum 공유.
+
+---
+
+## 7. 주요 설정 (application.yml)
+
+`application.yml` 파일은 `auth-service`의 모든 외부 의존성 및 동작 환경을 정의한다.
+
+* **`server.port: 8081`**: `auth-service`의 실행 포트를 8081로 지정한다.
+* **`spring.datasource` / `spring.jpa`**: `AuthUserEntity`를 저장할 MySQL DB 연결 정보를 환경변수(DB_HOST 등)로부터 주입받는다.
+* **`spring.data.redis`**: Refresh Token, 인증 코드, OAuth2 State 저장을 위한 Redis(`REDIS_HOST`) 연결 정보를 정의한다.
+* **`spring.kafka`**:
+    * **`producer`**: SAGA 시작(`UserRegistrationRequestedEvent`)을 위해 Kafka로 이벤트를 발행(serialize)하는 설정을 정의한다.
+    * **`consumer`**: SAGA 응답(`UserProfileCreationSuccessEvent` 등)을 수신(deserialize)하기 위한 설정을 정의한다. `spring.json.trusted.packages`와 `type.mapping`은 `common-module`의 DTO를 올바르게 역직렬화하기 위해 필수적이다.
+* **`spring.mail`**: `EmailService`가 인증 코드를 발송하기 위해 사용할 GMail SMTP 서버(`smtp.gmail.com`) 및 계정 정보를 설정한다.
+* **`spring.security.oauth2`**: Google, Naver, Kakao 각 소셜 공급자로부터 발급받은 `client-id`, `client-secret` 및 `scope`를 정의한다. 이 설정은 `CustomOAuth2UserService`의 기반 데이터가 된다.
+* **`jwt`**:
+    * `secret`: `JwtTokenProvider`가 토큰 서명에 사용할 비밀 키를 환경변수(`JWT_SECRET`)로부터 주입받는다.
+    * `access_expiration_time` / `refresh_expiration_time`: 각각 Access Token과 Refresh Token의 만료 시간을 설정한다.
+* **`app.frontend.redirect-url`**: 소셜 로그인 성공 시, `OAuth2LoginSuccessHandler`가 사용자를 리디렉션시킬 프론트엔드 콜백 URL을 정의한다.
