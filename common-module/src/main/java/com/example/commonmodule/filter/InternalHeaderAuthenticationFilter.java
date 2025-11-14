@@ -32,12 +32,8 @@ public class InternalHeaderAuthenticationFilter extends OncePerRequestFilter {
             try {
                 Role role = Role.valueOf(roleHeader); //  Convert string to enum
 
-                // 3. [Refactor] 생성자 대신 정적 팩토리 메서드 사용
-                UserDetails userDetails = AuthUser.fromGatewayHeader(
-                        Long.parseLong(userId),
-                        email,
-                        role
-                );
+                // 3. 생성자 대신 정적 팩토리 메서드 사용
+                UserDetails userDetails = AuthUser.fromGatewayHeader(Long.parseLong(userId), email, role);
 
                 // 4. SecurityContextHolder에 인증 객체 등록
                 UsernamePasswordAuthenticationToken authentication = new UsernamePasswordAuthenticationToken(
@@ -45,6 +41,7 @@ public class InternalHeaderAuthenticationFilter extends OncePerRequestFilter {
                         null,
                         userDetails.getAuthorities()
                 );
+
                 SecurityContextHolder.getContext().setAuthentication(authentication);
 
             } catch (Exception e) {
