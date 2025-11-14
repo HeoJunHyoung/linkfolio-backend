@@ -157,3 +157,61 @@
     * `secret`: `JwtTokenProvider`가 토큰 서명에 사용할 비밀 키를 환경변수(`JWT_SECRET`)로부터 주입받는다.
     * `access_expiration_time` / `refresh_expiration_time`: 각각 Access Token과 Refresh Token의 만료 시간을 설정한다.
 * **`app.frontend.redirect-url`**: 소셜 로그인 성공 시, `OAuth2LoginSuccessHandler`가 사용자를 리디렉션시킬 프론트엔드 콜백 URL을 정의한다.
+
+---
+
+A. 자체 로그인(Local Login) 및 토큰 발급
+#### 
+```mermaid
+sequenceDiagram
+    participant Client as 👤 클라이언트
+    participant AuthService as 🔐 auth-service
+    participant AuthDB as 🗄️ Auth DB
+    participant Redis as ⚡ Redis (Cache)
+
+    Client->>+AuthService: POST /auth/login (username, password)
+    
+    Note over AuthService: 1. [Filter] CustomAuthenticationFilter
+    AuthService->>+AuthDB: 2. [Service] CustomUserDetailsService: <br> 사용자 조회 (Status='COMPLETED' 확인)
+    AuthDB-->>-AuthService: AuthUserEntity
+    
+    Note over AuthService: 3. [Handler] LocalLoginSuccessHandler 실행
+    AuthService->>AuthService: 4. JwtTokenProvider: <br> Access/Refresh Token 생성
+    AuthService->>+Redis: 5. RefreshTokenService: <br> Refresh Token 저장 (Key: RT:<userId>)
+    Redis-->>-AuthService: OK
+    
+    AuthService-->>-Client: 200 OK (Body: AccessToken, Cookie: RefreshToken)
+```
+
+B. 회원가입 SAGA (SAGA Coordinator)
+#### 
+```mermaid
+sequenceDiagram
+    participant Client as 👤 클라이언트
+    participant AuthService as 🔐 auth-service
+    participant AuthDB as 🗄️ Auth DB
+    participant Kafka as 📨 Kafka
+    participant UserService as 👥 user-service
+    
+    Client->>+AuthService: POST /auth/signup (회원가입 요청)
+    Note over AuthService: 1. 이메일 인증('VE:') 등 검증
+    
+    par [AuthService 로컬 트랜잭션]
+        AuthService->>+AuthDB: 2. [TX-Auth] AuthUser (PENDING) 저장
+        AuthDB-->>-AuthService: OK
+    and
+        AuthService->>+Kafka: 3. [SAGA] UserRegistrationRequestedEvent 발행
+        Kafka-->>-AuthService: OK
+    end
+    
+    AuthService-->>-Client: 201 Created (1차 응답)
+    
+    Kafka-->>+UserService: 4. [SAGA] Event 수신 (UserEventHandler)
+    UserService-->>-Kafka: (처리 중...)
+    
+    Kafka-->>+AuthService: 5. [SAGA-Success] Event 수신 (AuthEventHandler)
+    Note over AuthService: (user-service가 성공 이벤트를 발행)
+    AuthService->>+AuthDB: 6. [TX-Auth] AuthUser (PENDING -> COMPLETED) 상태 변경
+    AuthDB-->>-AuthService: OK
+    AuthService-->>-Kafka: (ACK)
+```

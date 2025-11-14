@@ -117,3 +117,31 @@ apigateway-service의 pom.xml은 MSA 게이트웨이 역할에 맞게 신중하�
   - 게이트웨이는 `common-module`을 의존한다. 이는 ErrorCode 인터페이스, 공통 예외 응답 DTO인 `ErrorResponse` 등을 공유하기 위함이다.
   - 의존성 제외(Exclusion): common-module은 다른 서비스들을 위해 `spring-boot-starter-data-jpa`, `spring-boot-starter-web` (MVC), `spring-boot-starter-security` (MVC용) 의존성을 포함하고 있다. **게이트웨이는 WebFlux 기반이며 데이터베이스가 필요 없으므로, common-module을 가져올 때 이 의존성들을 <exclusions> 태그를 사용하여 모두 제외**한다.
   - 이러한 제외 설정은 `ApigatewayServiceApplication.java의 @SpringBootApplication(exclude = ...)` 설정을 통해서도 재확인되어, JPA 관련 자동 설정이 로드되지 않도록 보장한다.
+
+---
+
+#### 
+```mermaid
+sequenceDiagram
+    participant Client as 👤 클라이언트
+    participant APIGateway as 🚪 API 게이트웨이
+    participant UserService as 👥 user-service
+    
+    Client->>+APIGateway: GET /user-service/users/me <br> (Header: Authorization: Bearer <JWT>)
+    
+    Note over APIGateway: 1. [GlobalFilter] AuthorizationHeaderFilter 실행
+    APIGateway->>APIGateway: 2. JWT 검증 및 Claims 추출 <br> (userId, email, role)
+    
+    Note over APIGateway: 3. [스푸핑 방지] 기존 X-User-* 헤더 (있다면) 제거
+    APIGateway->>APIGateway: 4. 신뢰할 수 있는 X-User-* 헤더 새로 주입
+    
+    APIGateway->>+UserService: GET /users/me <br> (Header: X-User-Id, X-User-Email, X-User-Role)
+    
+    Note over UserService: 5. [Filter] InternalHeaderAuthenticationFilter 실행
+    UserService->>UserService: 6. X-User-* 헤더를 신뢰하여 AuthUser 객체 생성
+    UserService->>UserService: 7. SecurityContextHolder에 인증 객체 등록
+    UserService->>UserService: 8. Controller 로직 실행 (@AuthenticationPrincipal)
+    
+    UserService-->>-APIGateway: 200 OK (UserResponse)
+    APIGateway-->>-Client: 200 OK (UserResponse)
+```
