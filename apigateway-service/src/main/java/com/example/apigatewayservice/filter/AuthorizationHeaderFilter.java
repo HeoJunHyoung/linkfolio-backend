@@ -62,15 +62,20 @@ public class AuthorizationHeaderFilter implements GlobalFilter, Ordered {
     }
 
     @Override
+    public int getOrder() {
+        return Ordered.HIGHEST_PRECEDENCE;
+    }
+    
+    @Override
     public Mono<Void> filter(ServerWebExchange exchange, GatewayFilterChain chain) {
 
         ServerHttpRequest request = exchange.getRequest();
-        String path = request.getURI().getPath();
+        String path = request.getURI().getPath(); // 현재 요청 경로 추출
 
         log.info("🔍 API Gateway Request Path: {}", path);
         log.info("🔍 Headers: {}", request.getHeaders());
 
-        // 1. 화이트리스트(인증 예외) 경로 검사
+        // 1. 화이트리스트(인증 예외) 경로 검사 (헤더가 없으면 MISSING_AUTH_HEADER 예외를 발생)
         if (isPatchExcluded(path)) {
             log.info("Permitting request to excluded path: {}", path);
             return chain.filter(exchange);
@@ -82,23 +87,24 @@ public class AuthorizationHeaderFilter implements GlobalFilter, Ordered {
         }
 
         try {
-            // 3. 헤더에서 JWT 추출 (GatewayAuthenticationException 발생 가능)
+            // 3. 헤더에서 순수 JWT 토큰 추출 (GatewayAuthenticationException 발생 가능)
             String jwt = getJwtFromHeader(request);
-            // 4. JWT 파싱 및 Claims 추출 (JwtException 발생 가능)
+
+            // 4. JWT 파싱 및 Claims 추출 (JwtException 발생 가능) ; 토큰 서명, 만료 시간 검증 후, Payload 추출
             Claims claims = getClaims(jwt);
 
-            // 5. Claims에서 사용자 정보 추출
+            // 5. Claims에서 사용자 정보 추출 (userId, email, role)
             String userId = claims.getSubject();
             String email = claims.get("email", String.class);
             String role = claims.get("role", String.class);
 
-            // 6. Claims 검증
+            // 6. Claims 검증 ; 값 존재 여부 확인
             if (isInvalidPayload(userId, email, role)) {
                 log.warn("Invalid JWT payload: userId or email is missing.");
                 return onError(exchange, ErrorCode.INVALID_JWT_PAYLOAD);
             }
 
-            // 7. [보안] 스푸핑 공격을 방지하도록 헤더 수정 후, 내부 서비스로 전달
+            // 7. buildInternalRequest 메서드를 호출하여 새로운 요청(Request)을 생성 => 스푸핑 공격 방지
             ServerHttpRequest newRequest = buildInternalRequest(request, userId, email, role);
 
             // 8. 다음 필터 체인 실행
@@ -146,11 +152,6 @@ public class AuthorizationHeaderFilter implements GlobalFilter, Ordered {
             response.setStatusCode(HttpStatus.INTERNAL_SERVER_ERROR);
             return response.setComplete();
         }
-    }
-
-    @Override
-    public int getOrder() {
-        return Ordered.HIGHEST_PRECEDENCE;
     }
 
     private Boolean isPatchExcluded(String path) {

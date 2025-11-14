@@ -9,13 +9,21 @@
 ## 2. 핵심 설정 (application.yml)
 
 ### 2.1. forward-headers-strategy: NATIVE
-이 설정은 게이트웨이가 프록시(예: Kubernetes Ingress, Load Balancer) 환경에서 동작할 때 필수적이다.
 
- - **필요성**: 클라이언트가 게이트웨이로 직접 요청하는 것이 아니라, 중간에 로드 밸런서 등을 거치게 되면 게이트웨이는 실제 클라이언트의 IP 주소나 프로토콜(HTTP/HTTPS)을 알 수 없게 된다. 게이트웨이는 로드 밸런서로부터의 내부 IP 요청으로만 인식한다.
+`application.yml`에 설정된 `server.forward-headers-strategy: NATIVE`는 게이트웨이가 자신을 호출한 **앞단의 리버스 프록시(예: Kubernetes Ingress, Nginx, 로드 밸런서)를 신뢰**하도록 지시하는 핵심 설정이다.
 
- - **동작**: `NATIVE` 전략을 사용하면, 게이트웨이는 프록시 서버(로드 밸런서)가 추가한 X-Forwarded-For (클라이언트 IP), X-Forwarded-Proto (프로토콜) 등의 헤더를 신뢰하고 파싱한다.
+- **필요성**: 클라이언트 요청(예: `https://linkfolio.com`)은 게이트웨이로 직접 도달하는 것이 아니라, 로드 밸런서를 먼저 거친다. 로드 밸런서는 HTTPS 요청을 받아 SSL/TLS 처리를 종료(SSL Termination)한 후, 게이트웨이로는 암호화되지 않은 내부 HTTP 요청(예: `http://apigateway-service:8000`)을 보낸다.
+- **기본 문제**: 이 설정을 사용하지 않으면(`NONE`이 기본값), 게이트웨이는 자신을 호출한 로드 밸런서의 **내부 IP**와 **HTTP 프로토콜**만을 인식하게 된다. 원래 클라이언트의 IP 주소와 HTTPS 프로토콜 정보는 유실된다.
 
- - **적용**: 이 설정을 통해 로그에 정확한 클라이언트 IP를 기록할 수 있으며, Swagger UI 등이 올바른 리디렉션 URL(HTTPS 기준)을 생성할 수 있게 된다.
+- **동작**: `NATIVE` 전략은 로드 밸런서가 요청 헤더에 추가해주는 표준 `X-Forwarded-*` 헤더들을 신뢰하고 파싱하라고 Spring에 지시한다.
+  * `X-Forwarded-For`: 실제 클라이언트의 IP 주소
+  * `X-Forwarded-Proto`: 원래 요청의 프로토콜 (http 또는 https)
+  * `X-Forwarded-Host`: 원래 요청의 호스트명 (예: `linkfolio.com`)
+
+- **미사용 시 문제점**:
+  1.  **부정확한 로그**: 모든 로그에 클라이언트 IP가 로드 밸런서의 내부 IP로 기록되어, 장애 추적이나 어뷰징 대응이 불가능해진다.
+  2.  **리디렉션 및 Swagger UI 오류**: 게이트웨이가 자신에게 온 요청이 `http://`라고 착각한다. 사용자가 `https://.../swagger-ui.html`로 접속해도, Swagger UI가 API 명세를 로드하기 위해 요청하는 URL(`api-docs`)을 `http://.../api-docs`로 잘못 생성하여 반환한다. 브라우저는 보안 페이지(`https://`)에서 비보안 리소스(`http://`)를 로드하려는 시도를 **'혼합 콘텐츠(Mixed Content)'** 오류로 간주하고 차단하여 UI가 깨지게 된다.
+  3.  **IP 기반 보안 기능 오작동**: IP 기반 차단 또는 요청 제한(Rate Limiting) 기능이 모두 로드 밸런서의 IP를 기준으로 동작하여 보안 정책이 무력화된다.
 
 ### 2.2. CORS (Cross-Origin Resource Sharing)
 `globalcors` 설정을 통해 모든 경로(`[/**]`)에 대해 특정 프론트엔드 오리진(예: `localhost:3000`, Vercel 배포 주소)에서의 요청을 허용하도록 설정하였다.
@@ -42,12 +50,11 @@
 이 필터는 게이트웨이의 핵심 보안 로직을 담당한다.
 
 ### 3.1. 필요성
-MSA 구조에서 각 서비스(`user-service`, `portfolio-service` 등)가 개별적으로 JWT 토큰을 검증하는 것은 비효율적이며 보일러플레이트 코드를 증가시킨다.
-
-게이트웨이가 중앙 인증 지점 역할을 맡아, 유효한 JWT 토큰을 가진 요청만 내부 서비스로 전달하도록 한다. 내부 서비스들은 게이트웨이를 통과한 요청을 '신뢰'할 수 있게 된다.
+MSA 구조에서 각 서비스(`user-service`, `portfolio-service` 등)가 개별적으로 JWT 토큰을 검증하는 것은 비효율적이며 보일러플레이트 코드를 증가시킨다. 게이트웨이가 앞단(Proxy)에서 중앙 인증 지점 역할을 맡아, 유효한 JWT 토큰을 가진 요청만 내부 서비스로 전달하도록 한다. 내부 서비스들은 게이트웨이를 통과한 요청을 '신뢰'할 수 있게 된다.
 
 ### 3.2. 동작 원리 및 흐름
 이 필터는 `GlobalFilter`로 구현되었으며, `Ordered.HIGHEST_PRECEDENCE` (최고 우선순위)를 가져 다른 어떤 필터보다 먼저 실행된다.
+(보통 MSA에서는 JWT 토큰을 `HTTP 헤더 방식`으로 처리하거나 `별도의 간소화한 토큰`으로 처리하는데, 본 프로젝트에서는 `HTTP 헤더 방식`을 선택하였다.)
 
   1. **요청 경로 확인**: 현재 요청의 경로(path)를 가져온다.
 
@@ -62,6 +69,7 @@ MSA 구조에서 각 서비스(`user-service`, `portfolio-service` 등)가 개�
   6. **Claims 정보 추출**: Claims에서 subject(userId), email, role 정보를 추출한다.
 
   7. **내부 헤더 주입**: buildInternalRequest 메서드를 호출하여 새로운 요청(Request)을 생성한다. 이 과정은 스푸핑 공격 방지를 위해 매우 중요하다. (3.3절 참고)
+            
 
   8. **요청 전달**: 새로 생성된 요청을 다음 필터 체인으로 전달한다.
 
@@ -76,6 +84,10 @@ MSA 구조에서 각 서비스(`user-service`, `portfolio-service` 등)가 개�
   4. 오직 JWT 토큰에서 직접 파싱한 신뢰할 수 있는 userId, email, role 값만을 사용하여 X-User-* 헤더를 새롭게 추가(add)한다. 
 
 | 이러한 '제거 후 재주입(Remove-and-Re-add)' 전략을 통해, 내부 마이크로서비스는 오직 게이트웨이가 검증하고 주입한 사용자 정보만을 신뢰할 수 있게 된다.
+
+Q. 로직을 봤을 때, JWT 기반으로 추출한 Claims로 HTTP 헤더에 add를 하고 있는데, 굳이 remove가 없어도 되지 않나?
+
+A. HTTP 헤더는 `다중 값(multi-valued)`을 가질 수 있어서 add를 했을 때 값을 덮어쓰기(overwrite) 하는게 아니라 새로운 값을 추가하는 구조가 된다. 따라서 반드시 remove가 선행되어야 한다.
 
 ---
 
@@ -103,5 +115,5 @@ apigateway-service의 pom.xml은 MSA 게이트웨이 역할에 맞게 신중하�
 
 - `common-module`:
   - 게이트웨이는 `common-module`을 의존한다. 이는 ErrorCode 인터페이스, 공통 예외 응답 DTO인 `ErrorResponse` 등을 공유하기 위함이다.
-  - 의존성 제외(Exclusion): common-module은 다른 서비스들을 위해 `spring-boot-starter-data-jpa`, `spring-boot-starter-web` (MVC), `spring-boot-starter-security` (MVC용) 의존성을 포함하고 있다. 게이트웨이는 WebFlux 기반이며 데이터베이스가 필요 없으므로, common-module을 가져올 때 이 의존성들을 <exclusions> 태그를 사용하여 모두 제외한다.
+  - 의존성 제외(Exclusion): common-module은 다른 서비스들을 위해 `spring-boot-starter-data-jpa`, `spring-boot-starter-web` (MVC), `spring-boot-starter-security` (MVC용) 의존성을 포함하고 있다. **게이트웨이는 WebFlux 기반이며 데이터베이스가 필요 없으므로, common-module을 가져올 때 이 의존성들을 <exclusions> 태그를 사용하여 모두 제외**한다.
   - 이러한 제외 설정은 `ApigatewayServiceApplication.java의 @SpringBootApplication(exclude = ...)` 설정을 통해서도 재확인되어, JPA 관련 자동 설정이 로드되지 않도록 보장한다.
