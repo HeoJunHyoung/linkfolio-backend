@@ -23,7 +23,6 @@ public class OpenApiConfig {
         SecurityRequirement securityRequirement = new SecurityRequirement().addList(jwtSchemeName);
         Components components = new Components()
                 .addSecuritySchemes(jwtSchemeName, new SecurityScheme()
-                        .name(jwtSchemeName)
                         .type(SecurityScheme.Type.HTTP) // HTTP 타입
                         .scheme("bearer") // 스킴은 bearer
                         .bearerFormat("JWT")); // 베어러 포맷은 JWT

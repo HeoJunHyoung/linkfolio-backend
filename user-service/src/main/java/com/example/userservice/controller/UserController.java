@@ -42,7 +42,7 @@ public class UserController {
             @ApiResponse(responseCode = "401", description = "인증 실패 (게이트웨이)", content = @Content),
             @ApiResponse(responseCode = "404", description = "사용자 없음 [U001]", content = @Content)
     })
-    @SecurityRequirement(name = "Bearer Authentication") // 이 API는 인증이 필요함
+    @SecurityRequirement(name = "BearerAuthentication") // 이 API는 인증이 필요함
     @GetMapping("/users/me")
     public ResponseEntity<UserResponse> getMyInfoApi(@AuthenticationPrincipal AuthUser authUser) {
         UserResponse userResponse = userService.getUser(authUser.getUserId());
@@ -55,7 +55,7 @@ public class UserController {
             @ApiResponse(responseCode = "401", description = "인증 실패 (게이트웨이)", content = @Content),
             @ApiResponse(responseCode = "404", description = "사용자 없음 [U001]", content = @Content)
     })
-    @SecurityRequirement(name = "Bearer Authentication") // 이 API는 인증이 필요함
+    @SecurityRequirement(name = "BearerAuthentication") // 이 API는 인증이 필요함
     @GetMapping("/users/{userId}")
     public ResponseEntity<UserResponse> getUserApi(@PathVariable("userId") Long userId) {
         UserResponse userResponse = userService.getUser(userId);
@@ -69,7 +69,7 @@ public class UserController {
             @ApiResponse(responseCode = "404", description = "사용자 없음 [U001]", content = @Content),
             @ApiResponse(responseCode = "500", description = "서버 내부 오류 (Kafka 발행 실패 등) [G001]", content = @Content)
     })
-    @SecurityRequirement(name = "Bearer Authentication") // 이 API는 인증이 필요함
+    @SecurityRequirement(name = "BearerAuthentication") // 이 API는 인증이 필요함
     @PutMapping("/users/me")
     public ResponseEntity<UserResponse> updateMyInfoApi(@AuthenticationPrincipal AuthUser authUser, @RequestBody UserProfileUpdateRequest request) {
         UserResponse userResponse = userService.updateUserProfile(authUser.getUserId(), request);

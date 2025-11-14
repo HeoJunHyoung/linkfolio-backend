@@ -157,7 +157,7 @@ public class AuthController {
             @ApiResponse(responseCode = "401", description = "인증 실패 (게이트웨이)", content = @Content),
             @ApiResponse(responseCode = "404", description = "사용자 없음 [U001]", content = @Content)
     })
-    @SecurityRequirement(name = "Bearer Authentication")
+    @SecurityRequirement(name = "BearerAuthentication")
     @PatchMapping("/password")
     public ResponseEntity<Void> changePasswordApi(@RequestHeader(value = "X-User-Id") Long userId,
                                                   @RequestBody PasswordChangeRequest request) {
@@ -167,7 +167,7 @@ public class AuthController {
 
     @Operation(summary = "로그아웃", description = "서버의 Refresh Token을 만료시키고 쿠키를 삭제합니다.")
     @ApiResponse(responseCode = "200", description = "로그아웃 성공")
-    @SecurityRequirement(name = "Bearer Authentication") // 이 API는 인증이 필요함을 명시
+    @SecurityRequirement(name = "BearerAuthentication") // 이 API는 인증이 필요함을 명시
     @PostMapping("/logout")
     public ResponseEntity<Void> logout(@RequestHeader(value = "X-User-Id", required = false) Long gatewayUserId,
                                        HttpServletResponse response) {
