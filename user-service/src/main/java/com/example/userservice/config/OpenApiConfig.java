@@ -19,7 +19,7 @@ public class OpenApiConfig {
                 .description("LinkFolio 사용자 정보 서비스 API 명세서");
 
         // JWT (Bearer Token) 인증을 위한 SecurityScheme 정의
-        String jwtSchemeName = "Bearer Authentication";
+        String jwtSchemeName = "BearerAuthentication";
         SecurityRequirement securityRequirement = new SecurityRequirement().addList(jwtSchemeName);
         Components components = new Components()
                 .addSecuritySchemes(jwtSchemeName, new SecurityScheme()

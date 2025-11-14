@@ -1,4 +1,4 @@
-package com.example.authservice.config;
+package com.example.portfolioservice.config;
 
 import io.swagger.v3.oas.models.Components;
 import io.swagger.v3.oas.models.OpenAPI;
@@ -14,12 +14,12 @@ public class OpenApiConfig {
     @Bean
     public OpenAPI openAPI() {
         Info info = new Info()
-                .title("Auth Service API") // API 타이틀
+                .title("Portfolio Service API") // API 타이틀
                 .version("v1.0.0")
-                .description("LinkFolio 인증/인가 서비스 API 명세서");
+                .description("LinkFolio 포트폴리오 관리 서비스 API 명세서");
 
-        // JWT (Bearer Token) 인증을 위한 SecurityScheme 정의
         String jwtSchemeName = "BearerAuthentication";
+
         SecurityRequirement securityRequirement = new SecurityRequirement().addList(jwtSchemeName);
         Components components = new Components()
                 .addSecuritySchemes(jwtSchemeName, new SecurityScheme()
