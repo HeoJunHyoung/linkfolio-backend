@@ -117,11 +117,7 @@
 * **`app.feign.user-service-url`**: `pom.xml`과 `PortfolioServiceApplication`에 Feign Client가 활성화되어 있고, `application.yml`에도 `user-service` URL이 정의되어 있다. 하지만 현재 비즈니스 로직(Kafka 비동기 동기화)으로 인해 **실제 Feign Client 인터페이스가 정의되거나 사용되지는 않고 있다.** 이는 향후 동기식 호출이 필요할 경우를 대비한 설정으로 볼 수 있다.
 
 ---
-#### A. 데이터 동기화 (Fan-out Consumer)
-
-`user-service`의 프로필 *수정* 이벤트가 `portfolio-service`에 어떻게 동기화되는지 보여준다.
-
-```markdown
+A. 데이터 동기화 (Fan-out Consumer)
 #### 
 ```mermaid
 sequenceDiagram
@@ -143,11 +139,8 @@ sequenceDiagram
     PortfolioDB-->>-PortfolioService: OK
     PortfolioService-->>-Kafka: (ACK)
 ```
-#### B. 포트폴리오 '관심' 추가 (Like)
 
-`portfolio-service`의 고유 비즈니스 로직과 트랜잭션을 보여준다.
-
-```markdown
+B. 포트폴리오 '관심' 추가 (Like)
 #### 
 ```mermaid
 sequenceDiagram
@@ -169,3 +162,4 @@ sequenceDiagram
     PortfolioDB-->>-PortfolioService: OK
     
     PortfolioService-->>-Client: 201 Created (TX Commit)
+```
