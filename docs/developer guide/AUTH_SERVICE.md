@@ -59,6 +59,21 @@
     * 두 토큰이 일치하면, **새로운 Access Token**과 **새로운 Refresh Token**을 모두 재발급한다.
     * 새 Refresh Token을 Redis에 덮어쓰고, 새 쿠키를 클라이언트에 전송하여 토큰을 '회전(Rotate)'시킨다.
 
+### 3.4. Spring Security 설정 (`SecurityConfig.java`)
+
+`SecurityConfig`는 `auth-service`의 모든 인증/인가 흐름을 정의하는 중추적인 파일이다.
+
+1.  **세션 관리**: `sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))` 설정을 통해 이 서비스가 HTTP 세션을 사용하지 않는 **Stateless** 서버임을 명시한다. 이는 JWT 기반 인증의 필수 요소이다.
+2.  **경로 권한 (인가)**: `authorizeHttpRequests`를 통해 각 API 경로의 접근 권한을 설정한다.
+    * `/auth/**`, `/oauth2/**` 등 인증 자체를 처리하는 모든 경로는 `permitAll()`로 허용된다.
+    * 그 외의 모든 요청(`anyRequest()`)은 `authenticated()`로 설정되지만, `auth-service`는 게이트웨이의 내부 헤더 인증(`InternalHeaderAuthenticationFilter`)을 사용하지 않으므로, 사실상 모든 비인증 경로는 `permitAll()`로 열려있는 것과 유사하게 동작한다. (인증이 필요한 API는 `AuthController`의 `/password`, `/logout` 정도이다.)
+3.  **자체 로그인 필터 체인**: `http.addFilter(authenticationFilter)`를 통해 `CustomAuthenticationFilter`를 등록한다. 이 필터는 `/auth/login` 경로의 요청을 전담하여 `CustomUserDetailsService` 및 `LocalLoginSuccessHandler`로 연결한다.
+4.  **소셜 로그인(OAuth2) 필터 체인**: `http.oauth2Login()` 블록을 통해 소셜 로그인 흐름을 커스터마이징한다.
+    * `authorizationRequestRepository(redisBasedAuthorizationRequestRepository)`: `state` 값을 세션 대신 Redis에 저장하도록 설정한다.
+    * `userService(customOAuth2UserService)`: 공급자로부터 사용자 정보를 받아온 후, `CustomOAuth2UserService`를 실행하여 SAGA 트랜잭션을 포함한 회원가입/로그인 로직을 수행하도록 한다.
+    * `successHandler(oAuth2LoginSuccessHandler)`: 인증 성공 후, `OAuth2LoginSuccessHandler`를 실행하여 JWT를 발급하고 프론트엔드로 리디렉션한다.
+
+
 ---
 
 ## 4. SAGA (회원가입) 트랜잭션
@@ -95,6 +110,20 @@
     * `VE:<email>`: 회원가입 인증 완료 상태 (3분 TTL)
     * `PW_RESET:<email>`: 비밀번호 재설정 인증 코드 (3분 TTL)
     * `PW_VERIFIED:<email>`: 비밀번호 재설정 인증 완료 상태 (6분 TTL)
+
+### 5.1. Redis 설정 (`RedisConfig.java`)
+
+`auth-service`의 `RedisConfig`는 다른 서비스(예: `user-service`)와 다른 직렬화 방식을 사용한다.
+
+* **Key Serializer**: `StringRedisSerializer`를 사용하여 Redis의 키가 `RT:1`, `VC:test@...`처럼 인간이 읽을 수 있는 문자열로 저장되도록 한다.
+* **Value Serializer**: `JdkSerializationRedisSerializer`를 사용한다.
+
+**JSON 직렬화를 사용하지 못하는 이유:**
+`RefreshTokenService`나 `EmailVerificationService`는 값으로 단순 `String`을 저장하므로 어떤 직렬화 방식을 사용해도 무방하다.
+
+하지만 `RedisBasedAuthorizationRequestRepository`는 OAuth2 인증 요청 정보를 담고 있는 `OAuth2AuthorizationRequest` 객체 자체를 Redis에 저장해야 한다. 이 객체는 Spring Security가 제공하는 복잡한 객체이며, 단순 POJO가 아니기 때문에 **JSON 직렬화(예: `GenericJackson2JsonRedisSerializer`)가 불가능하다.**
+
+`OAuth2AuthorizationRequest` 객체는 `java.io.Serializable` 인터페이스를 구현하고 있으므로, **Java의 기본 직렬화 방식**을 사용해야만 한다. `JdkSerializationRedisSerializer`가 바로 이 역할을 수행하며, `auth-service`에서 이 방식을 채택한 것은 OAuth2의 `state` 객체를 저장하기 위한 필수적인 선택이다.
 
 ---
 

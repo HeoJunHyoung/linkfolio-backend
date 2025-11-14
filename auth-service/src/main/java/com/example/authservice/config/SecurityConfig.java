@@ -72,7 +72,6 @@ public class SecurityConfig {
 
         // 필터 추가
         http.addFilter(authenticationFilter);
-        // [삭제] InternalHeaderAuthenticationFilter (GateWay가 여기엔 헤더를 안 줌)
 
         return http.build();
     }
