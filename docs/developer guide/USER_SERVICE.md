@@ -85,3 +85,39 @@
 * `spring-boot-starter-data-redis`: Redis 연결 및 캐싱(현재 명시적 사용은 적으나 향후 확장용) 의존성.
 * `common-module`: `BaseEntity`, `InternalHeaderAuthenticationFilter`, SAGA 이벤트 DTO(`UserRegistrationRequestedEvent` 등)를 공유하기 위한 핵심 의존성.
 * `org.mapstruct:mapstruct`: `UserMapper`에서 `UserProfileEntity`를 `UserResponse` DTO 등으로 변환하기 위해 사용된다.
+
+---
+
+#### 
+
+```mermaid
+sequenceDiagram
+    participant AuthService as 🔐 auth-service
+    participant Kafka as 📨 Kafka
+    participant UserService as 👥 user-service
+    participant UserDB as 🗄️ User DB
+    participant PortfolioService as 📑 portfolio-service
+    
+    Note over Kafka: (AuthService가 SAGA 시작 이벤트 발행)
+    Kafka-->>+UserService: 1. [SAGA] UserRegistrationRequestedEvent 수신 <br> (UserEventHandler)
+    
+    UserService->>UserService: 2. createUserProfile() 실행
+    
+    par [UserService 로컬 트랜잭션]
+        UserService->>+UserDB: 3. [TX-User] UserProfile (COMPLETED) 저장
+        UserDB-->>-UserService: OK
+    and
+        UserService->>+Kafka: 4. [SAGA-Success] UserProfileCreationSuccessEvent 발행 <br> (-> AuthService)
+    and
+        UserService->>+Kafka: 5. [Fan-out] UserProfilePublishedEvent 발행 <br> (-> AuthService, PortfolioService)
+    end
+    
+    Kafka-->>-UserService: (ACK)
+    
+    Kafka-->>+AuthService: 6. [SAGA-Success] Event 수신 <br> (AuthUser 상태 COMPLETED로 변경)
+    Kafka-->>-AuthService: (ACK)
+    
+    Kafka-->>+PortfolioService: 7. [Fan-out] Event 수신 (PortfolioEventHandler)
+    PortfolioService-->>PortfolioService: 8. PortfolioEntity 초기 레코드 생성 (데이터 동기화)
+    PortfolioService-->>-Kafka: (ACK)
+```

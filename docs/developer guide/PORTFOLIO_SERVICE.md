@@ -115,3 +115,57 @@
     * `value-deserializer`: `JsonDeserializer`를 사용한다.
     * `properties.spring.json.trusted.packages` 및 `type.mapping`: `user-service`가 발행한 `UserProfilePublishedEvent`를 `common-module` DTO로 올바르게 역직렬화하기 위한 필수 설정이다.
 * **`app.feign.user-service-url`**: `pom.xml`과 `PortfolioServiceApplication`에 Feign Client가 활성화되어 있고, `application.yml`에도 `user-service` URL이 정의되어 있다. 하지만 현재 비즈니스 로직(Kafka 비동기 동기화)으로 인해 **실제 Feign Client 인터페이스가 정의되거나 사용되지는 않고 있다.** 이는 향후 동기식 호출이 필요할 경우를 대비한 설정으로 볼 수 있다.
+
+---
+#### A. 데이터 동기화 (Fan-out Consumer)
+
+`user-service`의 프로필 *수정* 이벤트가 `portfolio-service`에 어떻게 동기화되는지 보여준다.
+
+```markdown
+#### 
+```mermaid
+sequenceDiagram
+    participant UserService as 👥 user-service
+    participant Kafka as 📨 Kafka
+    participant PortfolioService as 📑 portfolio-service
+    participant PortfolioDB as 🗄️ Portfolio DB
+
+    Note over UserService: (사용자가 /users/me 에서 이름 변경)
+    UserService->>+Kafka: 1. [Fan-out] UserProfilePublishedEvent 발행
+    Kafka-->>-UserService: OK
+    
+    Kafka-->>+PortfolioService: 2. [Fan-out] Event 수신 (PortfolioEventHandler)
+    PortfolioService->>PortfolioService: 3. updateCache() 실행
+    PortfolioService->>+PortfolioDB: 4. PortfolioEntity 조회 (BY userId)
+    PortfolioDB-->>-PortfolioService: PortfolioEntity
+    
+    PortfolioService->>+PortfolioDB: 5. PortfolioEntity UPDATE <br> (캐시된 name, email 등 동기화)
+    PortfolioDB-->>-PortfolioService: OK
+    PortfolioService-->>-Kafka: (ACK)
+```
+#### B. 포트폴리오 '관심' 추가 (Like)
+
+`portfolio-service`의 고유 비즈니스 로직과 트랜잭션을 보여준다.
+
+```markdown
+#### 
+```mermaid
+sequenceDiagram
+    participant Client as 👤 클라이언트
+    participant PortfolioService as 📑 portfolio-service
+    participant PortfolioDB as 🗄️ Portfolio DB
+
+    Client->>+PortfolioService: POST /portfolios/{id}/like
+    
+    Note over PortfolioService: 1. [TX] PortfolioLikeService.addLike() 실행
+    
+    PortfolioService->>+PortfolioDB: 2. (복합키) uk_user_portfolio 중복 검사
+    PortfolioDB-->>-PortfolioService: (중복 없음)
+    
+    PortfolioService->>+PortfolioDB: 3. PortfolioLikeEntity INSERT (관계 저장)
+    PortfolioDB-->>-PortfolioService: OK
+    
+    PortfolioService->>+PortfolioDB: 4. PortfolioEntity UPDATE (likeCount = likeCount + 1)
+    PortfolioDB-->>-PortfolioService: OK
+    
+    PortfolioService-->>-Client: 201 Created (TX Commit)
