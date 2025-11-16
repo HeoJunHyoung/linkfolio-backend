@@ -3,6 +3,7 @@ package com.example.userservice.controller;
 import com.example.commonmodule.dto.security.AuthUser;
 import com.example.userservice.client.dto.InternalUserProfileResponse;
 import com.example.userservice.dto.request.UserProfileUpdateRequest;
+import com.example.userservice.dto.response.UserInfoResponse;
 import com.example.userservice.dto.response.UserResponse;
 import com.example.userservice.service.UserService;
 import io.swagger.v3.oas.annotations.Operation;
@@ -44,9 +45,9 @@ public class UserController {
     })
     @SecurityRequirement(name = "BearerAuthentication") // 이 API는 인증이 필요함
     @GetMapping("/users/me")
-    public ResponseEntity<UserResponse> getMyInfoApi(@AuthenticationPrincipal AuthUser authUser) {
-        UserResponse userResponse = userService.getUser(authUser.getUserId());
-        return ResponseEntity.status(HttpStatus.OK).body(userResponse);
+    public ResponseEntity<UserInfoResponse> getMyInfoApi(@AuthenticationPrincipal AuthUser authUser) {
+        UserInfoResponse response = userService.getUser(authUser.getUserId());
+        return ResponseEntity.status(HttpStatus.OK).body(response);
     }
 
     @Operation(summary = "특정 회원 정보 조회", description = "사용자 ID(PK)로 특정 회원의 정보를 조회합니다.")
@@ -57,9 +58,9 @@ public class UserController {
     })
     @SecurityRequirement(name = "BearerAuthentication") // 이 API는 인증이 필요함
     @GetMapping("/users/{userId}")
-    public ResponseEntity<UserResponse> getUserApi(@PathVariable("userId") Long userId) {
-        UserResponse userResponse = userService.getUser(userId);
-        return ResponseEntity.status(HttpStatus.OK).body(userResponse);
+    public ResponseEntity<UserInfoResponse> getUserApi(@PathVariable("userId") Long userId) {
+        UserInfoResponse response = userService.getUser(userId);
+        return ResponseEntity.status(HttpStatus.OK).body(response);
     }
 
     @Operation(summary = "내 정보 수정", description = "현재 로그인된 사용자의 프로필 정보(이름, 생년월일, 성별)를 수정합니다.")

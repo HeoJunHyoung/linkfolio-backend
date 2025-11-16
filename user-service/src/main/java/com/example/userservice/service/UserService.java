@@ -5,6 +5,7 @@ import com.example.commonmodule.dto.event.UserRegistrationRequestedEvent;
 import com.example.userservice.client.dto.InternalUserProfileResponse;
 import com.example.userservice.config.KafkaTopics;
 import com.example.userservice.dto.request.UserProfileUpdateRequest;
+import com.example.userservice.dto.response.UserInfoResponse;
 import com.example.userservice.dto.response.UserResponse;
 import com.example.userservice.entity.UserProfileEntity;
 import com.example.userservice.entity.enumerate.UserProfileStatus;
@@ -30,10 +31,11 @@ public class UserService {
 
 
     // 회원 단일 조회 (내 정보 조회 / 특정 회원 조회)
-    public UserResponse getUser(Long userId) {
+    public UserInfoResponse getUser(Long userId) {
         UserProfileEntity userProfileEntity = userRepository.findById(userId)
                 .orElseThrow(() -> new BusinessException(USER_NOT_FOUND));
-        return userMapper.toUserResponse(userProfileEntity);
+        return UserInfoResponse.of(userProfileEntity.getEmail(), userProfileEntity.getUsername(), userProfileEntity.getName(),
+                userProfileEntity.getBirthdate(), userProfileEntity.getGender().name());
     }
 
     /**
