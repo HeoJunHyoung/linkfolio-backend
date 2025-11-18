@@ -34,12 +34,12 @@ spring:
     bootstrap-servers: ${SPRING_KAFKA_BOOTSTRAP_SERVERS}
     consumer:
       bootstrap-servers: ${SPRING_KAFKA_CONSUMER_BOOTSTRAP_SERVERS}
-      key-deserializer: org.apache.kafka.common.serialization.StringDeserializer
-      value-deserializer: org.springframework.kafka.support.serializer.JsonDeserializer
+      key-deserializer: io.confluent.kafka.serializers.KafkaAvroDeserializer
+      value-deserializer: io.confluent.kafka.serializers.KafkaAvroDeserializer
       group-id: "portfolio-consumer-group"
       properties:
-        spring.json.trusted.packages: "com.example.commonmodule.dto.event"
-        spring.json.type.mapping: "com.example.commonmodule.dto.event.UserProfilePublishedEvent:com.example.commonmodule.dto.event.UserProfilePublishedEvent"
+        schema.registry.url: http://10.0.2.9:8081
+        specific.avro.reader: false
 
 # --- Feign Client Configuration ---
 app:

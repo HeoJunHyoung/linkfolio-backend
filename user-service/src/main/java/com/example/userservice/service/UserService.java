@@ -1,9 +1,7 @@
 package com.example.userservice.service;
 
-import com.example.commonmodule.dto.event.UserProfilePublishedEvent;
 import com.example.commonmodule.dto.event.UserRegistrationRequestedEvent;
 import com.example.userservice.client.dto.InternalUserProfileResponse;
-import com.example.userservice.config.KafkaTopics;
 import com.example.userservice.dto.request.UserProfileUpdateRequest;
 import com.example.userservice.dto.response.UserInfoResponse;
 import com.example.userservice.dto.response.UserResponse;
@@ -14,7 +12,6 @@ import com.example.userservice.repository.UserRepository;
 import com.example.userservice.util.UserMapper;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.kafka.core.KafkaTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -27,19 +24,23 @@ public class UserService {
 
     private final UserRepository userRepository;
     private final UserMapper userMapper;
-    private final KafkaTemplate<String, Object> kafkaTemplate;
 
 
     // 회원 단일 조회 (내 정보 조회 / 특정 회원 조회)
     public UserInfoResponse getUser(Long userId) {
         UserProfileEntity userProfileEntity = userRepository.findById(userId)
                 .orElseThrow(() -> new BusinessException(USER_NOT_FOUND));
+
+        // [예외처리] .name()이 없어 NPE가 발생할 수 있는 부분 수정
+        String genderString = (userProfileEntity.getGender() != null) ? userProfileEntity.getGender().name() : null;
+
         return UserInfoResponse.of(userProfileEntity.getEmail(), userProfileEntity.getUsername(), userProfileEntity.getName(),
-                userProfileEntity.getBirthdate(), userProfileEntity.getGender().name());
+                userProfileEntity.getBirthdate(), genderString);
     }
 
     /**
      * 내 프로필 정보 수정
+     * ㄴ DB 저장 시 CDC가 이벤트를 자동 발행.
      */
     @Transactional
     public UserResponse updateUserProfile(Long userId, UserProfileUpdateRequest request) {
@@ -48,34 +49,11 @@ public class UserService {
                 .orElseThrow(() -> new BusinessException(USER_NOT_FOUND));
 
         // 2. 엔티티 정보 업데이트
-        userProfile.updateUserProfile(
-                request.getName(),
-                request.getBirthdate(),
-                request.getGender()
-        );
+        userProfile.updateUserProfile(request.getName(), request.getBirthdate(), request.getGender());
 
-        // 3. DB 저장 (JPA Dirty-Checking으로 생략 가능하나 명시)
+        // 3. DB 저장 (이 시점에 CDC가 UPDATE 이벤트를 감지)
         UserProfileEntity updatedProfile = userRepository.save(userProfile);
-
-        // 4. Kafka 이벤트 발행 (데이터 동기화)
-        //    (portfolio-service 등이 이 이벤트를 수신하여 캐시를 갱신)
-        try {
-
-            UserProfilePublishedEvent publishedEvent = UserProfilePublishedEvent.builder()
-                    .userId(updatedProfile.getUserId())
-                    .name(updatedProfile.getName())
-                    .email(updatedProfile.getEmail())
-                    .birthdate(updatedProfile.getBirthdate())
-                    .gender(updatedProfile.getGender())
-                    .build();
-
-            kafkaTemplate.send(KafkaTopics.USER_PROFILE_UPDATED, publishedEvent);
-            log.info("프로필 '수정' 완료. 데이터 전파(Fan-out) 이벤트 발행. UserId: {}", updatedProfile.getUserId());
-        } catch (Exception e) {
-            log.error("프로필 수정은 완료했으나 Kafka 이벤트 발행 실패, 롤백 필요. UserId: {}", userId, e);
-            // @Transactional에 의해 런타임 예외 발생 시 DB 롤백
-            throw new BusinessException(INTERNAL_SERVER_ERROR);
-        }
+        log.info("프로필 '수정' 완료. DB 저장 성공. UserId: {}", updatedProfile.getUserId());
 
         // 5. DTO로 변환하여 반환
         return userMapper.toUserResponse(updatedProfile);
@@ -88,7 +66,9 @@ public class UserService {
         return userMapper.toInternalResponse(userProfileEntity);
     }
 
-    // Kafka Consumer가 호출할 프로필 생성 메서드
+    /**
+     * Kafka Consumer가 호출할 프로필 생성 메서드
+     */
     @Transactional
     public UserProfileEntity createUserProfile(UserRegistrationRequestedEvent event) {
         // 1. 멱등성 보장 (이미 처리된 이벤트인지 확인)
@@ -105,7 +85,7 @@ public class UserService {
         // 3. 상태를 COMPLETED로 변경
         userProfile.updateStatus(UserProfileStatus.COMPLETED);
 
-        // 4. DB 저장
+        // 4. DB 저장 (이 시점에 CDC가 INSERT 이벤트를 감지)
         UserProfileEntity savedProfile = userRepository.save(userProfile);
 
         log.info("UserProfile 생성 및 COMPLETED 상태로 저장 성공. UserId: {}", event.getUserId());
