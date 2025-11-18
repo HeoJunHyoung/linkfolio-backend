@@ -2,7 +2,7 @@ package com.example.userservice.config;
 
 public interface KafkaTopics {
     // Auth -> User (프로필 생성 요청)
-    String USER_REGISTRATION_REQUESTED = "user-registration-requested";
+    String USER_REGISTRATION_REQUESTED = "outbox.event.UserRegistrationRequestedEvent";
 
     // User -> Auth (프로필 생성 성공)
     String USER_PROFILE_CREATED_SUCCESS = "user-profile-created-success";

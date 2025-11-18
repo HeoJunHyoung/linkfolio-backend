@@ -3,13 +3,16 @@ package com.example.authservice.service;
 import com.example.authservice.dto.AuthUser;
 import com.example.authservice.dto.OAuthAttributes;
 import com.example.authservice.entity.AuthUserEntity;
+import com.example.authservice.entity.OutboxEntity;
 import com.example.authservice.exception.ErrorCode;
 import com.example.authservice.repository.AuthUserRepository;
-import com.example.authservice.service.kafka.UserEventProducer;
+import com.example.authservice.repository.OutboxRepository;
 import com.example.authservice.service.oauth.OAuth2AttributeParser;
 import com.example.commonmodule.dto.event.UserRegistrationRequestedEvent;
 import com.example.commonmodule.entity.enumerate.UserProvider;
 import com.example.commonmodule.exception.BusinessException;
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.oauth2.client.userinfo.DefaultOAuth2UserService;
@@ -20,6 +23,7 @@ import org.springframework.security.oauth2.core.user.OAuth2User;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.LocalDateTime;
 import java.util.Map;
 import java.util.Optional;
 
@@ -29,9 +33,9 @@ import java.util.Optional;
 public class CustomOAuth2UserService implements OAuth2UserService<OAuth2UserRequest, OAuth2User> {
 
     private final AuthUserRepository authUserRepository;
-    private final UserEventProducer userEventProducer;
-    // 전략(Parser) Map 주입
     private final Map<String, OAuth2AttributeParser> attributeParsers;
+    private final OutboxRepository outboxRepository;
+    private final ObjectMapper objectMapper;
 
     @Override
     @Transactional
@@ -113,16 +117,26 @@ public class CustomOAuth2UserService implements OAuth2UserService<OAuth2UserRequ
         event.setProvider(provider.name());
         event.setRole(savedAuthUser.getRole());
 
-        // 5. SAGA 시작 (Kafka 이벤트 발행)
+        // 5. SAGA 시작 (Debezium이 발행)
         try {
-            userEventProducer.sendUserRegistrationRequested(event);
-            log.info("신규 소셜 유저 등록. SAGA(프로필 생성) 시작. UserId: {}", savedAuthUser.getUserId());
-        } catch (Exception e) {
-            log.error("신규 소셜 유저 SAGA 시작 실패 (Kafka 발행 실패), UserId: {}", savedAuthUser.getUserId(), e);
-            // BusinessException을 던져 OAuth2 로그인 흐름 전체를 롤백
-            throw new BusinessException(ErrorCode.KAFKA_PRODUCE_FAILED);
+            String payload = objectMapper.writeValueAsString(event);
+
+            OutboxEntity outboxEvent = OutboxEntity.builder()
+                    .aggregateType("USER")
+                    .aggregateId(savedAuthUser.getUserId().toString())
+                    .type("UserRegistrationRequestedEvent") // 토픽명 결정
+                    .payload(payload)
+                    .createdAt(LocalDateTime.now())
+                    .build();
+
+            outboxRepository.save(outboxEvent);
+            log.info("신규 소셜 유저 Outbox 저장 완료 (SAGA 시작). UserId: {}", savedAuthUser.getUserId());
+
+        } catch (JsonProcessingException e) {
+            log.error("Outbox JSON 변환 오류", e);
+            throw new BusinessException(ErrorCode.INTERNAL_SERVER_ERROR);
         }
 
-        return savedAuthUser; // PENDING 상태의 유저 반환
+        return savedAuthUser;
     }
 }
