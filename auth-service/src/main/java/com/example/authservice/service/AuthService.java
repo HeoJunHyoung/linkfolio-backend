@@ -4,17 +4,25 @@ import com.example.authservice.dto.UserDto;
 import com.example.authservice.dto.request.*;
 import com.example.authservice.dto.response.FindUsernameResponse;
 import com.example.authservice.entity.AuthUserEntity;
+import com.example.authservice.entity.OutboxEntity;
 import com.example.authservice.exception.ErrorCode;
 import com.example.authservice.repository.AuthUserRepository;
+import com.example.authservice.repository.OutboxRepository;
 import com.example.authservice.service.kafka.UserEventProducer;
 import com.example.commonmodule.dto.event.UserRegistrationRequestedEvent;
+import com.example.commonmodule.entity.enumerate.Gender;
+import com.example.commonmodule.entity.enumerate.Role;
 import com.example.commonmodule.entity.enumerate.UserProvider;
 import com.example.commonmodule.exception.BusinessException;
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+
+import java.time.LocalDateTime;
 
 @Slf4j
 @Service
@@ -22,9 +30,10 @@ import org.springframework.transaction.annotation.Transactional;
 public class AuthService {
 
     private final AuthUserRepository authUserRepository;
-    private final BCryptPasswordEncoder passwordEncoder;
+    private final OutboxRepository outboxRepository;
+    private final ObjectMapper objectMapper;
     private final EmailVerificationService emailVerificationService;
-    private final UserEventProducer userEventProducer;
+    private final BCryptPasswordEncoder passwordEncoder;
 
     /**
      * 회원가입 (Auth-Service가 주관)
@@ -58,26 +67,35 @@ public class AuthService {
         log.info("AuthUser 'PENDING' 상태로 저장됨. UserId: {}", savedAuthUser.getUserId());
 
 
-        // 6. (Kafka) 프로필 생성을 위한 이벤트 발행
+        // 6. Outbox 테이블에 이벤트 저장
+        UserRegistrationRequestedEvent event = UserRegistrationRequestedEvent.builder()
+                .userId(savedAuthUser.getUserId())
+                .email(request.getEmail())
+                .username(request.getUsername())
+                .name(request.getName())
+                .birthdate(request.getBirthdate())
+                .gender(request.getGender())
+                .provider(UserProvider.LOCAL.name())
+                .role(savedAuthUser.getRole())
+                .build();
+
         try {
-            UserRegistrationRequestedEvent event = new UserRegistrationRequestedEvent();
-            event.setUserId(savedAuthUser.getUserId()); // [중요] Auth DB에서 생성된 ID
-            event.setEmail(request.getEmail());
-            event.setUsername(request.getUsername());
-            event.setName(request.getName());
-            event.setBirthdate(request.getBirthdate());
-            event.setGender(request.getGender());
-            event.setProvider(UserProvider.LOCAL.name());
-            event.setRole(savedAuthUser.getRole());
+            // 이벤트를 JSON 문자열로 변환
+            String payload = objectMapper.writeValueAsString(event);
 
-            // UserEventProducer 사용 (Kafka 발행 실패 시 BusinessException이 throw되어 롤백됨)
-            userEventProducer.sendUserRegistrationRequested(event);
+            OutboxEntity outboxEvent = OutboxEntity.builder()
+                    .aggregateType("USER")
+                    .aggregateId(savedAuthUser.getUserId().toString())
+                    .type("UserRegistrationRequestedEvent") // 토픽명: outbox.event.UserRegistrationRequestedEvent
+                    .payload(payload)
+                    .createdAt(LocalDateTime.now())
+                    .build();
 
-        } catch (Exception e) {
-            log.error("Kafka 이벤트 발행 실패 (Auth-Service 롤백 필요), UserId: {}", savedAuthUser.getUserId(), e);
-            // AuthService의 @Transactional에 의해 이 RuntimeException이 롤백을 트리거
-            // (UserEventProducer가 BusinessException을 던지도록 설정함)
-            throw e;
+            outboxRepository.save(outboxEvent); // 같은 트랜잭션으로 저장 (Dual Write 방지)
+            log.info("SAGA 시작: Outbox 이벤트 저장 완료. UserId: {}", savedAuthUser.getUserId());
+
+        } catch (JsonProcessingException e) {
+            throw new BusinessException(ErrorCode.INTERNAL_SERVER_ERROR);
         }
 
         // 7. (Auth) 회원가입 완료 후, Redis의 "인증 완료" 상태 삭제

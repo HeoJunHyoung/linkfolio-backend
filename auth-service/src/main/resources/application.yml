@@ -30,20 +30,14 @@ spring:
 
   kafka:
     bootstrap-servers: ${SPRING_KAFKA_BOOTSTRAP_SERVERS}
-    consumer: # Consumer 설정 (user-service로부터 응답을 받기 위함)
+    consumer:
       bootstrap-servers: ${SPRING_KAFKA_CONSUMER_BOOTSTRAP_SERVERS}
-      key-deserializer: org.apache.kafka.common.serialization.StringDeserializer
-      value-deserializer: org.springframework.kafka.support.serializer.JsonDeserializer
+      key-deserializer: io.confluent.kafka.serializers.KafkaAvroDeserializer
+      value-deserializer: io.confluent.kafka.serializers.KafkaAvroDeserializer
+      group-id: "auth-saga-consumer"
       properties:
-        spring.json.trusted.packages: "com.example.commonmodule.dto.event"
-        spring.json.type.mapping: "com.example.commonmodule.dto.event.UserProfileCreationSuccessEvent:com.example.commonmodule.dto.event.UserProfileCreationSuccessEvent, \
-                                                        com.example.commonmodule.dto.event.UserProfileCreationFailureEvent:com.example.commonmodule.dto.event.UserProfileCreationFailureEvent, \
-                                                        com.example.commonmodule.dto.event.UserProfilePublishedEvent:com.example.commonmodule.dto.event.UserProfilePublishedEvent"
-
-    producer: #  Producer 설정 (user-service로 요청을 보내기 위함)
-      bootstrap-servers: ${SPRING_KAFKA_PRODUCER_BOOTSTRAP_SERVERS}
-      key-serializer: org.apache.kafka.common.serialization.StringSerializer
-      value-serializer: org.springframework.kafka.support.serializer.JsonSerializer
+        schema.registry.url: http://10.0.2.9:8081
+        specific.avro.reader: false
 
   # Mail (?? ?? ???)
   mail:

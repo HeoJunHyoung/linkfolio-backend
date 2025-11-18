@@ -1,16 +1,13 @@
 package com.example.userservice.service.kafka;
 
-import com.example.commonmodule.dto.event.UserProfileCreationFailureEvent;
-import com.example.commonmodule.dto.event.UserProfileCreationSuccessEvent;
-import com.example.commonmodule.dto.event.UserProfilePublishedEvent;
 import com.example.commonmodule.dto.event.UserRegistrationRequestedEvent;
-import com.example.userservice.config.KafkaTopics;
-import com.example.userservice.entity.UserProfileEntity;
 import com.example.userservice.service.UserService;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.avro.generic.GenericRecord;
+import org.apache.kafka.clients.consumer.ConsumerRecord;
 import org.springframework.kafka.annotation.KafkaListener;
-import org.springframework.kafka.core.KafkaTemplate;
 import org.springframework.stereotype.Component;
 
 @Slf4j
@@ -19,45 +16,34 @@ import org.springframework.stereotype.Component;
 public class UserEventHandler {
 
     private final UserService userService;
-    private final KafkaTemplate<String, Object> kafkaTemplate;
+    private final ObjectMapper objectMapper;
 
-    @KafkaListener(topics = KafkaTopics.USER_REGISTRATION_REQUESTED, groupId = "user-profile-consumer")
-    public void handleUserRegistrationRequested(UserRegistrationRequestedEvent event) {
-        log.info("수신된 사용자 생성 요청 이벤트: userId={}", event.getUserId());
-
+    // 토픽명: outbox.event.{이벤트타입}
+    @KafkaListener(topics = "outbox.event.UserRegistrationRequestedEvent", groupId = "user-profile-consumer")
+    public void handleUserRegistrationRequested(ConsumerRecord<Object, Object> record) {
         try {
-            // 1. 핵심 로직 호출 (이제 UserProfileEntity를 반환)
-            UserProfileEntity savedProfile = userService.createUserProfile(event);
+            // 1. Avro 메시지에서 payload(JSON 문자열) 추출
+            String payloadJson;
+            if (record.value() instanceof GenericRecord) {
+                GenericRecord genericRecord = (GenericRecord) record.value();
+                // Outbox SMT 설정에 따라서 payload 필드에 JSON이 들어있음
+                payloadJson = genericRecord.get("payload").toString();
+            } else {
+                // 혹시 String으로 올 경우 대비
+                payloadJson = record.value().toString();
+            }
 
-            // --- [!! Fan-out 시작 !!] ---
-            // 2-A. [SAGA용] SAGA 성공 이벤트를 auth-service로 다시 발행
-            UserProfileCreationSuccessEvent successEvent = new UserProfileCreationSuccessEvent(event.getUserId());
-            kafkaTemplate.send(KafkaTopics.USER_PROFILE_CREATED_SUCCESS, successEvent);
-            log.info("프로필 생성 성공. SAGA Success 이벤트 발행. UserId: {}", event.getUserId());
+            log.info("[Outbox 수신] Payload: {}", payloadJson);
 
-            // 2-B. [전파용] 데이터 동기화 이벤트를 portfolio-service (및 기타)로 발행
-            UserProfilePublishedEvent publishedEvent = UserProfilePublishedEvent.builder()
-                    .userId(savedProfile.getUserId())
-                    .name(savedProfile.getName())
-                    .email(savedProfile.getEmail())
-                    .birthdate(savedProfile.getBirthdate())
-                    .gender(savedProfile.getGender())
-                    .build();
+            // 2. JSON -> DTO 변환
+            UserRegistrationRequestedEvent event = objectMapper.readValue(payloadJson, UserRegistrationRequestedEvent.class);
 
-            kafkaTemplate.send(KafkaTopics.USER_PROFILE_UPDATED, publishedEvent);
-            log.info("프로필 생성 성공. 데이터 전파(Fan-out) 이벤트 발행. UserId: {}", event.getUserId());
-
-            // --- [!! Fan-out 종료 !!] ---
+            // 3. 프로필 생성 로직 실행
+            // (여기서 DB에 저장되면, user-profile-connector가 이벤트를 자동 발행함)
+            userService.createUserProfile(event);
 
         } catch (Exception e) {
-            // 3. [실패] SAGA 보상(실패) 이벤트를 auth-service로 발행
-            log.error("사용자 프로필 생성 실패: userId={}. SAGA Failure(보상) 이벤트 발행.", event.getUserId(), e);
-
-            UserProfileCreationFailureEvent failureEvent = new UserProfileCreationFailureEvent(
-                    event.getUserId(),
-                    e.getMessage()
-            );
-            kafkaTemplate.send(KafkaTopics.USER_PROFILE_CREATED_FAILURE, failureEvent);
+            log.error("프로필 생성 처리 중 오류 발생", e);
         }
     }
 }
