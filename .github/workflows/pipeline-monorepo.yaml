@@ -45,6 +45,7 @@ jobs:
             user-service/target/*.jar
             auth-service/target/*.jar
             portfolio-service/target/*.jar
+            chat-service/target/*.jar
 
   # -----------------------------------------------------------------
   # Job 2: (Parallel) Docker 이미지 빌드 및 푸시
@@ -54,7 +55,7 @@ jobs:
     needs: build # build 작업이 성공해야 실행
     strategy:
       matrix:
-        service: [apigateway-service, user-service, auth-service, portfolio-service]
+        service: [apigateway-service, user-service, auth-service, portfolio-service, chat-service]
         include:
           - service: apigateway-service
             service-name: apigateway
@@ -64,6 +65,8 @@ jobs:
             service-name: auth
           - service: portfolio-service
             service-name: portfolio
+          - service: chat-service
+            service-name: chat
 
     steps:
       - name: Checkout source code
@@ -121,7 +124,7 @@ jobs:
       - name: Update image tags with Kustomize
         run: |
           cd linkfolio-manifest/overlays/development
-          for SERVICE in apigateway user auth portfolio; do
+          for SERVICE in apigateway user auth portfolio chat; do
             echo "Updating image for $SERVICE-service..."
             kustomize edit set image h6bro/service-${SERVICE}=h6bro/service-${SERVICE}:${{ env.SHORT_SHA }}
           done
