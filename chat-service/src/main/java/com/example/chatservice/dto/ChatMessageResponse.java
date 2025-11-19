@@ -12,7 +12,7 @@ import java.time.LocalDateTime;
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
-public class ChatMessageResponse {
+public class ChatMessageResponse { // 채팅 내용 DTO
     private String id;
     private String roomId;
     private Long senderId;

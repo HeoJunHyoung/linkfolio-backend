@@ -19,7 +19,7 @@ public class ChatController {
 
     private final ChatService chatService;
 
-    // 채팅방 목록
+    // 채팅방 목록 조회
     @GetMapping("/rooms")
     public ResponseEntity<List<ChatRoomResponse>> getMyRooms(@AuthenticationPrincipal Object principal) {
         if (principal instanceof AuthUser authUser) {
@@ -29,7 +29,7 @@ public class ChatController {
         return ResponseEntity.badRequest().build();
     }
 
-    // 채팅방 메시지 이력 (무한스크롤)
+    // 채팅방 메시지 내용 조회 (무한스크롤)
     @GetMapping("/rooms/{roomId}/messages")
     public ResponseEntity<Slice<ChatMessageResponse>> getMessages(@PathVariable String roomId,
                                                                   @RequestParam(defaultValue = "0") int page) {

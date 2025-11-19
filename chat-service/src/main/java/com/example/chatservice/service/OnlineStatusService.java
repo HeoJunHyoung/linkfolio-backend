@@ -7,6 +7,7 @@ import org.springframework.stereotype.Service;
 @Service
 @RequiredArgsConstructor
 public class OnlineStatusService {
+
     private final RedisTemplate<String, Object> redisTemplate;
     private static final String STATUS_KEY_PREFIX = "STATUS:";
 

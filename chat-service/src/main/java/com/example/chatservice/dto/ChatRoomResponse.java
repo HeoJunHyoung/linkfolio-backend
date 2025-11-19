@@ -6,10 +6,10 @@ import java.time.LocalDateTime;
 
 @Data
 @Builder
-public class ChatRoomResponse {
+public class ChatRoomResponse { // 채팅 목록 DTO
     private String roomId;
     private Long otherUserId;
-    private String otherUserName; // User Service Feign 조회
+    private String otherUserName;
     private String lastMessage;
     private LocalDateTime lastMessageTime;
     private int unreadCount;
