@@ -1,4 +1,4 @@
-package com.example.chatservice.dto;
+package com.example.chatservice.client;
 
 import com.example.commonmodule.entity.enumerate.Gender;
 import lombok.Builder;

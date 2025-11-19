@@ -1,45 +1,38 @@
 package com.example.chatservice.entity;
 
-import lombok.*;
-import org.springframework.data.annotation.CreatedDate;
+import lombok.Builder;
+import lombok.Getter;
 import org.springframework.data.annotation.Id;
 import org.springframework.data.mongodb.core.index.Indexed;
 import org.springframework.data.mongodb.core.mapping.Document;
 
 import java.time.LocalDateTime;
 
-@Document(collection = "chat_messages")
 @Getter
-@Builder
-@NoArgsConstructor(access = AccessLevel.PROTECTED)
-@AllArgsConstructor(access = AccessLevel.PRIVATE)
+@Document(collection = "chat_message")
 public class ChatMessageEntity {
 
     @Id
-    private String id; // MongoDB의 고유 ID
+    private String id;
 
-    @Indexed
-    private String roomId; // 채팅방 ID (ChatRoomEntity의 ID)
+    @Indexed // roomId로 조회 성능 향상
+    private String roomId;
 
     private Long senderId;
 
-    private String content; // 메시지 내용
+    private String content;
 
-    // 읽음 처리: 메시지를 수신자가 읽은 시각. null이면 아직 안 읽은 것임
-    private LocalDateTime readAt;
-
-    @CreatedDate
     private LocalDateTime createdAt;
 
-    public static ChatMessageEntity of(String roomId, Long senderId, String content) {
-        return ChatMessageEntity.builder()
-                .roomId(roomId)
-                .senderId(senderId)
-                .content(content)
-                .build();
-    }
+    // 읽지 않은 사람 수 (아직 1:1 채팅이라 다음과 같이 정해질 듯)  [0:모두읽음, 1:상대안읽음]
+    private int readCount;
 
-    public void markAsRead() {
-        this.readAt = LocalDateTime.now();
+    @Builder
+    public ChatMessageEntity(String roomId, Long senderId, String content, LocalDateTime createdAt) {
+        this.roomId = roomId;
+        this.senderId = senderId;
+        this.content = content;
+        this.createdAt = createdAt;
+        this.readCount = 1; // 기본적으로 상대방은 안 읽음
     }
 }

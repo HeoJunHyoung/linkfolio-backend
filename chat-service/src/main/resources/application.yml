@@ -4,28 +4,39 @@ server:
     context-path: /chat-service
 
 spring:
-  main:
-    web-application-type: reactive # WebFlux ??
   application:
     name: chat-service
 
-  # --- MongoDB Configuration ---
+  # MongoDB (K8s ?? ?? ?? ConfigMap ??)
   data:
     mongodb:
-      authentication-database: ${MONGO_ROOT_USERNAME}
-      username: ${MONGO_ROOT_USERNAME}
-      password: ${MONGO_ROOT_PASSWORD}
-      database: ${MONGO_DATABASE}
       host: ${SPRING_DATA_MONGODB_HOST}
       port: ${SPRING_DATA_MONGODB_PORT}
+      database: ${SPRING_DATA_MONGODB_DATABASE}
+      authentication-database: ${SPRING_DATA_MONGODB_AUTHENTICATION_DATABASE}
+      username: ${MONGO_INITDB_ROOT_USERNAME}
+      password: ${MONGO_INITDB_ROOT_PASSWORD}
 
-    # --- Redis Configuration ---
+  # Redis (Pub/Sub)
     redis:
       host: ${SPRING_DATA_REDIS_HOST}
       port: ${SPRING_DATA_REDIS_PORT}
 
+  # Feign Client
+  cloud:
+    openfeign:
+      client:
+        config:
+          default:
+            connectTimeout: 5000
+            readTimeout: 5000
 
-# --- Feign Client Configuration (for User Profile Lookup) ---
+# K8s Service DNS
 app:
   feign:
-    user-service-url: http://user-service:80 # k8s ?? ??? ??
+    user-service-url: http://user-service:80
+
+logging:
+  level:
+    org.springframework.web.socket: DEBUG
+    com.example.chatservice: DEBUG
