@@ -1,0 +1,40 @@
+server:
+  port: 8083
+  servlet:
+    context-path: /chat-service
+
+spring:
+  application:
+    name: chat-service
+
+  # MongoDB
+  data:
+    mongodb:
+      host: ${SPRING_DATA_MONGODB_HOST}
+      port: ${SPRING_DATA_MONGODB_PORT}
+      database: ${SPRING_DATA_MONGODB_DATABASE}
+      authentication-database: ${SPRING_DATA_MONGODB_AUTHENTICATION_DATABASE}
+      username: ${MONGO_INITDB_ROOT_USERNAME}
+      password: ${MONGO_INITDB_ROOT_PASSWORD}
+
+    # Redis (Pub/Sub)
+    redis:
+      host: ${SPRING_DATA_REDIS_HOST}
+      port: ${SPRING_DATA_REDIS_PORT}
+
+  # Kafka (CDC ???)
+  kafka:
+    bootstrap-servers: ${SPRING_KAFKA_BOOTSTRAP_SERVERS}
+    consumer:
+      bootstrap-servers: ${SPRING_KAFKA_CONSUMER_BOOTSTRAP_SERVERS}
+      key-deserializer: io.confluent.kafka.serializers.KafkaAvroDeserializer
+      value-deserializer: io.confluent.kafka.serializers.KafkaAvroDeserializer
+      group-id: "chat-service-consumer-group"
+      properties:
+        schema.registry.url: http://10.0.2.9:8081 # ??? ?? ??
+        specific.avro.reader: false # GenericRecord? ??
+
+logging:
+  level:
+    org.springframework.web.socket: DEBUG
+    com.example.chatservice: DEBUG
