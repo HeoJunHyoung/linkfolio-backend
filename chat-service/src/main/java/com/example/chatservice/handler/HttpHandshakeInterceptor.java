@@ -2,6 +2,7 @@ package com.example.chatservice.handler;
 
 import jakarta.servlet.http.HttpServletRequest;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.server.ServerHttpRequest;
 import org.springframework.http.server.ServerHttpResponse;
 import org.springframework.http.server.ServletServerHttpRequest;
@@ -34,7 +35,8 @@ public class HttpHandshakeInterceptor implements HandshakeInterceptor {
                 log.debug("WebSocket Handshake: UserId {} stored in session attributes", userId);
             } else {
                 log.warn("WebSocket Handshake: X-User-Id header missing (Gateway bypass suspected)");
-                // 필요 시 여기서 return false; 하여 연결 거부 가능
+                response.setStatusCode(HttpStatus.UNAUTHORIZED); // 401 응답 설정
+                return false; // 연결 거부
             }
         }
         return true;

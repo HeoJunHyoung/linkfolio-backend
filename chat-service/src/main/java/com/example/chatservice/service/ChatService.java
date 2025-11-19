@@ -10,6 +10,7 @@ import com.example.chatservice.repository.ChatMessageRepository;
 import com.example.chatservice.repository.ChatRoomRepository;
 import com.example.chatservice.repository.ChatUserProfileRepository;
 import com.example.chatservice.service.redis.RedisPublisher;
+import com.mongodb.DuplicateKeyException;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.PageRequest;
@@ -37,7 +38,7 @@ public class ChatService {
     private final RedisPublisher redisPublisher;
     private final OnlineStatusService onlineStatusService;
 
-    @Transactional
+
     public void sendMessage(Long senderId, ChatMessageRequest request) {
         Long receiverId = request.getReceiverId();
 
@@ -67,13 +68,22 @@ public class ChatService {
         Long minId = Math.min(user1, user2);
         Long maxId = Math.max(user1, user2);
 
+        // 1차 시도: 조회
         return chatRoomRepository.findByUser1IdAndUser2Id(minId, maxId)
                 .orElseGet(() -> {
-                    ChatRoomEntity newRoom = ChatRoomEntity.builder()
-                            .user1Id(minId)
-                            .user2Id(maxId)
-                            .build();
-                    return chatRoomRepository.save(newRoom);
+                    try {
+                        // 방이 없으면 생성 시도
+                        ChatRoomEntity newRoom = ChatRoomEntity.builder()
+                                .user1Id(minId)
+                                .user2Id(maxId)
+                                .build();
+                        return chatRoomRepository.save(newRoom);
+                    } catch (DuplicateKeyException e) {
+                        // 동시성 이슈로 이미 방이 생성된 경우, 다시 조회하여 반환
+                        log.info("ChatRoom concurrent creation detected. Fetching existing room. User1: {}, User2: {}", minId, maxId);
+                        return chatRoomRepository.findByUser1IdAndUser2Id(minId, maxId)
+                                .orElseThrow(() -> new RuntimeException("ChatRoom creation failed and fetch failed."));
+                    }
                 });
     }
 

@@ -49,6 +49,18 @@ spring:
               predicates:
                 - Path=/portfolio-service/**
 
+            # 4. Chat Service (HTTP API)
+            - id: chat-service-route
+              uri: http://chat-service:80
+              predicates:
+                - Path=/chat-service/**
+
+            # 5. Chat Service (WebSocket)
+            - id: chat-service-ws-route
+              uri: http://chat-service:80
+              predicates:
+                - Path=/ws-chat/**
+
 app:
   gateway:
     excluded-urls:
@@ -78,6 +90,9 @@ app:
       - /auth-service/error
       - /portfolio-service/portfolios
       - /portfolio-service/portfolios/{portfolioId:\d+}
+
+      - /ws-chat/**
+      - /chat-service/chat/rooms/**
 
 # JWT Token Settings
 jwt:

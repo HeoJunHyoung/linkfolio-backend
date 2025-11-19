@@ -1,6 +1,9 @@
 package com.example.chatservice.config;
 
 import com.example.chatservice.service.redis.RedisSubscriber;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.SerializationFeature;
+import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -26,9 +29,15 @@ public class RedisConfig {
         return new LettuceConnectionFactory(host, port);
     }
 
-    /**
-     * Redis Pub/Sub 메시지를 수신하여 처리하는 컨테이너
-     */
+    // ObjectMapper Bean 등록 (LocalDateTime 처리를 위해)
+    @Bean
+    public ObjectMapper objectMapper() {
+        ObjectMapper mapper = new ObjectMapper();
+        mapper.registerModule(new JavaTimeModule()); // Java 8 날짜/시간 모듈 등록
+        mapper.disable(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS); // 타임스탬프 대신 ISO 형식 문자열로 저장
+        return mapper;
+    }
+
     @Bean
     public RedisMessageListenerContainer redisMessageListenerContainer(RedisConnectionFactory connectionFactory,
                                                                        MessageListenerAdapter listenerAdapter, ChannelTopic channelTopic) {
@@ -38,28 +47,28 @@ public class RedisConfig {
         return container;
     }
 
-    /**
-     * 실제 메시지를 처리하는 Subscriber를 어댑터로 감쌈 (sendMessage" 메서드가 콜백으로 실행)
-     */
     @Bean
     public MessageListenerAdapter listenerAdapter(RedisSubscriber subscriber) {
         return new MessageListenerAdapter(subscriber, "sendMessage");
     }
 
-    /**
-     * Redis 토픽 이름 정의 (채팅방 공통 토픽)
-     */
     @Bean
     public ChannelTopic channelTopic() {
         return new ChannelTopic("chatroom");
     }
 
     @Bean
-    public RedisTemplate<String, Object> redisTemplate(RedisConnectionFactory connectionFactory) {
+    public RedisTemplate<String, Object> redisTemplate(RedisConnectionFactory connectionFactory, ObjectMapper objectMapper) {
         RedisTemplate<String, Object> template = new RedisTemplate<>();
         template.setConnectionFactory(connectionFactory);
+
+        // Key Serializer
         template.setKeySerializer(new StringRedisSerializer());
-        template.setValueSerializer(new Jackson2JsonRedisSerializer<>(Object.class)); // JSON 직렬화
+
+        // Value Serializer 설정 (ObjectMapper 주입)
+        Jackson2JsonRedisSerializer<Object> serializer = new Jackson2JsonRedisSerializer<>(objectMapper, Object.class);
+
+        template.setValueSerializer(serializer);
         return template;
     }
 }
