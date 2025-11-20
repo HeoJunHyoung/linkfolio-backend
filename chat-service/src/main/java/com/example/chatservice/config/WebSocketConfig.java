@@ -22,8 +22,8 @@ public class WebSocketConfig implements WebSocketMessageBrokerConfigurer {
     public void registerStompEndpoints(StompEndpointRegistry registry) {
         registry.addEndpoint("/ws-chat")
                 .setAllowedOriginPatterns("*") // Gateway가 CORS 처리하므로 여기선 허용
-                .addInterceptors(httpHandshakeInterceptor) // Handshake 단계 인터셉터 추가
-                .withSockJS();
+                .addInterceptors(httpHandshakeInterceptor); // Handshake 단계 인터셉터 추가
+//                .withSockJS();
     }
 
     @Override
