@@ -26,7 +26,7 @@ public class ChatSocketController { // STOMP 메시지 핸들링
     @MessageMapping("/chat/send")
     public void sendMessage(@Payload ChatMessageRequest request, Principal principal) {
         Long senderId = Long.parseLong(principal.getName()); // StompHandler에서 설정한 ID
-        chatService.sendMessage(senderId, request);
+        chatService.handleMessage(senderId, request);
     }
 
     @EventListener

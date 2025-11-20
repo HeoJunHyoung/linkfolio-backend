@@ -1,6 +1,7 @@
 package com.example.chatservice.service.redis;
 
 import com.example.chatservice.dto.ChatMessageResponse;
+import com.example.chatservice.dto.enumerate.MessageType;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -20,13 +21,16 @@ public class RedisSubscriber {
      */
     public void sendMessage(String publishMessage) {
         try {
-            // Redis에서 받은 JSON 문자열을 객체로 매핑
-            ChatMessageResponse chatMessage = objectMapper.readValue(publishMessage, ChatMessageResponse.class);
+            ChatMessageResponse message = objectMapper.readValue(publishMessage, ChatMessageResponse.class);
 
-            // WebSocket 구독자에게 채팅 메시지 Send
-            // destination: /topic/chat/{roomId}
-            messagingTemplate.convertAndSend("/topic/chat/" + chatMessage.getRoomId(), chatMessage);
-            log.info("Redis Subscriber -> WebSocket: room={}, content={}", chatMessage.getRoomId(), chatMessage.getContent());
+            if (message.getType() == MessageType.READ) {
+                messagingTemplate.convertAndSend("/topic/chat/" + message.getRoomId() + "/read", message); // 읽음 표시
+            } else if (message.getType() == MessageType.TYPING) {
+                messagingTemplate.convertAndSend("/topic/chat/" + message.getRoomId() + "/typing", message); // 입력중
+            } else {
+                messagingTemplate.convertAndSend("/topic/chat/" + message.getRoomId(), message);     // 메시지 전송
+                messagingTemplate.convertAndSend("/topic/user/" + message.getReceiverId(), message); // 알림
+            }
 
         } catch (Exception e) {
             log.error("Exception in RedisSubscriber", e);
