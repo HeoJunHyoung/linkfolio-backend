@@ -3,6 +3,7 @@ package com.example.chatservice.service;
 import com.example.chatservice.dto.ChatMessageRequest;
 import com.example.chatservice.dto.ChatMessageResponse;
 import com.example.chatservice.dto.ChatRoomResponse;
+import com.example.chatservice.dto.enumerate.MessageType;
 import com.example.chatservice.entity.ChatMessageEntity;
 import com.example.chatservice.entity.ChatRoomEntity;
 import com.example.chatservice.entity.ChatUserProfileEntity;
@@ -39,11 +40,24 @@ public class ChatService {
     private final OnlineStatusService onlineStatusService;
 
 
-    public void sendMessage(Long senderId, ChatMessageRequest request) {
-        Long receiverId = request.getReceiverId();
+    @Transactional
+    public void handleMessage(Long senderId, ChatMessageRequest request) {
+        if (request.getType() == MessageType.READ) {
+            // 읽음 표시
+            markAsRead(senderId, request.getRoomId());
+        } else if (request.getType() == MessageType.TYPING) {
+            // 입력 중 신호 전송 (DB 저장 X, 바로 전송)
+            sendTypingSignal(senderId, request.getRoomId());
+        } else {
+            // 일반 전송
+            sendTalkMessage(senderId, request);
+        }
+    }
 
-        // 1. 방 조회 혹은 생성 (Lazy)
-        ChatRoomEntity chatRoom = getOrCreateChatRoom(senderId, receiverId);
+    // 일반 메시지 전송 로직
+    private void sendTalkMessage(Long senderId, ChatMessageRequest request) {
+        // 1. 방 조회/생성
+        ChatRoomEntity chatRoom = getOrCreateChatRoom(senderId, request.getReceiverId());
 
         // 2. 메시지 저장
         ChatMessageEntity message = ChatMessageEntity.builder()
@@ -59,8 +73,47 @@ public class ChatService {
         chatRoom.updateReadTime(senderId, message.getCreatedAt());
         chatRoomRepository.save(chatRoom);
 
-        // 4. Pub/Sub 전송
-        ChatMessageResponse response = ChatMessageResponse.from(message);
+        // 4. Redis 발행 (Response DTO 생성)
+        ChatMessageResponse response = ChatMessageResponse.builder()
+                .type(MessageType.TALK) // 타입 지정
+                .id(message.getId())
+                .roomId(chatRoom.getId())
+                .senderId(senderId)
+                .receiverId(request.getReceiverId())
+                .content(message.getContent())
+                .createdAt(message.getCreatedAt())
+                .readCount(1)
+                .build();
+
+        redisPublisher.publish(redisPublisher.getTopic(), response);
+    }
+
+    // 읽음 처리 로직
+    private void markAsRead(Long userId, String roomId) {
+        ChatRoomEntity chatRoom = chatRoomRepository.findById(roomId)
+                .orElseThrow(() -> new RuntimeException("Room not found"));
+
+        chatRoom.updateReadTime(userId, LocalDateTime.now());
+        chatRoomRepository.save(chatRoom);
+
+        // 읽음 이벤트 발행
+        ChatMessageResponse response = ChatMessageResponse.builder()
+                .type(MessageType.READ) // 타입 지정
+                .roomId(roomId)
+                .senderId(userId) // 읽은 사람
+                .build();
+
+        redisPublisher.publish(redisPublisher.getTopic(), response);
+    }
+
+    // 입력 중 신호 발송 메서드
+    private void sendTypingSignal(Long senderId, String roomId) {
+        ChatMessageResponse response = ChatMessageResponse.builder()
+                .type(MessageType.TYPING)
+                .roomId(roomId)
+                .senderId(senderId)
+                .build();
+
         redisPublisher.publish(redisPublisher.getTopic(), response);
     }
 
