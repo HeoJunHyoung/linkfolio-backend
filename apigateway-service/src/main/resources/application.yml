@@ -91,9 +91,6 @@ app:
       - /portfolio-service/portfolios
       - /portfolio-service/portfolios/{portfolioId:\d+}
 
-      - /ws-chat/**
-      - /chat-service/chat/rooms/**
-
 # JWT Token Settings
 jwt:
   secret: ${JWT_SECRET}

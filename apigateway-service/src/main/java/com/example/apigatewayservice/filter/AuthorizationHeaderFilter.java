@@ -65,7 +65,7 @@ public class AuthorizationHeaderFilter implements GlobalFilter, Ordered {
     public int getOrder() {
         return Ordered.HIGHEST_PRECEDENCE;
     }
-    
+
     @Override
     public Mono<Void> filter(ServerWebExchange exchange, GatewayFilterChain chain) {
 
@@ -73,25 +73,25 @@ public class AuthorizationHeaderFilter implements GlobalFilter, Ordered {
         String path = request.getURI().getPath(); // 현재 요청 경로 추출
 
         log.info("🔍 API Gateway Request Path: {}", path);
-        log.info("🔍 Headers: {}", request.getHeaders());
+        // log.info("🔍 Headers: {}", request.getHeaders()); // 보안상 헤더 전체 로깅은 지양하거나 디버그 레벨 권장
 
-        // 1. 화이트리스트(인증 예외) 경로 검사 (헤더가 없으면 MISSING_AUTH_HEADER 예외를 발생)
+        // 1. 화이트리스트(인증 예외) 경로 검사
         if (isPatchExcluded(path)) {
             log.info("Permitting request to excluded path: {}", path);
             return chain.filter(exchange);
         }
 
-        // 2. Authorization Header 존재 여부 검사
-        if (!request.getHeaders().containsKey(HttpHeaders.AUTHORIZATION)) {
+        // 2. 토큰 추출 (Header or Query Param)
+        String token = resolveToken(request);
+
+        // 3. 토큰이 없으면 에러 반환
+        if (token == null) {
             return onError(exchange, ErrorCode.MISSING_AUTH_HEADER);
         }
 
         try {
-            // 3. 헤더에서 순수 JWT 토큰 추출 (GatewayAuthenticationException 발생 가능)
-            String jwt = getJwtFromHeader(request);
-
-            // 4. JWT 파싱 및 Claims 추출 (JwtException 발생 가능) ; 토큰 서명, 만료 시간 검증 후, Payload 추출
-            Claims claims = getClaims(jwt);
+            // 4. JWT 파싱 및 Claims 추출 (JwtException 발생 가능)
+            Claims claims = getClaims(token);
 
             // 5. Claims에서 사용자 정보 추출 (userId, email, role)
             String userId = claims.getSubject();
@@ -125,7 +125,26 @@ public class AuthorizationHeaderFilter implements GlobalFilter, Ordered {
     }
 
     /**
-     * 에러 응답을 JSON 형식으로 반환하도록 수정
+     * 토큰 추출 메서드 (Header -> Query Param 순서로 확인)
+     */
+    private String resolveToken(ServerHttpRequest request) {
+        // 1. Authorization 헤더 확인
+        String authHeader = request.getHeaders().getFirst(HttpHeaders.AUTHORIZATION);
+        if (authHeader != null && authHeader.startsWith(BEARER_PREFIX)) {
+            return authHeader.substring(BEARER_PREFIX.length());
+        }
+
+        // 2. 쿼리 파라미터 확인 (웹소켓 등 헤더 사용 불가 시나리오)
+        String queryToken = request.getQueryParams().getFirst("token");
+        if (queryToken != null && !queryToken.isEmpty()) {
+            return queryToken;
+        }
+
+        return null; // 토큰을 찾을 수 없음
+    }
+
+    /**
+     * 에러 응답을 JSON 형식으로 반환
      */
     private Mono<Void> onError(ServerWebExchange exchange, ErrorCode errorCode) {
         log.warn("Gateway Error: {} (Status: {})", errorCode.getMessage(), errorCode.getStatus());
@@ -148,7 +167,6 @@ public class AuthorizationHeaderFilter implements GlobalFilter, Ordered {
             return response.writeWith(Mono.just(buffer));
         } catch (JsonProcessingException e) {
             log.error("Error serializing error response to JSON", e);
-            // JSON 직렬화 실패 시, 상태 코드만 설정
             response.setStatusCode(HttpStatus.INTERNAL_SERVER_ERROR);
             return response.setComplete();
         }
@@ -157,18 +175,6 @@ public class AuthorizationHeaderFilter implements GlobalFilter, Ordered {
     private Boolean isPatchExcluded(String path) {
         return excludedUrls.stream()
                 .anyMatch(pattern -> pathMatcher.match(pattern, path));
-    }
-
-
-    /**
-     * 유효성 검사 실패 시, GatewayAuthenticationException을 던지도록 변경
-     */
-    private String getJwtFromHeader(ServerHttpRequest request) {
-        String authHeader = request.getHeaders().getFirst(HttpHeaders.AUTHORIZATION);
-        if (authHeader == null || !authHeader.startsWith(BEARER_PREFIX)) {
-            throw new GatewayAuthenticationException(ErrorCode.INVALID_AUTH_FORMAT);
-        }
-        return authHeader.substring(BEARER_PREFIX.length());
     }
 
     /**
@@ -190,7 +196,7 @@ public class AuthorizationHeaderFilter implements GlobalFilter, Ordered {
                     httpHeaders.remove(INTERNAL_USER_ID_HEADER);
                     httpHeaders.remove(INTERNAL_USER_EMAIL_HEADER);
                     httpHeaders.remove(INTERNAL_USER_ROLE_HEADER);
-                    httpHeaders.remove(HttpHeaders.AUTHORIZATION);
+                    httpHeaders.remove(HttpHeaders.AUTHORIZATION); // 내부 통신 시 Authorization 헤더 제거
 
                     httpHeaders.add(INTERNAL_USER_ID_HEADER, userId);
                     httpHeaders.add(INTERNAL_USER_EMAIL_HEADER, email);
