@@ -37,19 +37,18 @@ public class PortfolioLikeService {
             throw new BusinessException(ErrorCode.PORTFOLIO_NOT_FOUND);
         }
 
-        // 이미 좋아요를 눌렀는지 확인
+        // 중복 좋아요 방지
         if (portfolioLikeRepository.existsByLikerIdAndPortfolio(authUserId, portfolio)) {
             log.warn("이미 관심 추가된 포트폴리오입니다. UserId: {}, PortfolioId: {}", authUserId, portfolioId);
-            return; // 멱등성을 위해 에러 대신 정상 반환
+            return;
         }
 
         // 1. PortfolioLike 엔티티 생성 및 저장
         PortfolioLikeEntity portfolioLike = PortfolioLikeEntity.of(authUserId, portfolio);
         portfolioLikeRepository.save(portfolioLike);
 
-        // 2. Portfolio 엔티티에 likeCount 업데이트 (편의 메서드 사용)
-        //    (JPA Dirty Checking에 의해 트랜잭션 종료 시 update 쿼리 발생)
-        portfolio.addLike(portfolioLike);
+        // 2. Portfolio 엔티티의 likeCount만 증가
+        portfolio.increaseLikeCount();
 
         log.info("관심 추가 완료. UserId: {}, PortfolioId: {}", authUserId, portfolioId);
     }
@@ -70,12 +69,11 @@ public class PortfolioLikeService {
             return; // 멱등성
         }
 
-        // 1. Portfolio 엔티티에서 likeCount 업데이트 및 연관관계 제거
-        portfolio.removeLike(portfolioLike);
-
-        // 2. PortfolioLike 엔티티 삭제
-        // ㄴ portfolio.removeLike()가 리스트에서만 제거하므로, Repository를 통한 DB 삭제는 별도 수행
+        // 1. PortfolioLike 엔티티 제거
         portfolioLikeRepository.delete(portfolioLike);
+
+        // 2. portfolio 엔터티의 likeCount 감소
+        portfolio.decreaseLikeCount();
 
         log.info("관심 취소 완료. UserId: {}, PortfolioId: {}", authUserId, portfolioId);
     }

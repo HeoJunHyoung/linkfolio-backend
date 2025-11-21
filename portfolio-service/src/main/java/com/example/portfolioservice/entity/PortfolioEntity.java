@@ -70,8 +70,6 @@ public class PortfolioEntity extends BaseEntity {
     @ColumnDefault("0")
     private Long likeCount = 0L;
 
-    @OneToMany(mappedBy = "portfolio", cascade = CascadeType.ALL, orphanRemoval = true)
-    private List<PortfolioLikeEntity> portfolioLikes = new ArrayList<>();
 
 
     // == 생성자 == //
@@ -105,9 +103,14 @@ public class PortfolioEntity extends BaseEntity {
         this.viewCount++;
     }
 
-    public void updateLikeCount(int delta) {
-        this.likeCount = Math.max(0, this.likeCount + delta); // 0 미만이 되지 않도록 보장
+    public void increaseLikeCount() {
+        this.likeCount++;
     }
+
+    public void decreaseLikeCount() {
+        this.likeCount = Math.max(0, this.likeCount - 1);
+    }
+
 
     // 사용자가 입력한 포트폴리오 정보 갱신
     public void updateUserInput(String photoUrl, String oneLiner, String content, String position, List<String> hashtags) {
@@ -129,14 +132,4 @@ public class PortfolioEntity extends BaseEntity {
         }
     }
 
-    // --- 연관관계 편의 메서드 --- //
-    public void addLike(PortfolioLikeEntity portfolioLike) {
-        this.portfolioLikes.add(portfolioLike);
-        updateLikeCount(1);
-    }
-
-    public void removeLike(PortfolioLikeEntity portfolioLike) {
-        this.portfolioLikes.remove(portfolioLike);
-        updateLikeCount(-1);
-    }
 }
