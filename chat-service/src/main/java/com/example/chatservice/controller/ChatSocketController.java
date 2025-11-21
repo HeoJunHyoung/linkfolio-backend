@@ -2,7 +2,6 @@ package com.example.chatservice.controller;
 
 import com.example.chatservice.dto.ChatMessageRequest;
 import com.example.chatservice.service.ChatService;
-import com.example.chatservice.service.OnlineStatusService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.event.EventListener;
@@ -20,7 +19,6 @@ import java.security.Principal;
 public class ChatSocketController { // STOMP 메시지 핸들링
 
     private final ChatService chatService;
-    private final OnlineStatusService onlineStatusService;
 
     // 메시지 전송 엔드포인트: /app/chat/send
     @MessageMapping("/chat/send")
@@ -33,7 +31,6 @@ public class ChatSocketController { // STOMP 메시지 핸들링
     public void handleConnect(SessionConnectEvent event) {
         if (event.getUser() != null) {
             Long userId = Long.parseLong(event.getUser().getName());
-            onlineStatusService.setUserOnline(userId);
             log.info("User Connected: {}", userId);
         }
     }
@@ -42,7 +39,6 @@ public class ChatSocketController { // STOMP 메시지 핸들링
     public void handleDisconnect(SessionDisconnectEvent event) {
         if (event.getUser() != null) {
             Long userId = Long.parseLong(event.getUser().getName());
-            onlineStatusService.setUserOffline(userId);
             log.info("User Disconnected: {}", userId);
         }
     }

@@ -37,7 +37,6 @@ public class ChatService {
     private final ChatMessageRepository chatMessageRepository;
     private final ChatUserProfileRepository chatUserProfileRepository;
     private final RedisPublisher redisPublisher;
-    private final OnlineStatusService onlineStatusService;
 
 
     @Transactional
@@ -148,7 +147,7 @@ public class ChatService {
         Slice<ChatRoomEntity> roomSlice = chatRoomRepository.findByUserId(userId, pageable);
         List<ChatRoomEntity> rooms = roomSlice.getContent();
 
-        // 2. 상대방 ID 수집 (Batch 조회를 위함) - 기존 로직과 동일
+        // 2. 상대방 ID 수집 (Batch 조회를 위함)
         Set<Long> otherUserIds = rooms.stream()
                 .map(room -> room.getUser1Id().equals(userId) ? room.getUser2Id() : room.getUser1Id())
                 .collect(Collectors.toSet());
@@ -167,7 +166,6 @@ public class ChatService {
 
             LocalDateTime myLastRead = room.getLastReadAt().getOrDefault(String.valueOf(userId), LocalDateTime.MIN);
             long unreadCount = chatMessageRepository.countUnreadMessages(room.getId(), myLastRead, userId);
-            boolean isOnline = onlineStatusService.isUserOnline(otherUserId);
 
             return ChatRoomResponse.builder()
                     .roomId(room.getId())
@@ -176,7 +174,6 @@ public class ChatService {
                     .lastMessage(room.getLastMessage())
                     .lastMessageTime(room.getLastMessageTime())
                     .unreadCount((int) unreadCount)
-                    .isOnline(isOnline)
                     .build();
         }).collect(Collectors.toList());
 
