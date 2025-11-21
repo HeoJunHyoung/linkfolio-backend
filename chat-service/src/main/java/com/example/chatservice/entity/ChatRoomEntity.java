@@ -69,6 +69,7 @@ public class ChatRoomEntity {
     }
 
     public int getUnreadCount(Long userId) {
+        if (this.unreadCounts == null) return 0;
         return this.unreadCounts.getOrDefault(String.valueOf(userId), 0);
     }
 }
