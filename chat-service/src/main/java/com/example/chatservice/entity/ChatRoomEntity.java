@@ -2,6 +2,7 @@ package com.example.chatservice.entity;
 
 import lombok.Builder;
 import lombok.Getter;
+import lombok.NoArgsConstructor;
 import org.springframework.data.annotation.Id;
 import org.springframework.data.mongodb.core.index.CompoundIndex;
 import org.springframework.data.mongodb.core.mapping.Document;
@@ -13,6 +14,7 @@ import java.util.Map;
 @Getter
 @Document(collection = "chat_room")
 @CompoundIndex(def = "{'user1Id': 1, 'user2Id': 1}", unique = true) // 두 사용자 간의 채팅방은 유니크해야 함 (1:1 채팅)
+@NoArgsConstructor
 public class ChatRoomEntity {
 
     @Id
@@ -57,19 +59,28 @@ public class ChatRoomEntity {
     }
 
     public void updateReadTime(Long userId, LocalDateTime time) {
+        if (this.lastReadAt == null) this.lastReadAt = new HashMap<>(); // 방어 로직
         this.lastReadAt.put(String.valueOf(userId), time);
     }
 
     public void increaseUnreadCount(Long userId) {
+        if (this.unreadCounts == null) {
+            this.unreadCounts = new HashMap<>();
+        }
         this.unreadCounts.merge(String.valueOf(userId), 1, Integer::sum);
     }
 
     public void resetUnreadCount(Long userId) {
+        if (this.unreadCounts == null) {
+            this.unreadCounts = new HashMap<>();
+        }
         this.unreadCounts.put(String.valueOf(userId), 0);
     }
 
     public int getUnreadCount(Long userId) {
-        if (this.unreadCounts == null) return 0;
+        if (this.unreadCounts == null) {
+            return 0;
+        }
         return this.unreadCounts.getOrDefault(String.valueOf(userId), 0);
     }
 }
