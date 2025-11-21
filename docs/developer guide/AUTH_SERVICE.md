@@ -82,20 +82,24 @@
 
 ### 4.1. SAGA 시작 (AuthService.signUp)
 
-`AuthService.signUp` 메서드는 `@Transactional`로 선언되어 있다.
+`AuthService.signUp` 메서드는 `@Transactional`로 선언되어 있으며 **Outbox Pattern**을 사용한다.
 
 1.  `EmailVerificationService`를 통해 이메일이 인증 완료(`VE:`) 상태인지 Redis에서 확인한다.
 2.  `AuthUserEntity`를 `AuthStatus.PENDING` 상태로 생성하여 Auth DB에 저장한다.
-3.  `UserEventProducer`를 통해 `UserRegistrationRequestedEvent` (프로필 생성 요청) 이벤트를 Kafka로 발행한다.
-4.  만약 Kafka 발행이 실패하면 `UserEventProducer`가 `BusinessException`을 발생시키고, `@Transactional` 어노테이션에 의해 2번에서 저장된 `AuthUserEntity`(PENDING 상태)가 롤백된다.
+3.  `UserRegistrationRequestedEvent` 이벤트를 JSON으로 변환하여 `OutboxEntity`에 저장한다.
+4.  트랜잭션이 커밋되면, **Debezium(CDC)**이 `outbox` 테이블의 변경을 감지하여 Kafka로 이벤트를 자동 발행한다.
+5.  이를 통해 DB 저장과 메시지 발행의 원자성(Atomicity)을 보장한다.
 
 ### 4.2. SAGA 응답 처리 (AuthEventHandler)
 
-`AuthEventHandler`는 `user-service`의 처리 결과를 Kafka로부터 수신한다.
+`AuthEventHandler`는 `user-service`의 처리 결과를 Kafka로부터 수신한다. 이때 Java 객체가 아닌 **CDC 이벤트(Avro GenericRecord)**를 직접 수신한다.
 
-* **`handleProfileCreationSuccess` (성공)**: `UserProfileCreationSuccessEvent` 수신 시, `userId`로 `PENDING` 상태의 `AuthUserEntity`를 찾아 상태를 `COMPLETED`로 변경한다.
-* **`handleProfileCreationFailure` (보상)**: `UserProfileCreationFailureEvent` 수신 시 (SAGA 롤백), `AuthUserEntity`의 상태를 `CANCELLED`로 변경한다.
-* **`handleUserProfileUpdate` (동기화)**: 회원가입 이후 `user-service`에서 사용자 정보(예: 이름)가 변경될 경우, `UserProfilePublishedEvent`를 수신하여 `auth-service` DB의 `name` 필드도 일관성 있게 업데이트한다.
+* **`handleUserProfileEvent` (성공 및 동기화)**:
+    * 토픽: `user_db_server.user_db.user_profile` (user-service DB 변경 로그)
+    * `user-service`가 프로필을 `COMPLETED` 상태로 저장하면 이 이벤트를 수신한다.
+    * `userId`로 `PENDING` 상태의 `AuthUserEntity`를 찾아 상태를 `COMPLETED`로 변경하여 회원가입을 완료한다.
+    * 또한, 사용자 이름(`name`) 등이 변경된 경우 `AuthUserEntity` 정보를 동기화한다.
+* **(실패 시)**: `UserProfileCreationFailureEvent` 수신 시 보상 트랜잭션을 수행하여 상태를 `CANCELLED`로 변경한다. (별도 토픽 사용)
 
 ---
 

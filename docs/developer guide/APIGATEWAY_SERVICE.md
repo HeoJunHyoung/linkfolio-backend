@@ -1,7 +1,7 @@
 ## 1. 개요
  - `apigateway-service`는 LinkFolio 백엔드 마이크로서비스 아키텍처(MSA)의 단일 진입점(Single Point of Entry) 역할을 수행하는 API 게이트웨이 서비스
  - 모든 외부 클라이언트(웹, 앱)의 요청은 이 게이트웨이를 통과
- - 요청을 인증하고 내부의 적절한 마이크로서비스(예: `user-service`, `auth-service`, `portfolio-service`)로 라우팅하는 책임
+ - 요청을 인증하고 내부의 적절한 마이크로서비스(예: `user-service`, `auth-service`, `portfolio-service`, `chat-service`)로 라우팅하는 책임
  - 주요 기술 스택으로는 Spring Cloud Gateway를 사용하여 비동기/논블로킹(Non-Blocking) 방식의 반응형(Reactive) 시스템으로 구축되었다.
 
 ---
@@ -33,10 +33,10 @@
 각 마이크로서비스로 요청을 중계하는 규칙이다.
 
  - `user-service-route`: `/user-service/**` 경로의 요청을 `http://user-service:80` (쿠버네티스 내부 서비스 DNS)로 전달한다.
-
  - `auth-service-route`: `/auth-service/**` 경로의 요청을 `http://auth-service:80`으로 전달한다.
-
  - `portfolio-service-route`: `/portfolio-service/**` 경로의 요청을 `http://portfolio-service:80`으로 전달한다.
+ - `chat-service-route`: `/chat-service/**` 경로의 요청을 `http://chat-service:80`으로 전달한다.
+ - `chat-service-ws-route`: `/ws-chat/**` 경로의 WebSocket 요청을 `http://chat-service:80`으로 전달한다.
 
 ### 2.4. 인증 제외 경로 (Excluded URLs)
 

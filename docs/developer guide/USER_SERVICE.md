@@ -33,21 +33,23 @@
     * 즉시 `updateStatus(UserProfileStatus.COMPLETED)`로 상태가 변경된 후 DB에 저장된다.
 4.  **(멱등성)** 만약 동일한 `userId`로 이벤트가 중복 수신되더라도, `userRepository.existsById` 검사를 통해 이미 생성된 프로필을 반환하여 멱등성을 보장한다.
 
-### 3.2. SAGA 응답 및 전파 (Producer)
+### 3.2. SAGA 응답 및 전파 (CDC 기반)
 
-`UserEventHandler`의 `handleUserRegistrationRequested` 메서드는 프로필 생성 성공/실패 시 `try-catch` 블록 내에서 두 가지 종류의 이벤트를 발행(produce)한다.
+`UserEventHandler`는 프로필 생성 성공/실패 여부에 따라 다르게 동작한다.
 
-* **성공 시 (try 블록)**:
-    1.  **SAGA 응답**: `UserProfileCreationSuccessEvent`를 `auth-service`로 발행하여 SAGA 트랜잭션 완료를 알린다.
-    2.  **데이터 전파 (Fan-out)**: `UserProfilePublishedEvent`를 발행하여 `portfolio-service` 등 관심 있는 모든 서비스에 신규 프로필 정보를 전파한다.
-* **실패 시 (catch 블록)**:
-    1.  **SAGA 보상**: `UserProfileCreationFailureEvent`를 `auth-service`로 발행하여 보상 트랜잭션(롤백)을 요청한다.
+* **성공 시 (UserService)**:
+    * Java 코드 레벨에서 Kafka 이벤트를 발행하지 않는다.
+    * `userRepository.save()`를 통해 DB에 데이터가 저장되면, **Debezium(CDC)**이 Transaction Log를 감지하여 `user_db.user_profile` 토픽으로 이벤트를 자동 발행한다.
+    * `auth-service`와 `portfolio-service`는 이 CDC 이벤트를 구독하여 상태를 동기화한다.
+* **실패 시 (UserEventHandler catch 블록)**:
+    * 예외 발생 시 `KafkaTemplate`을 사용하여 명시적으로 `UserProfileCreationFailureEvent`를 발행한다.
+    * 이를 수신한 `auth-service`는 계정 상태를 `CANCELLED`로 변경한다.
 
 ### 3.3. 프로필 수정 시 데이터 전파
 
 사용자가 `PUT /users/me` API를 통해 프로필(이름, 생년월일 등)을 수정하면, `UserService.updateUserProfile` 메서드가 호출된다.
 
-이 메서드는 DB를 업데이트한 후, `try-catch` 블록 안에서 `UserProfilePublishedEvent`를 Kafka로 발행하여 `portfolio-service`와 `auth-service`가 캐시된 사용자 이름을 동기화할 수 있도록 한다. 만약 Kafka 발행에 실패하면 `BusinessException`을 발생시켜 DB 변경 사항을 롤백한다.
+이 메서드 또한 **DB만 업데이트**한다. 트랜잭션이 커밋되면 CDC가 자동으로 변경된 이름 등의 정보를 Kafka로 발행(Fan-out)하며, 이를 구독하고 있는 `portfolio-service`와 `auth-service`가 각자의 캐시 데이터를 일관성 있게 갱신한다. 이를 통해 'Dual Write' 문제(DB는 갱신되었으나 메시지 발행 실패)를 원천 차단한다.
 
 ---
 

@@ -4,157 +4,176 @@
 
 `chat-service`는 LinkFolio MSA에서 **실시간 1:1 채팅** 및 **메시지 관리**를 전담하는 마이크로서비스이다.
 
-이 서비스는 기존 RDBMS(MySQL) 대신 **MongoDB**를 도입하여 대용량 메시지 데이터를 효율적으로 저장하며, **WebSocket (STOMP)**과 **Redis Pub/Sub** 아키텍처를 결합하여 다중 서버 환경에서도 실시간성(Real-time)을 보장하도록 설계되었다.
+대용량 메시지 처리를 위해 **MongoDB**를 메인 저장소로 사용하며, 다중 서버 환경에서의 실시간성을 보장하기 위해 **WebSocket (STOMP)**과 **Redis Pub/Sub** 아키텍처를 결합하였다.
 
-주요 책임은 다음과 같다:
-1.  **실시간 통신**: WebSocket 연결을 관리하고 메시지를 즉시 전달한다.
-2.  **메시지 영속화**: 채팅방 및 메시지 이력을 MongoDB에 저장하고 조회한다.
-3.  **상태 동기화**: 사용자의 온라인/오프라인 상태를 관리하고, 읽지 않은 메시지 수(Unread Count)를 계산한다.
+또한, 타 서비스(`user-service`)와의 결합도를 낮추고 조회 성능을 극대화하기 위해 **Kafka CDC(Change Data Capture)**를 통해 사용자 프로필 정보를 로컬 MongoDB에 동기화(Caching)하여 사용한다.
 
 ---
 
-## 2. 핵심 기능
+## 2. 핵심 기술 및 특징
 
-* **1:1 채팅 (Lazy Creation)**: 메시지 전송 시점에 채팅방이 없으면 자동으로 생성하며, `user1Id < user2Id` 정렬 로직을 통해 방의 중복 생성을 방지한다.
-* **Redis Pub/Sub 기반 메시징**: 특정 서버 인스턴스에 종속되지 않고, Redis 토픽(`chatroom`)을 통해 메시지를 모든 구독 인스턴스로 전파(Broadcast)한다.
-* **WebSocket 핸드셰이크 인증**: API Gateway가 주입한 헤더(`X-User-Id`)를 가로채 STOMP 세션에 바인딩하여 인증을 유지한다.
-* **사용자 상태 관리**: WebSocket 연결/해제 이벤트를 감지하여 Redis에 사용자 접속 상태(`STATUS:{userId}`)를 실시간으로 갱신한다.
-* **이력 및 목록 조회**: MongoDB의 인덱싱을 활용한 고성능 페이징(Slice) 조회 및 `user-service` Feign Client를 통한 상대방 프로필 정보 조합.
+* **WebSocket + STOMP**: 양방향 실시간 통신을 위해 표준 WebSocket 위에 메시징 규약인 STOMP를 얹어 사용한다.
+* **Redis Pub/Sub**: Scale-out 된 여러 채팅 서버 인스턴스 간에 메시지를 실시간으로 전파(Broadcast)한다.
+* **MongoDB**: 스키마 유연성과 대량의 쓰기/읽기 성능을 위해 NoSQL을 사용한다.
+* **Kafka CDC (Data Sync)**: `user-service`의 프로필 변경 사항을 실시간으로 수신하여 `chat-service` 내부의 `chat_user_profile` 컬렉션에 동기화한다. (Feign Client 제거)
+* **Gateway Header Auth**: WebSocket Handshake 단계에서 Gateway가 검증한 헤더(`X-User-Id`)를 가로채 인증을 처리한다.
 
 ---
 
-## 3. 아키텍처 및 데이터 흐름
+## 3. 상세 아키텍처 및 데이터 흐름
 
-`chat-service`는 HTTP(REST)와 WebSocket 두 가지 통신 프로토콜을 모두 사용한다.
+이 섹션은 프론트엔드 개발자가 채팅 기능을 구현하기 위해 반드시 이해해야 할 흐름을 상세히 기술한다.
 
-### 3.1. 실시간 메시지 전송 (WebSocket + Redis)
+### 3.1. 사전 지식 (Prerequisites)
 
-1.  **연결 (Handshake)**: 클라이언트가 `/ws-chat` 엔드포인트로 연결을 시도한다. `HttpHandshakeInterceptor`가 HTTP 헤더의 `X-User-Id`를 추출하여 세션 속성에 저장한다.
-2.  **전송 (Send)**: 클라이언트가 `/app/chat/send`로 메시지를 전송하면 `ChatSocketController`가 이를 수신한다.
-3.  **저장 (Persist)**: `ChatService`가 메시지를 MongoDB `chat_message` 컬렉션에 저장하고, `chat_room`의 `lastMessage` 등을 갱신한다.
-4.  **발행 (Publish)**: 저장 완료 후, `RedisPublisher`가 `chatroom` 토픽으로 메시지를 발행한다.
-5.  **수신 및 전달 (Subscribe & Broadcast)**: `RedisSubscriber`가 메시지를 수신하고, `SimpMessageSendingOperations`를 통해 해당 채팅방을 구독 중인(`topic/chat/{roomId}`) 모든 클라이언트에게 메시지를 전달한다.
+1.  **WebSocket Handshake**: WebSocket 연결은 최초에 **HTTP 프로토콜**로 시작된다(`Upgrade` 헤더 사용). 따라서 최초 연결 시에는 HTTP 헤더를 사용할 수 있다.
+2.  **STOMP Protocol**: WebSocket이 연결된 후, 그 위에서 동작하는 텍스트 기반 메시징 프로토콜이다.
+3.  **Gateway의 역할**: 클라이언트가 직접 마이크로서비스에 붙는 것이 아니라, API Gateway를 거친다. Gateway는 JWT를 검증하고 `X-User-Id` 헤더를 붙여서 내부 서비스로 넘겨준다.
 
-### 3.2. 채팅방 목록 및 이력 조회 (REST)
+### 3.2. 연결 및 인증 흐름 (Connection Flow)
 
-1.  **채팅방 목록 (`GET /chat/rooms`)**:
-    * MongoDB에서 내 ID가 포함된 모든 채팅방을 `lastMessageTime` 내림차순으로 조회한다.
-    * `UserClient` (Feign)를 호출하여 상대방의 최신 프로필 정보(이름 등)를 가져온다.
-    * `Redis`를 조회하여 상대방의 현재 접속 상태(Online/Offline)를 확인한다.
-    * 각 방별 `unreadCount`를 계산하여 응답한다.
-2.  **메시지 이력 (`GET /chat/rooms/{roomId}/messages`)**:
-    * MongoDB에서 `roomId`를 기준으로 페이징(Slice) 처리된 과거 메시지를 조회한다.
+가장 중요한 부분은 "JWT 토큰이 있는 상태에서 어떻게 WebSocket 인증을 통과하는가?"이다.
+
+1.  **클라이언트 연결 요청**:
+    * 프론트엔드는 `/ws-chat` 엔드포인트로 연결을 시도한다.
+    * 이때는 **HTTP 요청**이므로, Gateway가 `Authorization` 헤더를 검증하고 `X-User-Id` 헤더를 주입하여 `chat-service`로 전달한다.
+2.  **Handshake Interceptor (`HttpHandshakeInterceptor`)**:
+    * `chat-service`는 WebSocket 연결이 맺어지기 직전(Handshake 단계)에 요청을 가로챈다.
+    * HTTP 헤더에 있는 `X-User-Id`를 꺼내서, **WebSocket 세션 속성(Attributes)**에 저장한다.
+    * 이 단계가 성공해야 물리적인 연결이 수립된다.
+3.  **STOMP Connect (`StompHandler`)**:
+    * 연결 수립 후, 클라이언트는 STOMP `CONNECT` 프레임을 보낸다.
+    * `StompHandler`는 세션 속성에 저장해둔 `X-User-Id`를 꺼내와서, Spring Security의 `Principal`(인증 객체)로 등록한다.
+    * 이후의 모든 메시징 작업(Send)에서는 이 `Principal`을 통해 보낸 사람을 식별한다.
+
+### 3.3. 메시지 전송 및 수신 흐름 (Pub/Sub Flow)
+
+사용자 A(Server 1 접속)가 사용자 B(Server 2 접속)에게 메시지를 보내는 상황이다.
+
+1.  **SEND (Client -> Server 1)**:
+    * 사용자 A가 `/app/chat/send` 주소로 JSON 메시지를 전송한다.
+2.  **Persistence (Server 1)**:
+    * `ChatSocketController`가 메시지를 받는다.
+    * `ChatService`가 MongoDB에 메시지를 **저장**한다.
+3.  **Publish (Server 1 -> Redis)**:
+    * 저장이 완료되면 `RedisPublisher`가 `chatroom`이라는 Redis Topic에 메시지를 발행(Publish)한다.
+    * 이때 메시지는 직렬화된 JSON 형태이다.
+4.  **Subscribe (Redis -> Server 1, Server 2)**:
+    * `chatroom` 토픽을 구독하고 있던 모든 채팅 서버(Server 1, Server 2)가 메시지를 수신한다.
+5.  **Broadcast (Server 2 -> Client B)**:
+    * `RedisSubscriber`는 수신한 메시지의 `roomId`를 확인한다.
+    * 자신의 서버에 해당 `roomId`를 구독(`SUBSCRIBE /topic/chat/{roomId}`)하고 있는 클라이언트가 있는지 찾는다.
+    * 사용자 B가 Server 2에 붙어있으므로, Server 2는 사용자 B에게 WebSocket으로 메시지를 쏘아준다.
 
 ---
 
 ## 4. 데이터 모델 (MongoDB)
 
-NoSQL인 MongoDB를 사용하여 스키마 유연성과 쓰기 성능을 확보했다.
+### 4.1. `ChatRoomEntity` (`chat_room`)
+채팅방의 메타데이터를 저장한다.
 
-### 4.1. `ChatRoomEntity`
+* **Index**: `{'user1Id': 1, 'user2Id': 1}` (Unique Compound Index) - 항상 `user1Id < user2Id`로 정렬하여 저장, 중복 방 생성 방지.
+* **Fields**:
+    * `lastMessage`: 목록에 보여줄 미리보기 메시지.
+    * `lastReadAt`: `Map<String, LocalDateTime>` - 사용자별 마지막 읽은 시간 (안 읽은 메시지 계산용).
 
-* **Collection**: `chat_room`
-* **Index**: `{'user1Id': 1, 'user2Id': 1}` (Unique Compound Index)
-* **특징**:
-    * `user1Id`와 `user2Id`는 항상 `min(id), max(id)` 순서로 저장되어, A가 B에게 걸든 B가 A에게 걸든 동일한 방을 참조하도록 보장한다.
-    * `lastReadAt` (Map): 각 사용자별 마지막 읽은 시간을 저장하여 안 읽은 메시지 수를 계산하는 데 사용된다.
+### 4.2. `ChatMessageEntity` (`chat_message`)
+실제 대화 내용을 저장한다.
 
-### 4.2. `ChatMessageEntity`
+* **Index**: `roomId` (메시지 이력 조회용)
+* **Fields**: `senderId`, `content`, `createdAt`, `readCount` 등.
 
-* **Collection**: `chat_message`
-* **Index**: `roomId` (조회 성능 최적화)
-* **필드**: `senderId`, `content`, `createdAt`, `readCount` 등을 포함한다.
+### 4.3. `ChatUserProfileEntity` (`chat_user_profile`) [NEW]
+타 서비스(`user-service`)의 사용자 정보를 로컬에 캐싱한 데이터이다.
 
----
-
-## 5. 주요 기능 상세 (Redis 활용)
-
-`chat-service`의 `RedisConfig`는 메시지 브로커와 상태 저장소 역할을 수행한다.
-
-* **Pub/Sub (`RedisPublisher` / `RedisSubscriber`)**:
-    * 분산 환경(Scale-out)에서 필수적인 기능이다. 사용자 A가 '서버 1'에 붙어있고 사용자 B가 '서버 2'에 붙어있을 때, Redis를 거치지 않으면 메시지가 전달되지 않는다. 본 서비스는 모든 메시지를 Redis Topic으로 발행하여 이 문제를 해결한다.
-* **접속 상태 관리 (`OnlineStatusService`)**:
-    * **`STATUS:{userId}`**: 사용자가 WebSocket에 연결(`SessionConnectEvent`)되면 키를 생성하고, 연결이 끊기면(`SessionDisconnectEvent`) 삭제한다. 채팅방 목록 조회 시 이 키의 존재 여부로 온라인 상태를 판단한다.
+* **Purpose**: 채팅방 목록 조회 시 상대방의 이름/사진을 보여줘야 하는데, 매번 `user-service`를 호출(Feign)하면 성능 저하가 발생하므로 로컬에 복제본을 둔다.
+* **Sync**: `user-service` DB가 변경되면 Kafka CDC를 통해 이 컬렉션이 실시간 업데이트된다.
 
 ---
 
-## 6. 보안 및 인증 처리
+## 5. 주요 기능 구현 상세
 
-`chat-service`는 게이트웨이를 신뢰하는 내부 인증 방식을 사용하지만, WebSocket 프로토콜의 특수성으로 인해 추가적인 처리가 필요하다.
+### 5.1. 읽지 않은 메시지 수 계산 (Unread Count)
+* **Logic**: `ChatMessageRepository.countUnreadMessages`
+* `roomId`가 일치하고,
+* `senderId`가 내가 아니며 (내가 보낸 건 제외),
+* `createdAt`이 `ChatRoomEntity`에 저장된 내 `lastReadAt`보다 큰 메시지의 개수를 센다.
 
-* **`HttpHandshakeInterceptor`**:
-    * WebSocket 연결 초기 단계(HTTP Handshake)에서 Gateway가 넣어준 `X-User-Id` 헤더를 가로챈다.
-    * 이를 `attributes.put("X-User-Id", ...)`를 통해 STOMP 세션 속성으로 넘긴다.
-* **`StompHandler`**:
-    * STOMP `CONNECT` 프레임 처리 시, 세션 속성에 저장된 ID를 꺼내 `UsernamePasswordAuthenticationToken` (Principal)을 생성한다.
-    * 이후 컨트롤러의 `@AuthenticationPrincipal`이나 `Principal` 객체에 주입된다.
-* **`InternalHeaderAuthenticationFilter`**:
-    * REST API 요청(`GET /chat/**`)에 대해서는 다른 서비스와 동일하게 헤더 기반 인증 필터를 적용한다.
+### 5.2. 채팅방 목록 조회 (`GET /chat/rooms`)
+이전 버전과 달리 Feign Client를 사용하지 않는다.
 
----
-
-## 7. 의존성 관리 (pom.xml)
-
-실시간 통신과 NoSQL 처리를 위한 의존성이 포함되어 있다.
-
-* `spring-boot-starter-websocket`: WebSocket 및 STOMP 프로토콜 지원.
-* `spring-boot-starter-data-mongodb`: MongoDB 연동 및 Repository 패턴 지원.
-* `spring-boot-starter-data-redis`: Pub/Sub 및 상태 저장.
-* `spring-cloud-starter-openfeign`: `user-service` 통신.
-* `common-module`: 공통 DTO 및 유틸리티.
+1.  MongoDB (`chat_room`)에서 내가 속한 방 목록을 가져온다 (`Slice` 페이징).
+2.  방 목록에서 상대방 ID들을 추출한다.
+3.  MongoDB (`chat_user_profile`)에서 상대방 프로필 정보를 `In-Query`로 한 번에 조회한다. (성능 최적화)
+4.  각 방의 `unreadCount`를 계산하여 DTO로 조합 후 반환한다.
 
 ---
 
-## 8. 시퀀스 다이어그램
+## 6. 시퀀스 다이어그램
 
-#### A. 메시지 전송 및 전파 (Pub/Sub flow)
+#### A. 인증 및 연결 (Handshake & Connect)
 
-```mermaid
-sequenceDiagram
-    participant UserA as 👤 사용자 A
-    participant SocketController as 🎮 Socket Controller
-    participant Service as 🛠️ Chat Service
-    participant MongoDB as 🍃 MongoDB
-    participant Redis as ⚡ Redis (Topic)
-    participant UserB as 👤 사용자 B (구독자)
-
-    UserA->>SocketController: SEND /app/chat/send <br> (Message)
-    SocketController->>Service: sendMessage()
-    
-    Service->>+MongoDB: 1. ChatRoom 조회/생성
-    MongoDB-->>-Service: Room Info
-    
-    Service->>+MongoDB: 2. ChatMessage 저장 (save)
-    MongoDB-->>-Service: Saved Entity
-    
-    Service->>Service: 3. RedisPublisher.publish()
-    Service->>Redis: PUBLISH 'chatroom' (Json Message)
-    
-    Redis->>Service: (RedisSubscriber) onMessage()
-    Service->>UserB: STOMP SEND /topic/chat/{roomId} <br> (실시간 전달)
-```
-#### B. 채팅방 목록 조회 (Aggregation flow)
 ```mermaid
 sequenceDiagram
     participant Client as 👤 클라이언트
-    participant ChatController as 🎮 Chat Controller
-    participant MongoRepo as 🍃 ChatRoom Repo
-    participant UserClient as 👥 User Feign Client
-    participant OnlineService as ⚡ Online Service
+    participant Gateway as 🚪 API Gateway
+    participant Interceptor as 🛑 HttpHandshakeInterceptor
+    participant StompHandler as 👮 StompHandler
+    participant Session as 💾 WebSocket Session
+
+    Client->>Gateway: CONNECT /ws-chat (HTTP Upgrade)
+    Note right of Client: Header: Authorization (JWT)
     
-    Client->>ChatController: GET /chat/rooms
-    ChatController->>MongoRepo: findAllByUserId(userId)
-    MongoRepo-->>ChatController: List<ChatRoomEntity>
+    Gateway->>Gateway: JWT 검증 & X-User-Id 주입
+    Gateway->>Interceptor: Request (Header: X-User-Id)
     
-    loop 각 채팅방에 대해
-        ChatController->>UserClient: 상대방 ID로 프로필 조회 (API)
-        UserClient-->>ChatController: 이름, 이미지 등 반환
-        
-        ChatController->>OnlineService: 상대방 온라인 여부 확인 (Redis)
-        OnlineService-->>ChatController: true/false
-        
-        ChatController->>ChatController: 안 읽은 메시지 수 계산
+    Interceptor->>Session: Attributes.put("X-User-Id", value)
+    Interceptor-->>Client: 101 Switching Protocols (WS 연결 성공)
+    
+    Client->>StompHandler: STOMP CONNECT Frame
+    StompHandler->>Session: Attributes.get("X-User-Id")
+    StompHandler->>StompHandler: Set Principal (UserAuth)
+    StompHandler-->>Client: STOMP CONNECTED Frame
+```
+#### B. 메시지 전송 및 전파 (Redis Pub/Sub)
+```mermaid
+sequenceDiagram
+    participant UserA as 👤 A (Sender)
+    participant ServerA as 🖥️ Chat Server A
+    participant MongoDB as 🍃 MongoDB
+    participant Redis as ⚡ Redis
+    participant ServerB as 🖥️ Chat Server B
+    participant UserB as 👤 B (Receiver)
+
+    UserA->>ServerA: SEND /app/chat/send (JSON)
+    
+    ServerA->>MongoDB: Save Message & Update Room
+    ServerA->>Redis: PUBLISH "chatroom" (Message)
+    
+    par Broadcast to A
+        Redis->>ServerA: onMessage()
+        ServerA->>UserA: SUBSCRIBE /topic/chat/{roomId}
+    and Broadcast to B
+        Redis->>ServerB: onMessage()
+        ServerB->>UserB: SUBSCRIBE /topic/chat/{roomId}
     end
+```
+
+#### C. 데이터 동기화 (Kafka CDC)
+```mermaid
+sequenceDiagram
+    participant UserService as 👥 user-service
+    participant UserDB as 🗄️ User DB (MySQL)
+    participant Kafka as 📨 Kafka (Debezium)
+    participant ChatService as 💬 chat-service
+    participant ChatMongo as 🍃 Chat DB (Mongo)
+
+    UserService->>UserDB: 사용자 이름 변경 (UPDATE)
+    UserDB-->>Kafka: Binlog 감지 (CDC)
+    Kafka->>ChatService: Topic: user_db.user_profile
     
-    ChatController-->>Client: List<ChatRoomResponse>
+    Note right of ChatService: ChatUserProfileEventHandler
+    ChatService->>ChatService: Avro Deserialization
+    ChatService->>ChatMongo: save(ChatUserProfileEntity)
+    Note right of ChatMongo: 로컬 캐시 업데이트 완료
 ```

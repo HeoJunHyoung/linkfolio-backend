@@ -4,7 +4,7 @@
 
 `portfolio-service`는 LinkFolio MSA에서 **사용자의 포트폴리오** 및 관련 데이터(관심(Like) 등)를 전문적으로 관리하는 마이크로서비스이다.
 
-이 서비스의 가장 큰 아키텍처적 특징은 데이터 `비정규화(Denormalization)`이다. `user-service`의 사용자 정보(이름, 이메일 등)를 Feign Client를 통해 실시간으로 호출하여 조인하는 대신, Kafka를 통해 `비동기`적으로 데이터를 수신하여 `PortfolioEntity` 내부에 캐시(저장)한다.
+이 서비스의 가장 큰 아키텍처적 특징은 데이터 `비정규화(Denormalization)`이다. `user-service`의 사용자 정보(이름, 이메일 등)를 Feign Client를 통해 실시간으로 호출하여 조인하는 대신, **Kafka(CDC)**를 통해 `비동기`적으로 데이터를 수신하여 `PortfolioEntity` 내부에 캐시(저장)한다.
 
 이러한 설계는 포트폴리오 목록 조회와 같은 대량 읽기(Read) 작업에서 `user-service`에 대한 동기식 의존성을 제거하여, 시스템 전체의 성능과 장애 격리 수준을 크게 향상시킨다.
 
@@ -14,7 +14,7 @@
 
 * **포트폴리오 CRUD**: 사용자는 자신의 포트폴리오를 생성, 조회, 수정할 수 있다 (`getMyPortfolio`, `createOrUpdateMyPortfolio`).
 * **포트폴리오 '관심' 기능**: 다른 사용자의 포트폴리오에 '관심'을 추가하거나 취소할 수 있다 (`addLike`, `removeLike`).
-* **데이터 동기화 (Kafka Consumer)**: `user-service`로부터 `UserProfilePublishedEvent`를 수신하여 포트폴리오에 캐시된 사용자 정보를 생성하거나 갱신한다.
+* **데이터 동기화 (Kafka Consumer)**: `user-service`의 DB 변경 사항(CDC)을 수신하여 포트폴리오에 캐시된 사용자 정보를 생성하거나 갱신한다.
 * **동적 검색 (QueryDSL)**: 직군(position) 필터링 및 `likeCount`, `createdAt` 등 다양한 조건으로 포트폴리오 목록을 정렬 및 검색(Slice)한다.
 
 ---
@@ -43,16 +43,17 @@
 
 이 서비스는 SAGA의 최종 소비자(Consumer) 역할을 한다.
 
-* **`PortfolioEventHandler.java`**: `user-service`가 발행(produce)하는 `UserProfilePublishedEvent`를 `@KafkaListener`로 구독한다.
+* **`PortfolioEventHandler.java`**: Debezium(CDC)이 발행하는 `user_db_server.user_db.user_profile` 토픽을 `@KafkaListener`로 구독한다.
+* **메시지 처리 방식**: Java DTO가 아닌 **Avro (`GenericRecord`)** 형식을 사용하여 스키마 의존성을 낮추고 데이터를 유연하게 파싱한다.
 * **흐름 1: 신규 회원가입 (SAGA 완료 시)**
-    1.  `user-service`가 프로필 생성을 완료하고 `UserProfilePublishedEvent`를 발행한다.
-    2.  `PortfolioEventHandler`가 이벤트를 수신한다.
-    3.  `portfolioRepository.findByUserId`로 조회 시 엔티티가 존재하지 않으므로, `else` 분기를 탄다.
-    4.  이벤트의 `userId`, `name`, `email` 등의 정보로 **`isPublished(false)`** 상태의 초기 `PortfolioEntity` 레코드를 생성한다.
+  1.  `user-service`가 프로필을 `COMPLETED` 상태로 DB에 저장하면, CDC가 이벤트를 발행한다.
+  2.  `PortfolioEventHandler`가 이벤트를 수신하고 `GenericRecord`에서 `userId`, `name` 등을 추출한다.
+  3.  `portfolioRepository.findByUserId`로 조회 시 엔티티가 존재하지 않으므로, `else` 분기를 탄다.
+  4.  이벤트의 정보를 기반으로 **`isPublished(false)`** 상태의 초기 `PortfolioEntity` 레코드를 생성한다.
 * **흐름 2: 기존 사용자 프로필 수정 시**
-    1.  `user-service`가 `PUT /users/me` 요청을 처리하고 `UserProfilePublishedEvent`를 발행한다.
-    2.  `PortfolioEventHandler`가 이벤트를 수신한다.
-    3.  `findByUserId`로 `PortfolioEntity`를 찾은 후, `portfolio.updateCache(...)` 메서드를 호출하여 `name`, `email` 등 캐시된 필드를 덮어쓴다(동기화한다).
+  1.  `user-service`에서 사용자 정보가 수정되어 DB에 반영되면, CDC가 이벤트를 발행한다.
+  2.  `PortfolioEventHandler`가 이벤트를 수신한다.
+  3.  `findByUserId`로 `PortfolioEntity`를 찾은 후, `portfolio.updateCache(...)` 메서드를 호출하여 `name`, `email` 등 캐시된 필드를 덮어쓴다(동기화한다).
 
 ---
 
@@ -61,24 +62,24 @@
 ### 5.1. `PortfolioService.java`
 
 * **`createOrUpdateMyPortfolio`**:
-    * Kafka가 생성한 `PortfolioEntity`를 `authUserId`로 조회한다.
-    * `PortfolioRequest` DTO의 값으로 `portfolio.updateUserInput(...)`을 호출하여 사용자 입력 필드를 갱신한다.
-    * 이 과정에서 `isPublished` 상태가 `true`로 변경된다.
+  * Kafka가 생성해둔 `PortfolioEntity`를 `authUserId`로 조회한다.
+  * `PortfolioRequest` DTO의 값으로 `portfolio.updateUserInput(...)`을 호출하여 사용자 입력 필드를 갱신한다.
+  * 이 과정에서 `isPublished` 상태가 `true`로 변경된다.
 * **`getPortfolioDetails`**:
-    * 비정규화된 `PortfolioEntity`만 조회하므로 Feign Client 호출이 발생하지 않는다.
-    * `portfolio.increaseViewCount()`를 호출하여 조회수를 1 증가시킨다(Dirty Checking).
-    * 만약 사용자가 인증된 상태(`authUser != null`)라면, `portfolioLikeRepository.existsByLikerIdAndPortfolio`를 호출하여 `isLiked` 상태를 `true/false`로 설정한 후 DTO로 반환한다.
+  * 비정규화된 `PortfolioEntity`만 조회하므로 Feign Client 호출이 발생하지 않는다.
+  * `portfolio.increaseViewCount()`를 호출하여 조회수를 1 증가시킨다(Dirty Checking).
+  * 만약 사용자가 인증된 상태(`authUser != null`)라면, `portfolioLikeRepository.existsByLikerIdAndPortfolio`를 호출하여 `isLiked` 상태를 `true/false`로 설정한 후 DTO로 반환한다.
 
 ### 5.2. `PortfolioLikeService.java`
 
 '관심' 기능은 `PortfolioLikeEntity` (관계)와 `PortfolioEntity` (카운트 캐시)를 **둘 다 갱신**하는 트랜잭션으로 동작한다.
 
 * **`addLike`**:
-    1.  `PortfolioLikeEntity`를 생성하고 `save`한다.
-    2.  `portfolio.addLike(portfolioLike)`를 호출하여 `PortfolioEntity`의 `likeCount`를 1 증가시킨다.
+  1.  `PortfolioLikeEntity`를 생성하고 `save`한다.
+  2.  `portfolio.addLike(portfolioLike)`를 호출하여 `PortfolioEntity`의 `likeCount`를 1 증가시킨다.
 * **`removeLike`**:
-    1.  `PortfolioLikeEntity`를 조회하여 `delete`한다.
-    2.  `portfolio.removeLike(portfolioLike)`를 호출하여 `likeCount`를 1 감소시킨다.
+  1.  `PortfolioLikeEntity`를 조회하여 `delete`한다.
+  2.  `portfolio.removeLike(portfolioLike)`를 호출하여 `likeCount`를 1 감소시킨다.
 
 ### 5.3. QueryDSL (`*RepositoryImpl.java`)
 
@@ -111,42 +112,45 @@
 * **`server.port: 8082`**: `portfolio-service`의 실행 포트를 8082로 지정한다.
 * **`spring.datasource` / `spring.jpa`**: `PortfolioEntity` 등을 저장할 MySQL DB 연결 정보를 정의한다.
 * **`spring.kafka.consumer`**:
-    * `group-id: "portfolio-consumer-group"`: `portfolio-service`의 소비자 그룹을 식별한다.
-    * `value-deserializer`: `JsonDeserializer`를 사용한다.
-    * `properties.spring.json.trusted.packages` 및 `type.mapping`: `user-service`가 발행한 `UserProfilePublishedEvent`를 `common-module` DTO로 올바르게 역직렬화하기 위한 필수 설정이다.
+  * `group-id: "portfolio-consumer-group"`: `portfolio-service`의 소비자 그룹을 식별한다.
+  * `key/value-deserializer`: `KafkaAvroDeserializer`를 사용한다.
+  * `schema.registry.url`: Avro 스키마를 조회할 레지스트리 주소를 설정한다.
+  * `specific.avro.reader: false`: 특정 클래스로 매핑하지 않고 `GenericRecord`로 유연하게 읽어들인다.
 * **`app.feign.user-service-url`**: `pom.xml`과 `PortfolioServiceApplication`에 Feign Client가 활성화되어 있고, `application.yml`에도 `user-service` URL이 정의되어 있다. 하지만 현재 비즈니스 로직(Kafka 비동기 동기화)으로 인해 **실제 Feign Client 인터페이스가 정의되거나 사용되지는 않고 있다.** 이는 향후 동기식 호출이 필요할 경우를 대비한 설정으로 볼 수 있다.
 
 ---
-A. 데이터 동기화 (Fan-out Consumer)
+A. 데이터 동기화 (Fan-out Consumer: CDC)
 #### 
 ```mermaid
 sequenceDiagram
     participant UserService as 👥 user-service
-    participant Kafka as 📨 Kafka
+    participant UserDB as 🗄️ User DB
+    participant Kafka as 📨 Kafka (Connect)
     participant PortfolioService as 📑 portfolio-service
     participant PortfolioDB as 🗄️ Portfolio DB
 
     Note over UserService: (사용자가 /users/me 에서 이름 변경)
-    UserService->>+Kafka: 1. [Fan-out] UserProfilePublishedEvent 발행
-    Kafka-->>-UserService: OK
+    UserService->>+UserDB: 1. [TX] 사용자 정보 UPDATE
+    UserDB-->>-UserService: OK
     
-    Kafka-->>+PortfolioService: 2. [Fan-out] Event 수신 (PortfolioEventHandler)
-    PortfolioService->>PortfolioService: 3. updateCache() 실행
-    PortfolioService->>+PortfolioDB: 4. PortfolioEntity 조회 (BY userId)
+    Note over Kafka: 2. Debezium이 UserDB 변경 감지 및 발행
+    Kafka-->>+PortfolioService: 3. [CDC] Event 수신 (PortfolioEventHandler)
+    
+    PortfolioService->>PortfolioService: 4. Avro Parsing (GenericRecord)
+    
+    PortfolioService->>+PortfolioDB: 5. PortfolioEntity 조회 (BY userId)
     PortfolioDB-->>-PortfolioService: PortfolioEntity
     
-    PortfolioService->>+PortfolioDB: 5. PortfolioEntity UPDATE <br> (캐시된 name, email 등 동기화)
+    PortfolioService->>+PortfolioDB: 6. PortfolioEntity UPDATE <br> (캐시된 name, email 등 동기화)
     PortfolioDB-->>-PortfolioService: OK
-    PortfolioService-->>-Kafka: (ACK)
 ```
-
 B. 포트폴리오 '관심' 추가 (Like)
 #### 
 ```mermaid
 sequenceDiagram
-    participant Client as 👤 클라이언트
-    participant PortfolioService as 📑 portfolio-service
-    participant PortfolioDB as 🗄️ Portfolio DB
+participant Client as 👤 클라이언트
+participant PortfolioService as 📑 portfolio-service
+participant PortfolioDB as 🗄️ Portfolio DB
 
     Client->>+PortfolioService: POST /portfolios/{id}/like
     
