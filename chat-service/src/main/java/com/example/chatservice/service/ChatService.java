@@ -18,6 +18,7 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Slice;
 import org.springframework.data.domain.SliceImpl;
+import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -37,7 +38,9 @@ public class ChatService {
     private final ChatMessageRepository chatMessageRepository;
     private final ChatUserProfileRepository chatUserProfileRepository;
     private final RedisPublisher redisPublisher;
+    private final RedisTemplate<String, Object> redisTemplate;
 
+    private static final String TOTAL_UNREAD_PREFIX = "USER_TOTAL_UNREAD:";
 
     @Transactional
     public void handleMessage(Long senderId, ChatMessageRequest request) {
@@ -55,10 +58,9 @@ public class ChatService {
 
     // 일반 메시지 전송 로직
     private void sendTalkMessage(Long senderId, ChatMessageRequest request) {
-        // 1. 방 조회/생성
         ChatRoomEntity chatRoom = getOrCreateChatRoom(senderId, request.getReceiverId());
 
-        // 2. 메시지 저장
+        // 1. 메시지 저장
         ChatMessageEntity message = ChatMessageEntity.builder()
                 .roomId(chatRoom.getId())
                 .senderId(senderId)
@@ -67,14 +69,22 @@ public class ChatService {
                 .build();
         chatMessageRepository.save(message);
 
-        // 3. 방 메타데이터 갱신
+        // 2. [DB Update] 방 메타데이터 갱신 (상대방 카운트 증가)
         chatRoom.updateLastMessage(message.getContent(), message.getCreatedAt());
         chatRoom.updateReadTime(senderId, message.getCreatedAt());
+
+        chatRoom.increaseUnreadCount(request.getReceiverId()); // 상대방 +1
+        chatRoom.resetUnreadCount(senderId); // 나는 0 (방어 로직)
+
         chatRoomRepository.save(chatRoom);
 
-        // 4. Redis 발행 (Response DTO 생성)
+        // 3. [Redis Update] 상대방 전체 안 읽은 개수 +1
+        String redisKey = TOTAL_UNREAD_PREFIX + request.getReceiverId();
+        redisTemplate.opsForValue().increment(redisKey);
+
+        // 4. Pub/Sub
         ChatMessageResponse response = ChatMessageResponse.builder()
-                .type(MessageType.TALK) // 타입 지정
+                .type(MessageType.TALK)
                 .id(message.getId())
                 .roomId(chatRoom.getId())
                 .senderId(senderId)
@@ -92,14 +102,24 @@ public class ChatService {
         ChatRoomEntity chatRoom = chatRoomRepository.findById(roomId)
                 .orElseThrow(() -> new RuntimeException("Room not found"));
 
-        chatRoom.updateReadTime(userId, LocalDateTime.now());
-        chatRoomRepository.save(chatRoom);
+        int currentUnreadCount = chatRoom.getUnreadCount(userId);
 
-        // 읽음 이벤트 발행
+        if (currentUnreadCount > 0) {
+            // 1. [DB Update] 내 카운트 0으로 초기화
+            chatRoom.resetUnreadCount(userId);
+            chatRoom.updateReadTime(userId, LocalDateTime.now());
+            chatRoomRepository.save(chatRoom);
+
+            // 2. [Redis Update] 전체 카운트 차감
+            String redisKey = TOTAL_UNREAD_PREFIX + userId;
+            redisTemplate.opsForValue().decrement(redisKey, currentUnreadCount);
+        }
+
+        // 3. Pub/Sub (상대방에게 읽음 알림)
         ChatMessageResponse response = ChatMessageResponse.builder()
-                .type(MessageType.READ) // 타입 지정
+                .type(MessageType.READ)
                 .roomId(roomId)
-                .senderId(userId) // 읽은 사람
+                .senderId(userId)
                 .build();
 
         redisPublisher.publish(redisPublisher.getTopic(), response);
@@ -143,29 +163,24 @@ public class ChatService {
      * 내 채팅방 목록 조회
      */
     public Slice<ChatRoomResponse> getMyChatRooms(Long userId, Pageable pageable) {
-        // 1. DB에서 Slice로 조회
         Slice<ChatRoomEntity> roomSlice = chatRoomRepository.findByUserId(userId, pageable);
         List<ChatRoomEntity> rooms = roomSlice.getContent();
 
-        // 2. 상대방 ID 수집 (Batch 조회를 위함)
         Set<Long> otherUserIds = rooms.stream()
                 .map(room -> room.getUser1Id().equals(userId) ? room.getUser2Id() : room.getUser1Id())
                 .collect(Collectors.toSet());
 
-        // 3. 로컬 캐시 DB에서 상대방 정보 일괄 조회
         Map<Long, ChatUserProfileEntity> profileMap = chatUserProfileRepository.findAllById(otherUserIds)
                 .stream()
                 .collect(Collectors.toMap(ChatUserProfileEntity::getUserId, Function.identity()));
 
-        // 4. DTO 변환
         List<ChatRoomResponse> roomResponses = rooms.stream().map(room -> {
             Long otherUserId = room.getUser1Id().equals(userId) ? room.getUser2Id() : room.getUser1Id();
-
             ChatUserProfileEntity profile = profileMap.get(otherUserId);
             String otherUserName = (profile != null) ? profile.getName() : "알 수 없음";
 
-            LocalDateTime myLastRead = room.getLastReadAt().getOrDefault(String.valueOf(userId), LocalDateTime.MIN);
-            long unreadCount = chatMessageRepository.countUnreadMessages(room.getId(), myLastRead, userId);
+            // [N+1 해결] DB 쿼리 없이 Entity 필드에서 바로 get
+            int unreadCount = room.getUnreadCount(userId);
 
             return ChatRoomResponse.builder()
                     .roomId(room.getId())
@@ -173,11 +188,10 @@ public class ChatService {
                     .otherUserName(otherUserName)
                     .lastMessage(room.getLastMessage())
                     .lastMessageTime(room.getLastMessageTime())
-                    .unreadCount((int) unreadCount)
+                    .unreadCount(unreadCount)
                     .build();
         }).collect(Collectors.toList());
 
-        // 5. SliceImpl로 감싸서 반환 (hasNext 정보 유지)
         return new SliceImpl<>(roomResponses, pageable, roomSlice.hasNext());
     }
 
@@ -185,5 +199,12 @@ public class ChatService {
         PageRequest pageable = PageRequest.of(page, size);
         return chatMessageRepository.findByRoomIdOrderByCreatedAtDesc(roomId, pageable)
                 .map(ChatMessageResponse::from);
+    }
+
+    // 전체 안 읽은 메시지 수 조회 API용 메서드
+    public Long getTotalUnreadCount(Long userId) {
+        String redisKey = TOTAL_UNREAD_PREFIX + userId;
+        Object count = redisTemplate.opsForValue().get(redisKey);
+        return count != null ? Long.parseLong(count.toString()) : 0L;
     }
 }

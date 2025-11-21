@@ -35,4 +35,10 @@ public class ChatController {
                                                                   @RequestParam(defaultValue = "0") int page) {
         return ResponseEntity.ok(chatService.getChatMessages(roomId, page, 20));
     }
+
+    // 전체 안 읽은 메시지 수 조회 (메인 뱃지용)
+    @GetMapping("/unread-count")
+    public ResponseEntity<Long> getTotalUnreadCount(@AuthenticationPrincipal AuthUser authUser) {
+        return ResponseEntity.ok(chatService.getTotalUnreadCount(authUser.getUserId()));
+    }
 }
