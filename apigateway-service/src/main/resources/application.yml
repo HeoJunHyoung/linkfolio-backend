@@ -63,6 +63,12 @@ spring:
               predicates:
                 - Path=/ws-chat/**
 
+            # 6. Support Service
+            - id: support-service-route
+              uri: http://support-service:80
+              predicates:
+                - Path=/support-service/**
+
 app:
   gateway:
     excluded-urls:
@@ -93,6 +99,12 @@ app:
       - /portfolio-service/portfolios
       - /portfolio-service/portfolios/{portfolioId:\d+}
 
+      - /support-service/notices
+      - /support-service/notices/**
+      - /support-service/faqs
+      - /support-service/faqs/**
+      - /support-service/v3/api-docs/**
+
 # JWT Token Settings
 jwt:
   secret: ${JWT_SECRET}
@@ -110,6 +122,8 @@ springdoc:
         url: https://impressionless-connaturally-jonie.ngrok-free.dev/user-service/v3/api-docs
       - name: 3. Portfolio Service
         url: https://impressionless-connaturally-jonie.ngrok-free.dev/portfolio-service/v3/api-docs
+      - name: 4. Support Service (Notice/FAQ)
+        url: https://impressionless-connaturally-jonie.ngrok-free.dev/support-service/v3/api-docs
 
 
   # 게이트웨이의 공인 주소(ngrok)를 명시하여 Mixed Content 문제 해결
