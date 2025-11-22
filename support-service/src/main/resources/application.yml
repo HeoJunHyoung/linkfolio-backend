@@ -1,7 +1,7 @@
 server:
   port: 8084
   servlet:
-    context-path: support-service
+    context-path: /support-service
 
 spring:
   application:
