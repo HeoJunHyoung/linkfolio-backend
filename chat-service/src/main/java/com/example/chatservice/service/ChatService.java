@@ -60,7 +60,7 @@ public class ChatService {
     private void sendTalkMessage(Long senderId, ChatMessageRequest request) {
         ChatRoomEntity chatRoom = getOrCreateChatRoom(senderId, request.getReceiverId());
 
-        // 1. 메시지 저장
+        // 1. [DB Insert] 메시지 저장
         ChatMessageEntity message = ChatMessageEntity.builder()
                 .roomId(chatRoom.getId())
                 .senderId(senderId)
@@ -69,11 +69,11 @@ public class ChatService {
                 .build();
         chatMessageRepository.save(message);
 
-        // 2. [DB Update] 방 메타데이터 갱신 (상대방 카운트 증가)
-        chatRoom.updateLastMessage(message.getContent(), message.getCreatedAt());
-        chatRoom.updateReadTime(senderId, message.getCreatedAt());
+        // 2. [DB Update] 채팅방 메타데이터 갱신
+        chatRoom.updateLastMessage(message.getContent(), message.getCreatedAt()); // 채팅방의 마지막 메시지 최신화
+        chatRoom.updateReadTime(senderId, message.getCreatedAt()); // 채팅방의 마지막 메시지 시간 최신화
 
-        chatRoom.increaseUnreadCount(request.getReceiverId()); // 상대방 +1
+        chatRoom.increaseUnreadCount(request.getReceiverId()); // 상대방의 읽지 않은 메시지 수 + 1
         chatRoom.resetUnreadCount(senderId); // 나는 0 (방어 로직)
 
         chatRoomRepository.save(chatRoom);
@@ -82,6 +82,8 @@ public class ChatService {
         String redisKey = TOTAL_UNREAD_PREFIX + request.getReceiverId();
         redisTemplate.opsForValue().increment(redisKey);
 
+        // ** 위는 DB 저장에 관련된 부분 / 아래는 실시간으로 메시지 발행해서 뿌리는 부분 ** //
+        
         // 4. Pub/Sub
         ChatMessageResponse response = ChatMessageResponse.builder()
                 .type(MessageType.TALK)
@@ -94,7 +96,7 @@ public class ChatService {
                 .readCount(1)
                 .build();
 
-        redisPublisher.publish(redisPublisher.getTopic(), response);
+        redisPublisher.publish(redisPublisher.getTopic(), response); // redisPublisher.publish(chatroom, response); <- chatroom이라는 토픽(채널)로 메시지 던짐
     }
 
     // 읽음 처리 로직

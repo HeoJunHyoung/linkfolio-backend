@@ -23,11 +23,11 @@ public class ChatRoomEntity {
     private Long user1Id;
     private Long user2Id;
 
-    private String lastMessage;
-    private LocalDateTime lastMessageTime;
-
-    // 각 사용자가 마지막으로 읽은 시간 Key: UserId , Value: LocalDateTime)
-    private Map<String, LocalDateTime> lastReadAt = new HashMap<>();
+    private String lastMessage; // 채팅방 목록에서 보여지는 마지막 메시지 내용
+    
+    private LocalDateTime lastMessageTime; // 채팅방 목록이 최신 메시지 온 순서대로 정렬되는 기준
+    
+    private Map<String, LocalDateTime> lastReadAt = new HashMap<>(); // 각 사용자가 마지막으로 읽은 시간 Key: UserId , Value: LocalDateTime)
 
     private Map<String, Integer> unreadCounts = new HashMap<>(); // 사용자 ID별 안 읽은 메시지 개수 (Key: UserId, Value: Count)
 

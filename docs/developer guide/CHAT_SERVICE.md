@@ -65,6 +65,51 @@
     * 자신의 서버에 해당 `roomId`를 구독(`SUBSCRIBE /topic/chat/{roomId}`)하고 있는 클라이언트가 있는지 찾는다.
     * 사용자 B가 Server 2에 붙어있으므로, Server 2는 사용자 B에게 WebSocket으로 메시지를 쏘아준다.
 
+### 3.4. WebSocket + STOMP 설정 및 상세 동작 원리
+
+WebSocketConfig 설정에 따른 전체적인 메시지 처리 흐름은 다음과 같다.
+
+**[전체적인 큰 흐름]**
+WebSocket + STOMP 구조는 크게 다음 3단계로 동작한다.
+
+1.  **HTTP → WebSocket 업그레이드 단계 (Handshake)**
+    * 브라우저가 일반 HTTP 요청을 보내고 서버가 이를 WebSocket 프로토콜로 업그레이드한다.
+    * 이 단계에서 인증(JWT 검증)이나 초기 세션 값 저장이 이루어진다.
+2.  **클라이언트 → 서버로 메시지 전송 ("/app" 경로 사용)**
+    * 프론트엔드에서 `/app`으로 시작하는 주소로 메시지를 보내면, 서버의 `@MessageMapping` 메서드가 이 메시지를 처리한다.
+3.  **서버 → 클라이언트에게 메시지 브로드캐스트 ("/topic" 경로 사용)**
+    * 서버(또는 Redis Subscriber)가 `/topic`으로 시작하는 경로로 메시지를 발행하면, 해당 토픽을 구독중인 클라이언트들은 실시간으로 메시지를 전달받는다.
+
+#### 1) registerStompEndpoints (WebSocket 초기 연결)
+* `registry.addEndpoint("/ws-chat")`: 브라우저가 WebSocket을 처음 연결할 때 호출하는 URL이다. 즉, "웹소켓 연결 요청은 **/ws-chat** 주소로 하십시오"라는 의미이다.
+* `setAllowedOriginPatterns("*")`: 특정 도메인만 허용하는 CORS와 비슷한 개념이며, 어떤 프론트엔드(origin)에서도 접속 가능하도록 허용한다.
+* `addInterceptors(httpHandshakeInterceptor)`: Handshake Interceptor는 WebSocket 연결이 성립되기 이전, 즉 **HTTP 요청 단계**에서 실행된다.
+    * **동작 흐름**:
+        1.  브라우저가 `/ws-chat` 주소로 일반 HTTP 요청을 보낸다.
+        2.  서버는 이 요청을 WebSocket 프로토콜로 업그레이드한다.
+        3.  이 과정에서 HTTP Header 또는 URL Query에서 토큰을 추출하여 JWT 검증 후 유저 ID를 WebSocket 세션에 저장한다.
+    * 즉, "WebSocket 연결이 되기 전에 인증을 통과한 사용자만 입장시키는 문지기 역할"을 한다.
+
+#### 2) configureMessageBroker (STOMP 주소 체계)
+STOMP는 '주소 기반 라우팅'을 하기 때문에, 메시지를 보낼 때 사용하는 주소와 받을 때 사용하는 주소가 다르다.
+
+* **setApplicationDestinationPrefixes("/app")**
+    * **클라이언트 → 서버**로 메시지를 보낼 때 사용하는 prefix이다. (예: `client.send("/app/chat/send", payload)`)
+    * 서버에서는 `@MessageMapping("/chat/send")` 로 이 메시지를 받는다.
+    * HTTP의 `@PostMapping` 같은 개념의 "WebSocket용 Controller 경로"라고 보면 된다.
+* **enableSimpleBroker("/topic", "/queue")**
+    * **서버 → 클라이언트**로 메시지를 전달할 때 사용하는 prefix이다.
+        * `/topic`: 여러 사용자에게 메시지를 뿌릴 때 (Pub/Sub 방식)
+        * `/queue`: 1:1 개인 메시지 전용
+    * 예: 서버에서 `/topic/chatroom/123` 로 메시지를 발행하면, 해당 주소를 구독한 클라이언트들이 모두 메시지를 받는다.
+
+#### 3) configureClientInboundChannel (메시지 수신 Interceptor)
+이 부분은 Handshake 인터셉터와 타이밍이 다르다. WebSocket이 이미 연결된 후 **클라이언트의 STOMP Frame이 서버로 들어올 때마다** 작동한다.
+
+* **검사 대상**: CONNECT, SEND, SUBSCRIBE, DISCONNECT 등 모든 프레임.
+* **필요성**: Handshake에서 인증을 통과했더라도, 이후 권한 없는 채팅방에 `SUBSCRIBE` 요청을 보내거나 `SEND` 요청을 보내는 등 비정상적인 행동을 지속적으로 감시해야 한다.
+* 즉, "WebSocket 연결 후에도 지속적으로 보안을 검사하는 필터" 역할을 수행한다.
+
 ---
 
 ## 4. 데이터 모델 (MongoDB)
@@ -134,46 +179,4 @@ sequenceDiagram
     StompHandler->>Session: Attributes.get("X-User-Id")
     StompHandler->>StompHandler: Set Principal (UserAuth)
     StompHandler-->>Client: STOMP CONNECTED Frame
-```
-#### B. 메시지 전송 및 전파 (Redis Pub/Sub)
-```mermaid
-sequenceDiagram
-    participant UserA as 👤 A (Sender)
-    participant ServerA as 🖥️ Chat Server A
-    participant MongoDB as 🍃 MongoDB
-    participant Redis as ⚡ Redis
-    participant ServerB as 🖥️ Chat Server B
-    participant UserB as 👤 B (Receiver)
-
-    UserA->>ServerA: SEND /app/chat/send (JSON)
-    
-    ServerA->>MongoDB: Save Message & Update Room
-    ServerA->>Redis: PUBLISH "chatroom" (Message)
-    
-    par Broadcast to A
-        Redis->>ServerA: onMessage()
-        ServerA->>UserA: SUBSCRIBE /topic/chat/{roomId}
-    and Broadcast to B
-        Redis->>ServerB: onMessage()
-        ServerB->>UserB: SUBSCRIBE /topic/chat/{roomId}
-    end
-```
-
-#### C. 데이터 동기화 (Kafka CDC)
-```mermaid
-sequenceDiagram
-    participant UserService as 👥 user-service
-    participant UserDB as 🗄️ User DB (MySQL)
-    participant Kafka as 📨 Kafka (Debezium)
-    participant ChatService as 💬 chat-service
-    participant ChatMongo as 🍃 Chat DB (Mongo)
-
-    UserService->>UserDB: 사용자 이름 변경 (UPDATE)
-    UserDB-->>Kafka: Binlog 감지 (CDC)
-    Kafka->>ChatService: Topic: user_db.user_profile
-    
-    Note right of ChatService: ChatUserProfileEventHandler
-    ChatService->>ChatService: Avro Deserialization
-    ChatService->>ChatMongo: save(ChatUserProfileEntity)
-    Note right of ChatMongo: 로컬 캐시 업데이트 완료
 ```

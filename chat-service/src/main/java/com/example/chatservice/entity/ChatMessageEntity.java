@@ -21,7 +21,7 @@ public class ChatMessageEntity {
     private Long senderId;
     private String content;
     private LocalDateTime createdAt;
-    private int readCount;
+    private int readCount; // 메시지를 읽지 않은 사람의 수
 
     @Builder
     public ChatMessageEntity(String roomId, Long senderId, String content, LocalDateTime createdAt) {

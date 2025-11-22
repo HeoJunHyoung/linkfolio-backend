@@ -19,7 +19,7 @@ public class SecurityConfig {
                 .csrf(csrf -> csrf.disable())
                 .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .authorizeHttpRequests(authorize -> authorize
-                        .requestMatchers("/actuator/**", "/ws-chat/**").permitAll() // WebSocket Handshake는 자체 인터셉터로 처리
+                        .requestMatchers("/actuator/**", "/ws-chat/**").permitAll() // WebSocket Handshake는 자체 인터셉터로 처리하기 때문에 permitAll 설정
                         .anyRequest().authenticated()
                 )
                 // HTTP 요청 헤더 인증 필터 (Gateway 신뢰)
