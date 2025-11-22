@@ -122,6 +122,8 @@ springdoc:
         url: https://impressionless-connaturally-jonie.ngrok-free.dev/user-service/v3/api-docs
       - name: 3. Portfolio Service
         url: https://impressionless-connaturally-jonie.ngrok-free.dev/portfolio-service/v3/api-docs
+      - name: 4. Support Service (Notice/FAQ)
+        url: https://impressionless-connaturally-jonie.ngrok-free.dev/support-service/v3/api-docs
 
 
   # 게이트웨이의 공인 주소(ngrok)를 명시하여 Mixed Content 문제 해결
