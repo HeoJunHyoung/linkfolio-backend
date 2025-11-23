@@ -2,8 +2,12 @@ package com.example.communityservice;
 
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
+import org.springframework.cloud.openfeign.EnableFeignClients;
+import org.springframework.data.jpa.repository.config.EnableJpaAuditing;
 
-@SpringBootApplication
+@SpringBootApplication(scanBasePackages = "com.example")
+@EnableJpaAuditing
+@EnableFeignClients
 public class CommunityServiceApplication {
 
     public static void main(String[] args) {
