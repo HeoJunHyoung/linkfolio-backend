@@ -36,6 +36,7 @@
         <module>chat-service</module>
         <module>common-module</module>
         <module>support-service</module>
+        <module>community-service</module>
     </modules>
 
     <properties>

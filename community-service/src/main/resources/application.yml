@@ -1,0 +1,23 @@
+server:
+  port: 8085 # ????? 8082, ?? 8083, ???? 8084, ???? 8085
+  servlet:
+    context-path: /community-service
+
+spring:
+  application:
+    name: community-service
+  datasource:
+    driver-class-name: com.mysql.cj.jdbc.Driver
+    url: jdbc:mysql://${DB_HOST}/${MYSQL_DATABASE}?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC&useUnicode=true&characterEncoding=UTF-8
+    username: ${MYSQL_USER}
+    password: ${MYSQL_PASSWORD}
+  jpa:
+    hibernate:
+      ddl-auto: update
+    show-sql: true
+  kafka:
+    bootstrap-servers: ${SPRING_KAFKA_BOOTSTRAP_SERVERS}
+
+app:
+  feign:
+    chat-service-url: http://chat-service:80
