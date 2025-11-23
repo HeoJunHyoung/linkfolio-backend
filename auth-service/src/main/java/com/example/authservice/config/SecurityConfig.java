@@ -44,6 +44,7 @@ public class SecurityConfig {
                         // 모든 /auth/** 경로는 인증 없이 허용
                         .requestMatchers("/auth/**").permitAll()
                         .requestMatchers("/oauth2/**", "/login/oauth2/**").permitAll()
+                        .requestMatchers("/error").permitAll()
                         .anyRequest().authenticated()
                 );
 

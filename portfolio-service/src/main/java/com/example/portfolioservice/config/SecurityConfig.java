@@ -36,6 +36,8 @@ public class SecurityConfig {
                         .requestMatchers(HttpMethod.GET, "/portfolios").permitAll()
                         .requestMatchers(HttpMethod.GET, "/portfolios/{portfolioId:\\d+}").permitAll()
 
+                        .requestMatchers("/error").permitAll()
+
                         // 그 외 모든 요청은 기본적으로 인증 필요
                         .anyRequest().authenticated()
                 );

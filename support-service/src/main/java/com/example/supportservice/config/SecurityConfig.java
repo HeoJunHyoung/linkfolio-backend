@@ -22,6 +22,7 @@ public class SecurityConfig {
                         .requestMatchers("/notices/**", "/faqs/**").permitAll()
                         .requestMatchers("/v3/api-docs/**", "/swagger-ui/**", "/swagger-resources/**").permitAll()
                         .requestMatchers("/actuator/**").permitAll()
+                        .requestMatchers("/error").permitAll()
                         .requestMatchers("/admin/**").hasRole("ADMIN") // [Admin] 관리자 기능 (ADMIN 권한 필수)
                         .anyRequest().authenticated()
                 )
