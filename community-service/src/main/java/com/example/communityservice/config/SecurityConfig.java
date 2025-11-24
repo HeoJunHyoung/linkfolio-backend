@@ -1,8 +1,9 @@
-package com.example.chatservice.config;
+package com.example.communityservice.config;
 
 import com.example.commonmodule.filter.InternalHeaderAuthenticationFilter;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.http.HttpMethod;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.config.http.SessionCreationPolicy;
@@ -18,13 +19,16 @@ public class SecurityConfig {
         http
                 .csrf(csrf -> csrf.disable())
                 .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
-                .authorizeHttpRequests(authorize -> authorize
-                        .requestMatchers("/actuator/**", "/ws-chat/**").permitAll() // WebSocket Handshake는 자체 인터셉터로 처리하기 때문에 permitAll 설정
+                .authorizeHttpRequests(auth -> auth
+                        // Swagger & Actuator
+                        .requestMatchers("/swagger-ui/**", "/v3/api-docs/**", "/actuator/**").permitAll()
                         .requestMatchers("/error").permitAll()
-                        .requestMatchers("/internal/**").permitAll() // 내부 통신용 경로 허용 - community-service에서 팀원 모집(참여 요청)에서 사용
+                        // 게시글 조회(GET)는 인증 없이 허용
+                        .requestMatchers(HttpMethod.GET, "/community/posts/**").permitAll()
+                        // 그 외 모든 요청(작성, 수정, 삭제, 좋아요 등)은 인증 필요
                         .anyRequest().authenticated()
                 )
-                // HTTP 요청 헤더 인증 필터 (Gateway 신뢰)
+                // Gateway에서 넘어오는 헤더(X-User-Id 등)를 기반으로 인증 처리
                 .addFilterBefore(new InternalHeaderAuthenticationFilter(), AuthorizationFilter.class);
 
         return http.build();

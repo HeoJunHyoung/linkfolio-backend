@@ -209,4 +209,17 @@ public class ChatService {
         Object count = redisTemplate.opsForValue().get(redisKey);
         return count != null ? Long.parseLong(count.toString()) : 0L;
     }
+
+    @Transactional
+    public void sendInternalMessage(Long senderId, Long receiverId, String content) {
+        // 1. 내부 요청을 ChatMessageRequest DTO로 변환
+        ChatMessageRequest request = ChatMessageRequest.builder()
+                .receiverId(receiverId)
+                .content(content)
+                .type(MessageType.TALK) // 일반 대화 메시지로 처리
+                .build();
+
+        // 2. 기존 메시지 전송 로직 호출 (DB 저장, Redis 갱신, Pub/Sub 모두 수행됨)
+        sendTalkMessage(senderId, request);
+    }
 }
