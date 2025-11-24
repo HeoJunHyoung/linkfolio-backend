@@ -52,9 +52,6 @@ public class PostEntity extends BaseEntity {
     private RecruitmentStatus recruitmentStatus; // RECRUIT 전용
 
     @OneToMany(mappedBy = "post", cascade = CascadeType.ALL, orphanRemoval = true)
-    private List<PostTagEntity> tags = new ArrayList<>();
-
-    @OneToMany(mappedBy = "post", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<PostCommentEntity> comments = new ArrayList<>();
 
     @Builder
@@ -100,7 +97,4 @@ public class PostEntity extends BaseEntity {
         }
     }
 
-    public void addTag(PostTagEntity tag) {
-        this.tags.add(tag);
-    }
 }

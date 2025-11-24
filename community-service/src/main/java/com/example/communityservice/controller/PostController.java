@@ -2,6 +2,7 @@ package com.example.communityservice.controller;
 
 import com.example.commonmodule.dto.security.AuthUser;
 import com.example.communityservice.dto.request.PostCreateRequest;
+import com.example.communityservice.dto.response.PostDetailResponse;
 import com.example.communityservice.dto.response.PostResponse;
 import com.example.communityservice.entity.enumerate.PostCategory;
 import com.example.communityservice.service.PostService;
@@ -42,10 +43,13 @@ public class PostController {
         return ResponseEntity.ok(postService.getPosts(category, keyword, isSolved, pageable));
     }
 
-    @Operation(summary = "게시글 상세 조회", description = "게시글 상세 내용을 조회하고 조회수를 1 증가시킵니다.")
+    @Operation(summary = "게시글 상세 조회", description = "게시글 내용과 계층형 댓글 목록(작성자 정보 포함)을 반환합니다.")
     @GetMapping("/posts/{postId}")
-    public ResponseEntity<PostResponse> getPostDetail(@PathVariable Long postId) {
-        return ResponseEntity.ok(postService.getPostDetail(postId));
+    public ResponseEntity<PostDetailResponse> getPostDetail(@PathVariable Long postId,
+                                                            @AuthenticationPrincipal AuthUser authUser) {
+        // 로그인하지 않은 경우 authUser는 null
+        Long currentUserId = (authUser != null) ? authUser.getUserId() : null;
+        return ResponseEntity.ok(postService.getPostDetail(postId, currentUserId));
     }
 
     @Operation(summary = "북마크 토글", description = "게시글을 북마크하거나 취소합니다.")

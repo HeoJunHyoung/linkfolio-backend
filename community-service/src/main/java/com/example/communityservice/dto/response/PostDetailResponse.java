@@ -8,15 +8,14 @@ import lombok.Data;
 
 import java.time.LocalDateTime;
 import java.util.List;
-import java.util.stream.Collectors;
 
 @Data
 @Builder
-public class PostResponse {
+public class PostDetailResponse {
     private Long id;
     private Long userId;
 
-    // 작성자 정보 (Service에서 채움)
+    // 작성자 정보
     private String writerName;
     private String writerEmail;
 
@@ -25,13 +24,22 @@ public class PostResponse {
     private String content;
     private Long viewCount;
     private Long bookmarkCount;
+
+    // 상태 값
     private Boolean isSolved;
     private RecruitmentStatus recruitmentStatus;
+
+    // 현재 사용자의 북마크 여부
+    private boolean isBookmarked;
+
+    // 댓글 목록 (계층형)
+    private List<CommentResponse> comments;
+
     private LocalDateTime createdAt;
     private LocalDateTime lastModifiedAt;
 
-    public static PostResponse from(PostEntity entity) {
-        return PostResponse.builder()
+    public static PostDetailResponse from(PostEntity entity) {
+        return PostDetailResponse.builder()
                 .id(entity.getId())
                 .userId(entity.getUserId())
                 .category(entity.getCategory())
@@ -39,8 +47,8 @@ public class PostResponse {
                 .content(entity.getContent())
                 .viewCount(entity.getViewCount())
                 .bookmarkCount(entity.getBookmarkCount())
-                .isSolved(entity.getCategory() == PostCategory.QNA ? entity.isSolved() : null)
-                .recruitmentStatus(entity.getCategory() == PostCategory.RECRUIT ? entity.getRecruitmentStatus() : null)
+                .isSolved(entity.isSolved())
+                .recruitmentStatus(entity.getRecruitmentStatus())
                 .createdAt(entity.getCreatedAt())
                 .lastModifiedAt(entity.getLastModifiedAt())
                 .build();

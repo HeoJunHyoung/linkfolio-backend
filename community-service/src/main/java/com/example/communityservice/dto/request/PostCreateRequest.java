@@ -14,5 +14,4 @@ public class PostCreateRequest {
 
     private String content;
 
-    private List<String> tags;
 }
