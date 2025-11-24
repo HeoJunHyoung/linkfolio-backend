@@ -21,6 +21,7 @@ public class SecurityConfig {
                 .authorizeHttpRequests(authorize -> authorize
                         .requestMatchers("/actuator/**", "/ws-chat/**").permitAll() // WebSocket Handshake는 자체 인터셉터로 처리하기 때문에 permitAll 설정
                         .requestMatchers("/error").permitAll()
+                        .requestMatchers("/internal/**").permitAll() // 내부 통신용 경로 허용 - community-service에서 팀원 모집(참여 요청)에서 사용
                         .anyRequest().authenticated()
                 )
                 // HTTP 요청 헤더 인증 필터 (Gateway 신뢰)
