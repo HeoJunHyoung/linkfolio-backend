@@ -16,11 +16,16 @@ import java.util.stream.Collectors;
 public class PostResponse {
     private Long id;
     private Long userId;
+
+    // 작성자 정보 (Service에서 채움)
+    private String writerName;
+    private String writerEmail;
+
     private PostCategory category;
     private String title;
     private String content;
     private Long viewCount;
-    private Long bookmarkCount; // 북마크 수
+    private Long bookmarkCount;
     private List<String> tags;
     private Boolean isSolved;
     private RecruitmentStatus recruitmentStatus;

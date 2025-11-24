@@ -11,12 +11,18 @@ import com.example.communityservice.entity.enumerate.RecruitmentStatus;
 import com.example.communityservice.repository.PostBookmarkRepository;
 import com.example.communityservice.repository.PostCommentRepository;
 import com.example.communityservice.repository.PostRepository;
+import com.example.communityservice.repository.PostUserProfileRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -27,6 +33,7 @@ public class PostService {
     private final PostRepository postRepository;
     private final PostCommentRepository commentRepository;
     private final PostBookmarkRepository postBookmarkRepository;
+    private final PostUserProfileRepository userProfileRepository;
     private final ChatServiceClient chatServiceClient;
 
     @Transactional
@@ -48,7 +55,12 @@ public class PostService {
     }
 
     public Page<PostResponse> getPosts(PostCategory category, String keyword, Boolean isSolved, Pageable pageable) {
-        return postRepository.searchPosts(category, keyword, isSolved, pageable);
+        Page<PostResponse> postResponses = postRepository.searchPosts(category, keyword, isSolved, pageable);
+
+        // 작성자 정보 매핑
+        mapWriterInfo(postResponses.getContent());
+
+        return postResponses;
     }
 
     @Transactional
@@ -58,7 +70,34 @@ public class PostService {
 
         post.increaseViewCount();
 
-        return PostResponse.from(post);
+        PostResponse response = PostResponse.from(post);
+
+        // 상세 조회 시 작성자 정보 매핑
+        userProfileRepository.findById(post.getUserId()).ifPresent(user -> {
+            response.setWriterName(user.getName());
+            response.setWriterEmail(user.getEmail());
+        });
+
+        return response;
+    }
+
+    // 작성자 정보 매핑 헬퍼 메서드
+    private void mapWriterInfo(List<PostResponse> posts) {
+
+        Set<Long> userIds = posts.stream().map(PostResponse::getUserId).collect(Collectors.toSet());
+
+        Map<Long, PostUserProfileEntity> userMap = userProfileRepository.findAllById(userIds).stream()
+                .collect(Collectors.toMap(PostUserProfileEntity::getUserId, u -> u));
+
+        posts.forEach(post -> {
+            PostUserProfileEntity user = userMap.get(post.getUserId());
+            if (user != null) {
+                post.setWriterName(user.getName());
+                post.setWriterEmail(user.getEmail());
+            } else {
+                post.setWriterName("알 수 없음"); // 탈퇴 회원 등
+            }
+        });
     }
 
     @Transactional
@@ -100,7 +139,7 @@ public class PostService {
         }
     }
 
-    // 북마크 토글 (좋아요 대체)
+    // 북마크 토글
     @Transactional
     public void toggleBookmark(Long userId, Long postId) {
         PostEntity post = postRepository.findById(postId)
