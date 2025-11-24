@@ -21,7 +21,6 @@ import org.springframework.web.bind.annotation.*;
 @Tag(name = "Community API", description = "커뮤니티(게시판) API")
 @RestController
 @RequiredArgsConstructor
-@RequestMapping("/community")
 public class PostController {
 
     private final PostService postService;

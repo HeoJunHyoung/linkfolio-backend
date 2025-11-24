@@ -73,7 +73,7 @@ spring:
             - id: community-service-route
               uri: http://community-service:80
               predicates:
-                - Path=/community/**
+                - Path=/community-service/**
 
 app:
   gateway:
@@ -111,9 +111,9 @@ app:
       - /support-service/faqs/**
       - /support-service/v3/api-docs/**
 
-      - /community/posts
-      - /community/posts/**
-      - /community/v3/api-docs/**
+      - /community-service/posts
+      - /community-service/posts/**
+      - /community-service/v3/api-docs/**
 
 # JWT Token Settings
 jwt:
