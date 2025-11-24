@@ -24,6 +24,8 @@ import org.springframework.transaction.annotation.Transactional;
 import java.util.*;
 import java.util.stream.Collectors;
 
+import static com.example.communityservice.exception.ErrorCode.*;
+
 @Service
 @RequiredArgsConstructor
 @Transactional(readOnly = true)
@@ -58,7 +60,7 @@ public class PostService {
     @Transactional
     public PostDetailResponse getPostDetail(Long postId, Long currentUserId) {
         PostEntity post = postRepository.findById(postId)
-                .orElseThrow(() -> new RuntimeException("게시글을 찾을 수 없습니다."));
+                .orElseThrow(() -> new BusinessException(POST_NOT_FOUND));
 
         post.increaseViewCount();
 
@@ -172,14 +174,14 @@ public class PostService {
                 .orElseThrow(() -> new RuntimeException("게시글을 찾을 수 없습니다."));
 
         if (!post.getUserId().equals(userId)) {
-            throw new RuntimeException("작성자만 채택할 수 있습니다.");
+            throw new BusinessException(NOT_POST_OWNER);
         }
         if (post.getCategory() != PostCategory.QNA) {
-            throw new RuntimeException("QnA 게시글이 아닙니다.");
+            throw new BusinessException(NOT_QNA_CATEGORY);
         }
 
         PostCommentEntity comment = commentRepository.findById(commentId)
-                .orElseThrow(() -> new RuntimeException("댓글을 찾을 수 없습니다."));
+                .orElseThrow(() -> new BusinessException(COMMENT_NOT_FOUND));
 
         comment.accept();
         post.markAsSolved();
@@ -190,10 +192,10 @@ public class PostService {
                 .orElseThrow(() -> new RuntimeException("게시글을 찾을 수 없습니다."));
 
         if (post.getCategory() != PostCategory.RECRUIT) {
-            throw new RuntimeException("팀원 모집 게시글이 아닙니다.");
+            throw new BusinessException(NOT_RECRUIT_CATEGORY);
         }
         if (post.getRecruitmentStatus() == RecruitmentStatus.CLOSED) {
-            throw new RuntimeException("이미 마감된 모집입니다.");
+            throw new BusinessException(RECRUITMENT_CLOSED);
         }
 
         String message = String.format("안녕하세요, '%s' 모집 글을 보고 지원합니다.", post.getTitle());
@@ -201,7 +203,7 @@ public class PostService {
             chatServiceClient.sendMessageInternal(applicantId, post.getUserId(), message);
         } catch (Exception e) {
             log.error("메시지 전송 실패: {}", e.getMessage());
-            throw new BusinessException(CommonErrorCode.INTERNAL_SERVER_ERROR);
+            throw new BusinessException(MESSAGE_SEND_FAILED);
         }
     }
 
