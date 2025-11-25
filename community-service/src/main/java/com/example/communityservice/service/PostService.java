@@ -3,7 +3,9 @@ package com.example.communityservice.service;
 import com.example.commonmodule.exception.BusinessException;
 import com.example.commonmodule.exception.CommonErrorCode;
 import com.example.communityservice.client.ChatServiceClient;
+import com.example.communityservice.dto.request.CommentRequest;
 import com.example.communityservice.dto.request.PostCreateRequest;
+import com.example.communityservice.dto.request.PostUpdateRequest;
 import com.example.communityservice.dto.response.CommentResponse;
 import com.example.communityservice.dto.response.PostDetailResponse;
 import com.example.communityservice.dto.response.PostResponse;
@@ -17,6 +19,7 @@ import com.example.communityservice.repository.PostUserProfileRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -48,6 +51,30 @@ public class PostService {
                 .build();
 
         return postRepository.save(post).getId();
+    }
+
+    @Transactional
+    public void updatePost(Long userId, Long postId, PostUpdateRequest request) {
+        PostEntity post = postRepository.findById(postId)
+                .orElseThrow(() -> new BusinessException(POST_NOT_FOUND));
+
+        if (!post.getUserId().equals(userId)) {
+            throw new BusinessException(NOT_POST_OWNER);
+        }
+
+        post.update(request.getTitle(), request.getContent());
+    }
+
+    @Transactional
+    public void deletePost(Long userId, Long postId) {
+        PostEntity post = postRepository.findById(postId)
+                .orElseThrow(() -> new BusinessException(POST_NOT_FOUND));
+
+        if (!post.getUserId().equals(userId)) {
+            throw new BusinessException(NOT_POST_OWNER);
+        }
+
+        postRepository.delete(post);
     }
 
     public Page<PostResponse> getPosts(PostCategory category, String keyword, Boolean isSolved, Pageable pageable) {
@@ -94,6 +121,63 @@ public class PostService {
         updateCommentWriterInfo(response.getComments(), userMap);
 
         return response;
+    }
+
+    @Transactional
+    public void createComment(Long userId, Long postId, CommentRequest request) {
+        PostEntity post = postRepository.findById(postId)
+                .orElseThrow(() -> new BusinessException(POST_NOT_FOUND));
+
+        PostCommentEntity parent = null;
+        if (request.getParentId() != null) {
+            parent = commentRepository.findById(request.getParentId())
+                    .orElseThrow(() -> new BusinessException(COMMENT_NOT_FOUND));
+        }
+
+        PostCommentEntity comment = PostCommentEntity.builder()
+                .post(post)
+                .userId(userId)
+                .content(request.getContent())
+                .parent(parent)
+                .build();
+
+        commentRepository.save(comment);
+    }
+
+    @Transactional
+    public void updateComment(Long userId, Long postId, Long commentId, CommentRequest request) {
+        // postId는 URL 유효성 검증용으로 받을 수 있으나, 여기서는 commentId로 조회 후 권한만 확인
+        PostCommentEntity comment = commentRepository.findById(commentId)
+                .orElseThrow(() -> new BusinessException(COMMENT_NOT_FOUND));
+
+        // URL의 postId와 댓글의 실제 postId가 일치하는지 검증
+        if (!comment.getPost().getId().equals(postId)) {
+            throw new BusinessException(INVALID_INPUT_VALUE);
+        }
+
+        if (!comment.getUserId().equals(userId)) {
+            throw new BusinessException(NOT_COMMENT_OWNER);
+        }
+
+        comment.updateContent(request.getContent());
+    }
+
+    @Transactional
+    public void deleteComment(Long userId, Long postId, Long commentId) {
+        PostCommentEntity comment = commentRepository.findById(commentId)
+                .orElseThrow(() -> new BusinessException(COMMENT_NOT_FOUND));
+
+        // URL의 postId와 댓글의 실제 postId가 일치하는지 검증
+        if (!comment.getPost().getId().equals(postId)) {
+            throw new BusinessException(INVALID_INPUT_VALUE);
+        }
+
+        if (!comment.getUserId().equals(userId)) {
+            throw new BusinessException(NOT_COMMENT_OWNER);
+        }
+
+        // 자식 댓글이 있는 경우 Cascade 설정에 따라 함께 삭제됨
+        commentRepository.delete(comment);
     }
 
     // 댓글 계층 구조 변환 (Parent-Child)
@@ -208,6 +292,21 @@ public class PostService {
     }
 
     @Transactional
+    public void updateRecruitmentStatus(Long userId, Long postId, RecruitmentStatus status) {
+        PostEntity post = postRepository.findById(postId)
+                .orElseThrow(() -> new BusinessException(POST_NOT_FOUND));
+
+        if (!post.getUserId().equals(userId)) {
+            throw new BusinessException(NOT_POST_OWNER);
+        }
+        if (post.getCategory() != PostCategory.RECRUIT) {
+            throw new BusinessException(NOT_RECRUIT_CATEGORY);
+        }
+
+        post.updateRecruitmentStatus(status);
+    }
+
+    @Transactional
     public void toggleBookmark(Long userId, Long postId) {
         PostEntity post = postRepository.findById(postId)
                 .orElseThrow(() -> new RuntimeException("게시글을 찾을 수 없습니다."));
@@ -223,4 +322,28 @@ public class PostService {
                 }
         );
     }
+
+
+
+    public Page<PostResponse> getMyPosts(Long userId, Pageable pageable) {
+        Page<PostEntity> posts = postRepository.findAllByUserId(userId, pageable);
+        List<PostResponse> responses = posts.stream().map(PostResponse::from).collect(Collectors.toList());
+        mapWriterInfo(responses); // 작성자 정보 매핑 (본인이지만 통일성을 위해 호출)
+        return new PageImpl<>(responses, pageable, posts.getTotalElements());
+    }
+
+    public Page<PostResponse> getMyBookmarkedPosts(Long userId, Pageable pageable) {
+        Page<PostEntity> posts = postRepository.findBookmarkedPosts(userId, pageable);
+        List<PostResponse> responses = posts.stream().map(PostResponse::from).collect(Collectors.toList());
+        mapWriterInfo(responses);
+        return new PageImpl<>(responses, pageable, posts.getTotalElements());
+    }
+
+    public Page<PostResponse> getMyCommentedPosts(Long userId, Pageable pageable) {
+        Page<PostEntity> posts = postRepository.findCommentedPosts(userId, pageable);
+        List<PostResponse> responses = posts.stream().map(PostResponse::from).collect(Collectors.toList());
+        mapWriterInfo(responses);
+        return new PageImpl<>(responses, pageable, posts.getTotalElements());
+    }
+
 }
