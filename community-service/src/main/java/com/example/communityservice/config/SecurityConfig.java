@@ -24,7 +24,7 @@ public class SecurityConfig {
                         .requestMatchers("/swagger-ui/**", "/v3/api-docs/**", "/actuator/**").permitAll()
                         .requestMatchers("/error").permitAll()
                         // 게시글 조회(GET)는 인증 없이 허용
-                        .requestMatchers(HttpMethod.GET, "/community/posts/**").permitAll()
+                        .requestMatchers(HttpMethod.GET, "/posts/**").permitAll()
                         // 그 외 모든 요청(작성, 수정, 삭제, 좋아요 등)은 인증 필요
                         .anyRequest().authenticated()
                 )
