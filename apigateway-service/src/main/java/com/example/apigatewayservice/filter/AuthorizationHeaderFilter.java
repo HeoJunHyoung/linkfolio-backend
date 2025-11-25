@@ -73,41 +73,42 @@ public class AuthorizationHeaderFilter implements GlobalFilter, Ordered {
         String path = request.getURI().getPath(); // 현재 요청 경로 추출
 
         log.info("🔍 API Gateway Request Path: {}", path);
-        // log.info("🔍 Headers: {}", request.getHeaders()); // 보안상 헤더 전체 로깅은 지양하거나 디버그 레벨 권장
 
-        // 1. 화이트리스트(인증 예외) 경로 검사
-        if (isPatchExcluded(path)) {
-            log.info("Permitting request to excluded path: {}", path);
-            return chain.filter(exchange);
-        }
-
-        // 2. 토큰 추출 (Header or Query Param)
+        // 1. 토큰 추출 시도
         String token = resolveToken(request);
 
-        // 3. 토큰이 없으면 에러 반환
+        // 2. 토큰이 없는 경우 처리
         if (token == null) {
+            // 화이트리스트(인증 예외) 경로라면 인증 없이 통과 (익명 요청)
+            if (isPatchExcluded(path)) {
+                log.info("Permitting anonymous request to excluded path: {}", path);
+                return chain.filter(exchange);
+            }
+            // 화이트리스트가 아니라면 에러 반환
             return onError(exchange, ErrorCode.MISSING_AUTH_HEADER);
         }
 
+        // 3. 토큰이 있는 경우 검증 및 헤더 주입 (화이트리스트 경로라도 토큰이 있으면 수행)
         try {
-            // 4. JWT 파싱 및 Claims 추출 (JwtException 발생 가능)
+            // JWT 파싱 및 Claims 추출 (JwtException 발생 가능)
             Claims claims = getClaims(token);
 
-            // 5. Claims에서 사용자 정보 추출 (userId, email, role)
+            // Claims에서 사용자 정보 추출 (userId, email, role)
             String userId = claims.getSubject();
             String email = claims.get("email", String.class);
             String role = claims.get("role", String.class);
 
-            // 6. Claims 검증 ; 값 존재 여부 확인
+            // Claims 검증 ; 값 존재 여부 확인
             if (isInvalidPayload(userId, email, role)) {
                 log.warn("Invalid JWT payload: userId or email is missing.");
                 return onError(exchange, ErrorCode.INVALID_JWT_PAYLOAD);
             }
 
-            // 7. buildInternalRequest 메서드를 호출하여 새로운 요청(Request)을 생성 => 스푸핑 공격 방지
+            // buildInternalRequest 메서드를 호출하여 새로운 요청(Request)을 생성 => 스푸핑 공격 방지
+            // (X-User-Id 헤더 주입)
             ServerHttpRequest newRequest = buildInternalRequest(request, userId, email, role);
 
-            // 8. 다음 필터 체인 실행
+            // 다음 필터 체인 실행 (인증된 정보 포함)
             return chain.filter(exchange.mutate().request(newRequest).build());
 
         } catch (GatewayAuthenticationException e) {
