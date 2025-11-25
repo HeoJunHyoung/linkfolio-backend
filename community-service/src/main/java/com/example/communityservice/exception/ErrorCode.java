@@ -18,6 +18,7 @@ public enum ErrorCode implements com.example.commonmodule.exception.ErrorCode {
 
     // 댓글 (Comment)
     COMMENT_NOT_FOUND(HttpStatus.NOT_FOUND, "C003", "댓글을 찾을 수 없습니다."),
+    NOT_COMMENT_OWNER(HttpStatus.FORBIDDEN, "C008", "댓글 작성자만 해당 작업을 수행할 수 있습니다."),
 
     // QnA
     NOT_QNA_CATEGORY(HttpStatus.BAD_REQUEST, "C004", "QnA 게시글에서만 답변을 채택할 수 있습니다."),
