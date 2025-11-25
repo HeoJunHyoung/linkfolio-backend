@@ -1,6 +1,7 @@
 package com.example.communityservice.controller;
 
 import com.example.commonmodule.dto.security.AuthUser;
+import com.example.commonmodule.exception.ErrorResponse;
 import com.example.communityservice.dto.request.CommentRequest;
 import com.example.communityservice.dto.request.PostCreateRequest;
 import com.example.communityservice.dto.request.PostUpdateRequest;
@@ -10,6 +11,12 @@ import com.example.communityservice.dto.response.PostResponse;
 import com.example.communityservice.entity.enumerate.PostCategory;
 import com.example.communityservice.service.PostService;
 import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.media.Content;
+import io.swagger.v3.oas.annotations.media.Schema;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import io.swagger.v3.oas.annotations.responses.ApiResponses;
+import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -21,57 +28,83 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
-@Tag(name = "Community API", description = "커뮤니티(게시판) API")
+@Tag(name = "Community API", description = "커뮤니티 게시글, 댓글, 북마크 및 모집 관리 API")
 @RestController
 @RequiredArgsConstructor
 public class PostController {
 
     private final PostService postService;
 
-    @Operation(summary = "게시글 작성", description = "QnA, 정보공유, 팀원모집 게시글을 작성합니다.")
+    @Operation(summary = "게시글 작성", description = "새로운 게시글(QnA, 정보공유, 팀원모집)을 작성합니다.")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "작성 성공 (생성된 게시글 ID 반환)"),
+            @ApiResponse(responseCode = "400", description = "잘못된 입력값 [G002]", content = @Content(schema = @Schema(implementation = ErrorResponse.class))),
+            @ApiResponse(responseCode = "401", description = "인증 실패", content = @Content(schema = @Schema(implementation = ErrorResponse.class)))
+    })
+    @SecurityRequirement(name = "BearerAuthentication")
     @PostMapping("/posts")
     public ResponseEntity<Long> createPost(@AuthenticationPrincipal AuthUser authUser,
                                            @RequestBody @Valid PostCreateRequest request) {
         return ResponseEntity.ok(postService.createPost(authUser.getUserId(), request));
     }
 
-    @Operation(summary = "게시글 수정", description = "제목과 내용을 수정합니다.")
+    @Operation(summary = "게시글 수정", description = "본인이 작성한 게시글의 제목과 내용을 수정합니다.")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "수정 성공"),
+            @ApiResponse(responseCode = "403", description = "작성자만 수정 가능 [C002]", content = @Content(schema = @Schema(implementation = ErrorResponse.class))),
+            @ApiResponse(responseCode = "404", description = "게시글 찾을 수 없음 [C001]", content = @Content(schema = @Schema(implementation = ErrorResponse.class)))
+    })
+    @SecurityRequirement(name = "BearerAuthentication")
     @PutMapping("/posts/{postId}")
     public ResponseEntity<Void> updatePost(@AuthenticationPrincipal AuthUser authUser,
-                                           @PathVariable Long postId,
+                                           @Parameter(description = "수정할 게시글 ID") @PathVariable Long postId,
                                            @RequestBody @Valid PostUpdateRequest request) {
         postService.updatePost(authUser.getUserId(), postId, request);
         return ResponseEntity.ok().build();
     }
 
-    @Operation(summary = "게시글 삭제", description = "게시글을 삭제합니다.")
+    @Operation(summary = "게시글 삭제", description = "본인이 작성한 게시글을 삭제합니다.")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "삭제 성공"),
+            @ApiResponse(responseCode = "403", description = "작성자만 삭제 가능 [C002]", content = @Content(schema = @Schema(implementation = ErrorResponse.class))),
+            @ApiResponse(responseCode = "404", description = "게시글 찾을 수 없음 [C001]", content = @Content(schema = @Schema(implementation = ErrorResponse.class)))
+    })
+    @SecurityRequirement(name = "BearerAuthentication")
     @DeleteMapping("/posts/{postId}")
     public ResponseEntity<Void> deletePost(@AuthenticationPrincipal AuthUser authUser,
-                                           @PathVariable Long postId) {
+                                           @Parameter(description = "삭제할 게시글 ID") @PathVariable Long postId) {
         postService.deletePost(authUser.getUserId(), postId);
         return ResponseEntity.ok().build();
     }
 
-    @Operation(summary = "게시글 목록 조회", description = "카테고리, 검색어, 해결 여부 등으로 필터링하여 조회합니다.")
+    @Operation(summary = "게시글 목록 조회 (검색/필터)", description = "카테고리, 키워드, 해결 여부 등을 조건으로 게시글 목록을 조회합니다. (인증 불필요)")
     @GetMapping("/posts")
     public ResponseEntity<Page<PostResponse>> getPosts(
-            @RequestParam(required = false) PostCategory category,
-            @RequestParam(required = false) String keyword,
-            @RequestParam(required = false) Boolean isSolved,
-            @PageableDefault(size = 10, sort = "createdAt", direction = Sort.Direction.DESC) Pageable pageable) {
+            @Parameter(description = "카테고리 (QNA, INFO, RECRUIT)") @RequestParam(required = false) PostCategory category,
+            @Parameter(description = "검색 키워드 (제목 + 내용)") @RequestParam(required = false) String keyword,
+            @Parameter(description = "해결 여부 (QnA 전용)") @RequestParam(required = false) Boolean isSolved,
+            @Parameter(description = "페이징 설정 (기본: 최신순 10개)") @PageableDefault(size = 10, sort = "createdAt", direction = Sort.Direction.DESC) Pageable pageable) {
         return ResponseEntity.ok(postService.getPosts(category, keyword, isSolved, pageable));
     }
 
-    @Operation(summary = "게시글 상세 조회", description = "게시글 내용과 계층형 댓글 목록(작성자 정보 포함)을 반환합니다.")
+    @Operation(summary = "게시글 상세 조회", description = "게시글의 상세 내용과 계층형 댓글 목록을 조회합니다. 로그인 시 북마크 여부가 포함됩니다.")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "조회 성공"),
+            @ApiResponse(responseCode = "404", description = "게시글 찾을 수 없음 [C001]", content = @Content(schema = @Schema(implementation = ErrorResponse.class)))
+    })
     @GetMapping("/posts/{postId}")
-    public ResponseEntity<PostDetailResponse> getPostDetail(@PathVariable Long postId,
+    public ResponseEntity<PostDetailResponse> getPostDetail(@Parameter(description = "조회할 게시글 ID") @PathVariable Long postId,
                                                             @AuthenticationPrincipal AuthUser authUser) {
-        // 로그인하지 않은 경우 authUser는 null
         Long currentUserId = (authUser != null) ? authUser.getUserId() : null;
         return ResponseEntity.ok(postService.getPostDetail(postId, currentUserId));
     }
 
-    @Operation(summary = "북마크 토글", description = "게시글을 북마크하거나 취소합니다.")
+    @Operation(summary = "북마크 토글", description = "게시글을 북마크에 추가하거나 삭제합니다.")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "토글 성공"),
+            @ApiResponse(responseCode = "404", description = "게시글 찾을 수 없음 [C001]", content = @Content(schema = @Schema(implementation = ErrorResponse.class)))
+    })
+    @SecurityRequirement(name = "BearerAuthentication")
     @PostMapping("/posts/{postId}/bookmark")
     public ResponseEntity<Void> toggleBookmark(@AuthenticationPrincipal AuthUser authUser,
                                                @PathVariable Long postId) {
@@ -79,7 +112,14 @@ public class PostController {
         return ResponseEntity.ok().build();
     }
 
-    @Operation(summary = "[QnA] 답변 채택", description = "질문 작성자가 특정 답변을 채택합니다.")
+    @Operation(summary = "[QnA] 답변 채택", description = "QnA 게시글의 작성자가 특정 댓글(답변)을 채택합니다.")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "채택 성공"),
+            @ApiResponse(responseCode = "400", description = "QnA 게시글이 아님 [C004]", content = @Content(schema = @Schema(implementation = ErrorResponse.class))),
+            @ApiResponse(responseCode = "403", description = "게시글 작성자만 채택 가능 [C002]", content = @Content(schema = @Schema(implementation = ErrorResponse.class))),
+            @ApiResponse(responseCode = "404", description = "댓글 찾을 수 없음 [C003]", content = @Content(schema = @Schema(implementation = ErrorResponse.class)))
+    })
+    @SecurityRequirement(name = "BearerAuthentication")
     @PostMapping("/posts/{postId}/comments/{commentId}/adopt")
     public ResponseEntity<Void> adoptAnswer(@AuthenticationPrincipal AuthUser authUser,
                                             @PathVariable Long postId,
@@ -88,7 +128,12 @@ public class PostController {
         return ResponseEntity.ok().build();
     }
 
-    @Operation(summary = "댓글 작성", description = "게시글에 댓글을 작성합니다.")
+    @Operation(summary = "댓글 작성", description = "게시글에 댓글(또는 대댓글)을 작성합니다.")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "작성 성공"),
+            @ApiResponse(responseCode = "404", description = "게시글 또는 부모 댓글 없음 [C001, C003]", content = @Content(schema = @Schema(implementation = ErrorResponse.class)))
+    })
+    @SecurityRequirement(name = "BearerAuthentication")
     @PostMapping("/posts/{postId}/comments")
     public ResponseEntity<Void> createComment(@AuthenticationPrincipal AuthUser authUser,
                                               @PathVariable Long postId,
@@ -97,7 +142,13 @@ public class PostController {
         return ResponseEntity.ok().build();
     }
 
-    @Operation(summary = "댓글 수정", description = "댓글 내용을 수정합니다.")
+    @Operation(summary = "댓글 수정", description = "본인이 작성한 댓글을 수정합니다.")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "수정 성공"),
+            @ApiResponse(responseCode = "403", description = "댓글 작성자만 수정 가능 [C008]", content = @Content(schema = @Schema(implementation = ErrorResponse.class))),
+            @ApiResponse(responseCode = "404", description = "댓글 찾을 수 없음 [C003]", content = @Content(schema = @Schema(implementation = ErrorResponse.class)))
+    })
+    @SecurityRequirement(name = "BearerAuthentication")
     @PatchMapping("/posts/{postId}/comments/{commentId}")
     public ResponseEntity<Void> updateComment(@AuthenticationPrincipal AuthUser authUser,
                                               @PathVariable Long postId,
@@ -107,7 +158,13 @@ public class PostController {
         return ResponseEntity.ok().build();
     }
 
-    @Operation(summary = "댓글 삭제", description = "댓글을 삭제합니다.")
+    @Operation(summary = "댓글 삭제", description = "본인이 작성한 댓글을 삭제합니다.")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "삭제 성공"),
+            @ApiResponse(responseCode = "403", description = "댓글 작성자만 삭제 가능 [C008]", content = @Content(schema = @Schema(implementation = ErrorResponse.class))),
+            @ApiResponse(responseCode = "404", description = "댓글 찾을 수 없음 [C003]", content = @Content(schema = @Schema(implementation = ErrorResponse.class)))
+    })
+    @SecurityRequirement(name = "BearerAuthentication")
     @DeleteMapping("/posts/{postId}/comments/{commentId}")
     public ResponseEntity<Void> deleteComment(@AuthenticationPrincipal AuthUser authUser,
                                               @PathVariable Long postId,
@@ -116,7 +173,13 @@ public class PostController {
         return ResponseEntity.ok().build();
     }
 
-    @Operation(summary = "[Team] 지원하기", description = "팀원 모집 글 작성자에게 1:1 채팅으로 지원 메시지를 보냅니다.")
+    @Operation(summary = "[Team] 지원하기", description = "모집 중인 팀원 모집 게시글 작성자에게 지원 메시지(1:1 채팅)를 보냅니다.")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "지원 메시지 전송 성공"),
+            @ApiResponse(responseCode = "400", description = "모집글이 아니거나 마감됨 [C005, C006]", content = @Content(schema = @Schema(implementation = ErrorResponse.class))),
+            @ApiResponse(responseCode = "500", description = "채팅 서버 오류 [C007]", content = @Content(schema = @Schema(implementation = ErrorResponse.class)))
+    })
+    @SecurityRequirement(name = "BearerAuthentication")
     @PostMapping("/posts/{postId}/recruit/apply")
     public ResponseEntity<Void> applyTeam(@AuthenticationPrincipal AuthUser authUser,
                                           @PathVariable Long postId) {
@@ -124,7 +187,13 @@ public class PostController {
         return ResponseEntity.ok().build();
     }
 
-    @Operation(summary = "모집 상태 변경", description = "팀원 모집 상태를 변경합니다 (OPEN/CLOSED).")
+    @Operation(summary = "[Team] 모집 상태 변경", description = "팀원 모집 상태를 변경합니다 (OPEN <-> CLOSED).")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "상태 변경 성공"),
+            @ApiResponse(responseCode = "400", description = "모집글이 아님 [C005]", content = @Content(schema = @Schema(implementation = ErrorResponse.class))),
+            @ApiResponse(responseCode = "403", description = "작성자만 변경 가능 [C002]", content = @Content(schema = @Schema(implementation = ErrorResponse.class)))
+    })
+    @SecurityRequirement(name = "BearerAuthentication")
     @PatchMapping("/posts/{postId}/status")
     public ResponseEntity<Void> updateRecruitmentStatus(@AuthenticationPrincipal AuthUser authUser,
                                                         @PathVariable Long postId,
@@ -134,6 +203,7 @@ public class PostController {
     }
 
     @Operation(summary = "내가 쓴 게시글 조회", description = "로그인한 사용자가 작성한 게시글 목록을 조회합니다.")
+    @SecurityRequirement(name = "BearerAuthentication")
     @GetMapping("/posts/me")
     public ResponseEntity<Page<PostResponse>> getMyPosts(@AuthenticationPrincipal AuthUser authUser,
                                                          @PageableDefault(sort = "createdAt", direction = Sort.Direction.DESC) Pageable pageable) {
@@ -141,6 +211,7 @@ public class PostController {
     }
 
     @Operation(summary = "내가 북마크한 글 조회", description = "로그인한 사용자가 북마크한 게시글 목록을 조회합니다.")
+    @SecurityRequirement(name = "BearerAuthentication")
     @GetMapping("/posts/me/bookmarks")
     public ResponseEntity<Page<PostResponse>> getMyBookmarkedPosts(@AuthenticationPrincipal AuthUser authUser,
                                                                    @PageableDefault(sort = "createdAt", direction = Sort.Direction.DESC) Pageable pageable) {
@@ -148,10 +219,10 @@ public class PostController {
     }
 
     @Operation(summary = "내가 댓글 단 글 조회", description = "로그인한 사용자가 댓글을 작성한 게시글 목록을 조회합니다.")
+    @SecurityRequirement(name = "BearerAuthentication")
     @GetMapping("/posts/me/commented")
     public ResponseEntity<Page<PostResponse>> getMyCommentedPosts(@AuthenticationPrincipal AuthUser authUser,
                                                                   @PageableDefault(sort = "createdAt", direction = Sort.Direction.DESC) Pageable pageable) {
         return ResponseEntity.ok(postService.getMyCommentedPosts(authUser.getUserId(), pageable));
     }
-
 }
