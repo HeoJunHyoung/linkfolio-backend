@@ -13,7 +13,7 @@ export function communityWriteScenario(baseUrl, testUser) {
     const payload = JSON.stringify({
         title: 'Load Test Post',
         content: 'Testing...',
-        category: 'INFORMATION',
+        category: 'INFO',
         isRecruitment: false
     });
 

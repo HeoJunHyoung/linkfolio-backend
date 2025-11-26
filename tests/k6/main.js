@@ -8,47 +8,49 @@ import { supportScenario } from './scenarios/support.js';
 const BASE_URL = 'http://linkfolio.127.0.0.1.nip.io';
 
 export const options = {
-    setupTimeOut: '300s',
+    // 셋업 단계 타임아웃 (데이터 생성 시간이 길어질 수 있으므로 넉넉히)
+    setupTimeout: '300s',
+
     scenarios: {
-        // 1. 포트폴리오 조회 (비중 40%)
+        // 1. 포트폴리오 조회 (기존 20 -> 5)
         portfolio_read: {
             executor: 'ramping-vus',
             startVUs: 0,
             stages: [
-                { duration: '10s', target: 20 },
-                { duration: '20s', target: 20 },
-                { duration: '10s', target: 0 },
+                { duration: '10s', target: 5 },  // 5명까지 서서히 증가
+                { duration: '20s', target: 5 },  // 5명 유지
+                { duration: '10s', target: 0 },  // 0명으로 감소
             ],
             exec: 'runPortfolio',
         },
-        // 2. 커뮤니티 조회 (비중 30%)
+        // 2. 커뮤니티 조회 (기존 15 -> 5)
         community_read: {
             executor: 'ramping-vus',
             startVUs: 0,
             stages: [
-                { duration: '10s', target: 15 },
-                { duration: '20s', target: 15 },
+                { duration: '10s', target: 5 },
+                { duration: '20s', target: 5 },
                 { duration: '10s', target: 0 },
             ],
             exec: 'runCommunityRead',
         },
-        // 3. 커뮤니티 작성 (비중 20% - 쓰기 부하)
+        // 3. 커뮤니티 작성 (기존 10 -> 2) : 쓰기 작업은 부하가 크므로 더 적게 설정
         community_write: {
             executor: 'constant-vus',
-            vus: 10,
+            vus: 2,
             duration: '40s',
             exec: 'runCommunityWrite',
         },
-        // 4. 고객센터 (비중 10% - 캐시 테스트)
+        // 4. 고객센터 (기존 5 -> 2)
         support_read: {
             executor: 'constant-vus',
-            vus: 5,
+            vus: 2,
             duration: '40s',
             exec: 'runSupport',
         },
     },
     thresholds: {
-        http_req_duration: ['p(95)<500'], // 95% 요청이 500ms 미만
+        http_req_duration: ['p(95)<500'], // 95% 요청이 500ms 미만이어야 함
     },
 };
 
@@ -58,11 +60,9 @@ export function setup() {
     const runnerUser = createTestUser(BASE_URL);
 
     // 2. 배경 데이터 생성 (백도어 풀가동)
-    // - 포트폴리오 50개 생성
-    seedPortfolioData(BASE_URL, 1000);
-    // - 게시글 1000개 생성 (주인공 유저가 작성한 것으로 처리)
-    seedCommunityData(BASE_URL, runnerUser.id, 1000);
-    // - 공지사항/FAQ 생성
+    // 로컬 환경 부하를 고려해 개수를 적절히 조절 (300개는 적당함)
+    seedPortfolioData(BASE_URL, 100);
+    seedCommunityData(BASE_URL, runnerUser.id, 100);
     seedSupportData(BASE_URL);
 
     return runnerUser;

@@ -3,8 +3,8 @@ import { randomString } from 'https://jslib.k6.io/k6-utils/1.2.0/index.js';
 
 // [변경] 병렬 처리(Batch)를 적용한 포트폴리오 데이터 생성 함수
 export function seedPortfolioData(baseUrl, count = 50) {
-    // 한 번에 동시에 보낼 요청 수 (서버 부하를 고려해 50~100 정도가 적당)
-    const BATCH_SIZE = 50;
+    // 한 번에 동시에 보낼 요청 수
+    const BATCH_SIZE = 10;
 
     console.log(`[Seeder] Creating ${count} portfolios using batch processing...`);
 
@@ -59,6 +59,7 @@ export function seedPortfolioData(baseUrl, count = 50) {
         }
 
         console.log(`[Seeder] Progress: ${Math.min(i + BATCH_SIZE, count)}/${count} done.`);
+
     }
 }
 

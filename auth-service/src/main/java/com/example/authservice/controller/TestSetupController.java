@@ -52,8 +52,8 @@ public class TestSetupController {
 
         // 2. CDC 전파 대기 (Sleep)
         // 트랜잭션이 커밋된 직후 Debezium이 이벤트를 가져가 user-service로 전파하기까지 시간이 필요함.
-        // ㄴ k6에서 sleep을 줘도 되지만, 확실한 정합성을 위해 여기서 2초 대기 후 응답.
-        Thread.sleep(2000);
+        // ㄴ k6에서 sleep을 줘도 되지만, 확실한 정합성을 위해 여기서 1.5초 대기 후 응답.
+        Thread.sleep(1500);
 
         log.info("테스트 유저 생성 완료 (Waited 1.5s for CDC). UserId: {}", userId);
         return ResponseEntity.ok(userId);
