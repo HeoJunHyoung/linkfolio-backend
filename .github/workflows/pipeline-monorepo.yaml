@@ -4,6 +4,11 @@ on:
   push:
     branches:
       - dev
+    paths-ignore:
+      - 'tests/**'       # k6 스크립트
+      - 'docs/**'        # 문서 폴더
+      - '**.md'          # 마크다운 파일
+      - '.gitignore'
   workflow_dispatch:
 
 jobs:
