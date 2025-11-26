@@ -8,6 +8,7 @@ import { supportScenario } from './scenarios/support.js';
 const BASE_URL = 'http://linkfolio.127.0.0.1.nip.io';
 
 export const options = {
+    setupTimeOut: '300s',
     scenarios: {
         // 1. 포트폴리오 조회 (비중 40%)
         portfolio_read: {
@@ -58,7 +59,7 @@ export function setup() {
 
     // 2. 배경 데이터 생성 (백도어 풀가동)
     // - 포트폴리오 50개 생성
-    seedPortfolioData(BASE_URL, 50);
+    seedPortfolioData(BASE_URL, 1000);
     // - 게시글 1000개 생성 (주인공 유저가 작성한 것으로 처리)
     seedCommunityData(BASE_URL, runnerUser.id, 1000);
     // - 공지사항/FAQ 생성
