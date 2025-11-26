@@ -102,7 +102,6 @@ app:
       - /auth-service/oauth2/authorization/**
       - /auth-service/login/oauth2/code/**
       - /auth-service/error
-      - /auth-service/auth/test/setup-user
       - /portfolio-service/portfolios
       - /portfolio-service/portfolios/{portfolioId:\d+}
 
@@ -115,6 +114,11 @@ app:
       - /community-service/posts
       - /community-service/posts/**
       - /community-service/v3/api-docs/**
+
+      - /auth-service/auth/test/setup-user
+      - /portfolio-service/portfolio/test/setup
+      - /community-service/community/test/setup
+      - /support-service/support/test/setup
 
 # JWT Token Settings
 jwt:
