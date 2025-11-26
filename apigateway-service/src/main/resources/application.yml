@@ -102,6 +102,7 @@ app:
       - /auth-service/oauth2/authorization/**
       - /auth-service/login/oauth2/code/**
       - /auth-service/error
+      - /auth-service/auth/test/setup-user
       - /portfolio-service/portfolios
       - /portfolio-service/portfolios/{portfolioId:\d+}
 
