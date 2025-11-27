@@ -25,6 +25,9 @@ public class SecurityConfig {
                         // Swagger UI 및 Actuator 허용
                         .requestMatchers("/actuator/**", "/swagger-ui/**", "/v3/api-docs/**", "/swagger-resources/**").permitAll()
 
+                        // 테스트용 백도어 허용
+                        .requestMatchers("/portfolio/test/**").permitAll()
+                        
                         // 인증 필요 API
                         .requestMatchers(HttpMethod.GET, "/me").authenticated()
                         .requestMatchers(HttpMethod.PUT, "/me").authenticated()
