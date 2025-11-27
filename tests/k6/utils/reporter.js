@@ -12,8 +12,8 @@ export function generateSummary(data, reportName) {
     const basePath = `../../../results/${reportName}`;
 
     return {
-        [`${basePath}/before.html`]: htmlReport(data),
-        [`${basePath}/before.json`]: JSON.stringify(data),
+        [`${basePath}/after.html`]: htmlReport(data),
+        [`${basePath}/after.json`]: JSON.stringify(data),
         stdout: textSummary(data, { indent: " ", enableColors: true }),
     };
 }
