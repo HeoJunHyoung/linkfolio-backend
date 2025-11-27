@@ -2,6 +2,7 @@ package com.example.supportservice.controller;
 
 import com.example.commonmodule.exception.ErrorResponse;
 import com.example.supportservice.dto.request.NoticeRequest;
+import com.example.supportservice.dto.response.NoticeListResponse;
 import com.example.supportservice.dto.response.NoticeResponse;
 import com.example.supportservice.service.NoticeService;
 import io.swagger.v3.oas.annotations.Operation;
@@ -37,7 +38,7 @@ public class NoticeController {
             @ApiResponse(responseCode = "500", description = "서버 내부 오류", content = @Content(schema = @Schema(implementation = ErrorResponse.class)))
     })
     @GetMapping("/notices")
-    public ResponseEntity<Page<NoticeResponse>> getNotices(
+    public ResponseEntity<Page<NoticeListResponse>> getNotices(
             @PageableDefault(size = 10, sort = {"isImportant", "createdAt"}, direction = Sort.Direction.DESC) Pageable pageable) {
         return ResponseEntity.ok(noticeService.getNotices(pageable));
     }
