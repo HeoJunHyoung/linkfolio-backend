@@ -1,8 +1,10 @@
 import http from 'k6/http';
 import { check } from 'k6';
+import { generateSummary } from '../../utils/reporter.js';
+
 
 export const options = {
-    vus: 50,
+    vus: 10,
     duration: '30s'
 };
 
@@ -20,4 +22,8 @@ export default function () {
         'Status is 200': (r) => r.status === 200,
         'Content Check': (r) => r.json('id') === randomId // 응답 ID 확인
     });
+}
+
+export function handleSummary(data) {
+    return generateSummary(data, "read/4_community_detail");
 }

@@ -1,6 +1,7 @@
 // 로그인
 import http from 'k6/http';
 import { check } from 'k6';
+import { generateSummary } from '../../utils/reporter.js';
 
 export const options = {
     vus: 10, // 동시 접속 50명
@@ -25,4 +26,8 @@ export default function () {
         'Login Success': (r) => r.status === 200,
         'Token Exists': (r) => r.json('accessToken') !== undefined,
     });
+}
+
+export function handleSummary(data) {
+    return generateSummary(data, "write/1_auth_login");
 }

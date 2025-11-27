@@ -1,6 +1,7 @@
 import http from 'k6/http';
 import { check } from 'k6';
 import { loginAndGetHeader } from '../../utils/auth.js';
+import { generateSummary } from '../../utils/reporter.js';
 
 export const options = {
     vus: 10,
@@ -23,4 +24,8 @@ export default function (headers) {
     const res = http.put(`${BASE_URL}/user-service/users/me`, payload, headers);
 
     check(res, { 'Update Success': (r) => r.status === 200 });
+}
+
+export function handleSummary(data) {
+    return generateSummary(data, "write/5_user_update");
 }

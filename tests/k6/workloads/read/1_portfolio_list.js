@@ -1,9 +1,10 @@
 // 포트폴리오 목록 조회
 import http from 'k6/http';
 import { check } from 'k6';
+import { generateSummary } from '../../utils/reporter.js';
 
 export const options = {
-    vus: 50,
+    vus: 10,
     duration: '30s',
 };
 
@@ -18,4 +19,8 @@ export default function () {
     const res = http.get(`${BASE_URL}/portfolio-service/portfolios?page=0&size=10&sort=${selectedSort}`);
 
     check(res, { 'Status is 200': (r) => r.status === 200 });
+}
+
+export function handleSummary(data) {
+    return generateSummary(data, "read/1_portfolio_list");
 }

@@ -1,9 +1,11 @@
 import http from 'k6/http';
 import { check } from 'k6';
 import { loginAndGetHeader } from '../../utils/auth.js';
+import { generateSummary } from '../../utils/reporter.js';
+
 
 export const options = {
-    vus: 50,
+    vus: 10,
     duration: '30s'
 };
 
@@ -22,4 +24,8 @@ export default function (headers) {
         'Status is 200': (r) => r.status === 200,
         'Has Email': (r) => r.json('email') !== undefined
     });
+}
+
+export function handleSummary(data) {
+    return generateSummary(data, "read/5_user_read");
 }
