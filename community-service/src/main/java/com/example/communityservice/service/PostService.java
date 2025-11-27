@@ -6,9 +6,7 @@ import com.example.communityservice.client.ChatServiceClient;
 import com.example.communityservice.dto.request.CommentRequest;
 import com.example.communityservice.dto.request.PostCreateRequest;
 import com.example.communityservice.dto.request.PostUpdateRequest;
-import com.example.communityservice.dto.response.CommentResponse;
-import com.example.communityservice.dto.response.PostDetailResponse;
-import com.example.communityservice.dto.response.PostResponse;
+import com.example.communityservice.dto.response.*;
 import com.example.communityservice.entity.*;
 import com.example.communityservice.entity.enumerate.PostCategory;
 import com.example.communityservice.entity.enumerate.RecruitmentStatus;
@@ -78,47 +76,24 @@ public class PostService {
     }
 
     public Page<PostResponse> getPosts(PostCategory category, String keyword, Boolean isSolved, Pageable pageable) {
-        Page<PostResponse> postResponses = postRepository.searchPosts(category, keyword, isSolved, pageable);
-        mapWriterInfo(postResponses.getContent());
-        return postResponses;
+        return postRepository.searchPosts(category, keyword, isSolved, pageable);
     }
 
-    // 상세 조회 로직 구현 (댓글 계층 구조, 사용자 정보 매핑, 북마크 여부)
+    // 상세 조회
     @Transactional
     public PostDetailResponse getPostDetail(Long postId, Long currentUserId) {
-        PostEntity post = postRepository.findById(postId)
+        // 1. 게시글 상세 정보 조회 (작성자 정보 + 북마크 여부 포함됨)
+        PostDetailResponse response = postRepository.findPostDetailById(postId, currentUserId)
                 .orElseThrow(() -> new BusinessException(POST_NOT_FOUND));
 
-        post.increaseViewCount();
+        // 2. 조회수 증가 (Entity 조회 없이 Update 쿼리만 실행하여 성능 향상 권장)
+        updateViewCount(postId);
 
-        // 1. 기본 Post 정보 변환
-        PostDetailResponse response = PostDetailResponse.from(post);
+        // 3. 댓글 목록 조회 (작성자 정보 포함됨)
+        List<CommentResponse> comments = postRepository.findCommentsByPostId(postId);
 
-        // 2. 북마크 여부 확인
-        if (currentUserId != null) {
-            boolean isBookmarked = postBookmarkRepository.existsByPostAndUserId(post, currentUserId);
-            response.setBookmarked(isBookmarked);
-        }
-
-        // 3. 댓글 조회 및 계층 구조 조립
-        List<PostCommentEntity> comments = commentRepository.findAllByPostIdOrderByCreatedAtAsc(postId);
-        List<CommentResponse> commentResponses = convertToCommentHierarchy(comments);
-        response.setComments(commentResponses);
-
-        // 4. 게시글 작성자 및 댓글 작성자 정보 일괄 매핑
-        Set<Long> userIds = new HashSet<>();
-        userIds.add(post.getUserId()); // 게시글 작성자
-        comments.forEach(c -> userIds.add(c.getUserId())); // 댓글 작성자들
-
-        Map<Long, PostUserProfileEntity> userMap = userProfileRepository.findAllById(userIds).stream()
-                .collect(Collectors.toMap(PostUserProfileEntity::getUserId, u -> u));
-
-        // 게시글 작성자 정보 세팅
-        setWriterInfo(response, userMap.get(post.getUserId()));
-
-        // 댓글 작성자 정보 세팅 (재귀적으로 처리하지 않고, Flat한 리스트에서 처리 후 조립했으므로 참조를 통해 반영됨)
-        // 위 convertToCommentHierarchy 내부에서 DTO를 만들었으므로, 여기서 순회하며 값을 채워줍니다.
-        updateCommentWriterInfo(response.getComments(), userMap);
+        // 4. 댓글 계층 구조 조립 (메모리 연산)
+        response.setComments(convertToCommentHierarchy(comments));
 
         return response;
     }
@@ -178,78 +153,6 @@ public class PostService {
 
         // 자식 댓글이 있는 경우 Cascade 설정에 따라 함께 삭제됨
         commentRepository.delete(comment);
-    }
-
-    // 댓글 계층 구조 변환 (Parent-Child)
-    private List<CommentResponse> convertToCommentHierarchy(List<PostCommentEntity> entities) {
-        Map<Long, CommentResponse> map = new HashMap<>();
-        List<CommentResponse> roots = new ArrayList<>();
-
-        // 1. DTO 변환 및 Map 저장
-        for (PostCommentEntity entity : entities) {
-            CommentResponse dto = CommentResponse.from(entity);
-            map.put(entity.getId(), dto);
-        }
-
-        // 2. 계층 구조 조립
-        for (PostCommentEntity entity : entities) {
-            CommentResponse currentDto = map.get(entity.getId());
-            if (entity.getParent() != null) {
-                CommentResponse parentDto = map.get(entity.getParent().getId());
-                if (parentDto != null) { // 부모가 존재하면 자식 리스트에 추가
-                    parentDto.getChildren().add(currentDto);
-                }
-            } else {
-                // 부모가 없으면 최상위 댓글
-                roots.add(currentDto);
-            }
-        }
-        return roots;
-    }
-
-    // 댓글 리스트(대댓글 포함)에 작성자 정보 매핑
-    private void updateCommentWriterInfo(List<CommentResponse> comments, Map<Long, PostUserProfileEntity> userMap) {
-        for (CommentResponse comment : comments) {
-            PostUserProfileEntity user = userMap.get(comment.getUserId());
-            if (user != null) {
-                comment.setWriterName(user.getName());
-                comment.setWriterEmail(user.getEmail());
-            } else {
-                comment.setWriterName("알 수 없음");
-            }
-
-            // 대댓글에 대해서도 재귀 호출
-            if (comment.getChildren() != null && !comment.getChildren().isEmpty()) {
-                updateCommentWriterInfo(comment.getChildren(), userMap);
-            }
-        }
-    }
-
-    // 게시글 작성자 정보 세팅 헬퍼
-    private void setWriterInfo(PostDetailResponse response, PostUserProfileEntity user) {
-        if (user != null) {
-            response.setWriterName(user.getName());
-            response.setWriterEmail(user.getEmail());
-        } else {
-            response.setWriterName("알 수 없음");
-        }
-    }
-
-    // 목록 조회용 작성자 정보 매핑
-    private void mapWriterInfo(List<PostResponse> posts) {
-        Set<Long> userIds = posts.stream().map(PostResponse::getUserId).collect(Collectors.toSet());
-        Map<Long, PostUserProfileEntity> userMap = userProfileRepository.findAllById(userIds).stream()
-                .collect(Collectors.toMap(PostUserProfileEntity::getUserId, u -> u));
-
-        posts.forEach(post -> {
-            PostUserProfileEntity user = userMap.get(post.getUserId());
-            if (user != null) {
-                post.setWriterName(user.getName());
-                post.setWriterEmail(user.getEmail());
-            } else {
-                post.setWriterName("알 수 없음");
-            }
-        });
     }
 
     @Transactional
@@ -323,27 +226,46 @@ public class PostService {
         );
     }
 
-
-
-    public Page<PostResponse> getMyPosts(Long userId, Pageable pageable) {
-        Page<PostEntity> posts = postRepository.findAllByUserId(userId, pageable);
-        List<PostResponse> responses = posts.stream().map(PostResponse::from).collect(Collectors.toList());
-        mapWriterInfo(responses); // 작성자 정보 매핑 (본인이지만 통일성을 위해 호출)
-        return new PageImpl<>(responses, pageable, posts.getTotalElements());
+    public Page<MyPostResponse> getMyPosts(Long userId, PostCategory category, Pageable pageable) {
+        return postRepository.findMyPosts(userId, category, pageable);
     }
 
-    public Page<PostResponse> getMyBookmarkedPosts(Long userId, Pageable pageable) {
-        Page<PostEntity> posts = postRepository.findBookmarkedPosts(userId, pageable);
-        List<PostResponse> responses = posts.stream().map(PostResponse::from).collect(Collectors.toList());
-        mapWriterInfo(responses);
-        return new PageImpl<>(responses, pageable, posts.getTotalElements());
+    // 내가 북마크한 글 조회 (원 글 작성자 이름 매핑 추가)
+    public Page<MyBookmarkPostResponse> getMyBookmarkedPosts(Long userId, PostCategory category, Pageable pageable) {
+        return postRepository.findMyBookmarkedPosts(userId, category, pageable);
     }
 
-    public Page<PostResponse> getMyCommentedPosts(Long userId, Pageable pageable) {
-        Page<PostEntity> posts = postRepository.findCommentedPosts(userId, pageable);
-        List<PostResponse> responses = posts.stream().map(PostResponse::from).collect(Collectors.toList());
-        mapWriterInfo(responses);
-        return new PageImpl<>(responses, pageable, posts.getTotalElements());
+    // ==========================================
+    // Private Helpers
+    // ==========================================
+
+    // 댓글 계층 구조 변환 (DTO 기반으로 동작)
+    private List<CommentResponse> convertToCommentHierarchy(List<CommentResponse> comments) {
+        Map<Long, CommentResponse> map = new HashMap<>();
+        List<CommentResponse> roots = new ArrayList<>();
+
+        // 매핑
+        for (CommentResponse dto : comments) {
+            map.put(dto.getId(), dto);
+        }
+
+        // 조립
+        for (CommentResponse dto : comments) {
+            if (dto.getParentId() != null) {
+                CommentResponse parent = map.get(dto.getParentId());
+                if (parent != null) {
+                    parent.getChildren().add(dto);
+                }
+            } else {
+                roots.add(dto);
+            }
+        }
+        return roots;
+    }
+
+    // 조회수 증가용 별도 메서드
+    private void updateViewCount(Long postId) {
+        postRepository.findById(postId).ifPresent(PostEntity::increaseViewCount);
     }
 
 }

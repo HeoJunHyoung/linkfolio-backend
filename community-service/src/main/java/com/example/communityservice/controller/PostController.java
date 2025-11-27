@@ -6,6 +6,8 @@ import com.example.communityservice.dto.request.CommentRequest;
 import com.example.communityservice.dto.request.PostCreateRequest;
 import com.example.communityservice.dto.request.PostUpdateRequest;
 import com.example.communityservice.dto.request.RecruitmentStatusRequest;
+import com.example.communityservice.dto.response.MyBookmarkPostResponse;
+import com.example.communityservice.dto.response.MyPostResponse;
 import com.example.communityservice.dto.response.PostDetailResponse;
 import com.example.communityservice.dto.response.PostResponse;
 import com.example.communityservice.entity.enumerate.PostCategory;
@@ -202,27 +204,24 @@ public class PostController {
         return ResponseEntity.ok().build();
     }
 
-    @Operation(summary = "내가 쓴 게시글 조회", description = "로그인한 사용자가 작성한 게시글 목록을 조회합니다.")
+    @Operation(summary = "내가 쓴 게시글 조회", description = "로그인한 사용자가 작성한 게시글 목록을 조회합니다. (카테고리 필터링 가능)")
     @SecurityRequirement(name = "BearerAuthentication")
     @GetMapping("/posts/me")
-    public ResponseEntity<Page<PostResponse>> getMyPosts(@AuthenticationPrincipal AuthUser authUser,
-                                                         @PageableDefault(sort = "createdAt", direction = Sort.Direction.DESC) Pageable pageable) {
-        return ResponseEntity.ok(postService.getMyPosts(authUser.getUserId(), pageable));
+    public ResponseEntity<Page<MyPostResponse>> getMyPosts(
+            @AuthenticationPrincipal AuthUser authUser,
+            @Parameter(description = "카테고리 (QNA, INFO, RECRUIT), 미입력 시 전체") @RequestParam(required = false) PostCategory category,
+            @PageableDefault(sort = "createdAt", direction = Sort.Direction.DESC) Pageable pageable) {
+        return ResponseEntity.ok(postService.getMyPosts(authUser.getUserId(), category, pageable));
     }
 
-    @Operation(summary = "내가 북마크한 글 조회", description = "로그인한 사용자가 북마크한 게시글 목록을 조회합니다.")
+    @Operation(summary = "내가 북마크한 글 조회", description = "로그인한 사용자가 북마크한 게시글 목록을 조회합니다. (카테고리 필터링 가능)")
     @SecurityRequirement(name = "BearerAuthentication")
     @GetMapping("/posts/me/bookmarks")
-    public ResponseEntity<Page<PostResponse>> getMyBookmarkedPosts(@AuthenticationPrincipal AuthUser authUser,
-                                                                   @PageableDefault(sort = "createdAt", direction = Sort.Direction.DESC) Pageable pageable) {
-        return ResponseEntity.ok(postService.getMyBookmarkedPosts(authUser.getUserId(), pageable));
+    public ResponseEntity<Page<MyBookmarkPostResponse>> getMyBookmarkedPosts(
+            @AuthenticationPrincipal AuthUser authUser,
+            @Parameter(description = "카테고리 (QNA, INFO, RECRUIT), 미입력 시 전체") @RequestParam(required = false) PostCategory category,
+            @PageableDefault(sort = "createdAt", direction = Sort.Direction.DESC) Pageable pageable) {
+        return ResponseEntity.ok(postService.getMyBookmarkedPosts(authUser.getUserId(), category, pageable));
     }
 
-    @Operation(summary = "내가 댓글 단 글 조회", description = "로그인한 사용자가 댓글을 작성한 게시글 목록을 조회합니다.")
-    @SecurityRequirement(name = "BearerAuthentication")
-    @GetMapping("/posts/me/commented")
-    public ResponseEntity<Page<PostResponse>> getMyCommentedPosts(@AuthenticationPrincipal AuthUser authUser,
-                                                                  @PageableDefault(sort = "createdAt", direction = Sort.Direction.DESC) Pageable pageable) {
-        return ResponseEntity.ok(postService.getMyCommentedPosts(authUser.getUserId(), pageable));
-    }
 }
