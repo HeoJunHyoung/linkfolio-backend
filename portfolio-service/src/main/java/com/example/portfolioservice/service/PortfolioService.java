@@ -15,6 +15,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Slice;
 import org.springframework.data.redis.core.RedisTemplate;
+import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -29,7 +30,9 @@ public class PortfolioService {
     private final PortfolioRepository portfolioRepository;
     private final PortfolioMapper portfolioMapper;
     private final PortfolioLikeRepository portfolioLikeRepository;
-    private final RedisTemplate<String, Object> redisTemplate;
+    private final StringRedisTemplate redisTemplate;
+
+    private static final String REDIS_VIEW_KEY = "portfolio:views";
 
     /**
      * 내 포트폴리오 조회 (마이페이지)
@@ -97,20 +100,18 @@ public class PortfolioService {
         }
 
         // 1. Redis 카운트 증가
-        String viewKey = "portfolio:view:" + portfolioId;
-        redisTemplate.opsForValue().increment(viewKey);
+        redisTemplate.opsForHash().increment(REDIS_VIEW_KEY, String.valueOf(portfolioId), 1L);
 
         // 2. 실시간 조회수 계산 (DB 값 + Redis 값)
-        Object cachedValue = redisTemplate.opsForValue().get(viewKey);
-        long cachedCount = (cachedValue != null) ? Long.parseLong(String.valueOf(cachedValue)) : 0L;
+        String cachedValue = (String) redisTemplate.opsForHash().get(REDIS_VIEW_KEY, String.valueOf(portfolioId));
+        long cachedCount = (cachedValue != null) ? Long.parseLong(cachedValue) : 0L;
 
         long realTimeViewCount = portfolio.getViewCount() + cachedCount;
 
 
         boolean isLiked = false;
         if (authUser != null) {
-            // 로그인한 상태라면, Like 테이블을 조회하여 관심 여부 확인
-            isLiked = portfolioLikeRepository.existsByLikerIdAndPortfolio(authUser.getUserId(), portfolio);
+            isLiked = portfolioLikeRepository.existsByLikerIdAndPortfolio(authUser.getUserId(), portfolio); // 로그인한 상태라면, Like 테이블을 조회하여 관심 여부 확인
         }
 
         List<String> hashtags = portfolioMapper.stringToHashtagList(portfolio.getHashtags());
