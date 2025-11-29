@@ -20,8 +20,8 @@ public class PostDetailResponse {
     private PostCategory category;
     private String title;
     private String content;
-    private int viewCount;
-    private int bookmarkCount;
+    private Long viewCount;
+    private Long bookmarkCount;
     private boolean isSolved;
     private boolean isBookmarked; // 로그인 유저의 북마크 여부
     private LocalDateTime createdAt;

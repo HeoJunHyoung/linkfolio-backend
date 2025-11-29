@@ -12,7 +12,9 @@ import java.util.ArrayList;
 import java.util.List;
 
 @Entity
-@Table(name = "community_comment")
+@Table(name = "community_comment", indexes = {
+        @Index(name = "idx_comment_post", columnList = "post_id, created_at ASC") // 게시글별 댓글 목록 조회
+})
 @Getter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 public class PostCommentEntity extends BaseEntity {

@@ -14,7 +14,11 @@ import java.util.ArrayList;
 import java.util.List;
 
 @Entity
-@Table(name = "community_post")
+@Table(name = "community_post", indexes = {
+        @Index(name = "idx_post_category_view", columnList = "category, view_count DESC"), // 1. 카테고리별 조회수 정렬 (인기글)
+        @Index(name = "idx_post_category_date", columnList = "category, created_at DESC"), // 2. 카테고리별 최신순 정렬 (목록)
+        @Index(name = "idx_post_user_id", columnList = "user_id") // 3. 내가 쓴 글 조회
+})
 @Getter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 public class PostEntity extends BaseEntity {
@@ -45,6 +49,10 @@ public class PostEntity extends BaseEntity {
     private Long bookmarkCount = 0L;
 
     @Column(nullable = false)
+    @ColumnDefault("0")
+    private Long commentCount = 0L;
+
+    @Column(nullable = false)
     @ColumnDefault("false")
     private boolean isSolved = false; // QNA 전용
 
@@ -71,20 +79,32 @@ public class PostEntity extends BaseEntity {
         this.content = content;
     }
 
-    public void increaseViewCount() {
-        this.viewCount++;
+    // === 통계 데이터 증감 메서드 ===
+
+    // 조회수 증가 (스케줄러가 사용)
+    public void increaseViewCount(Long count) {
+        this.viewCount += count;
     }
 
-    // 북마크 증가
+    // 댓글 수 관리
+    public void increaseCommentCount() {
+        this.commentCount++;
+    }
+
+    public void decreaseCommentCount() {
+        this.commentCount = Math.max(0, this.commentCount - 1);
+    }
+
+    // 북마크 수 관리
     public void increaseBookmarkCount() {
         this.bookmarkCount++;
     }
 
-    // 북마크 감소
     public void decreaseBookmarkCount() {
         this.bookmarkCount = Math.max(0, this.bookmarkCount - 1);
     }
 
+    // 상태 변경 메서드
     public void markAsSolved() {
         if (this.category == PostCategory.QNA) {
             this.isSolved = true;
@@ -96,5 +116,4 @@ public class PostEntity extends BaseEntity {
             this.recruitmentStatus = status;
         }
     }
-
 }

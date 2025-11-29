@@ -7,9 +7,13 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 
 @Entity
-@Table(name = "post_bookmark", uniqueConstraints = {
-        @UniqueConstraint(name = "uk_post_user_bookmark", columnNames = {"post_id", "user_id"})
-})
+@Table(name = "post_bookmark",
+        uniqueConstraints = {
+                @UniqueConstraint(name = "uk_post_user_bookmark", columnNames = {"post_id", "user_id"})
+        }, indexes = {
+                @Index(name = "idx_bookmark_user_date", columnList = "user_id, created_at DESC") // 내 북마크 목록 조회용 (userId로 조회 + 최신순 정렬)
+        }
+)
 @Getter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 public class PostBookmarkEntity extends BaseEntity {
