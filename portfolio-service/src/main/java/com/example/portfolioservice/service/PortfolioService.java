@@ -41,7 +41,7 @@ public class PortfolioService {
                 });
 
         // 2. DTO로 변환하여 반환
-        return portfolioMapper.toPortfolioResponse(portfolio);
+        return portfolioMapper.toPortfolioResponse(portfolio, false);
     }
 
     /**
@@ -69,7 +69,7 @@ public class PortfolioService {
         // 3. DB 저장 (Update) (2차 저장)
         PortfolioEntity updatedPortfolio = portfolioRepository.save(portfolio);
 
-        return portfolioMapper.toPortfolioResponse(updatedPortfolio);
+        return portfolioMapper.toPortfolioResponse(updatedPortfolio, false);
     }
 
     /**

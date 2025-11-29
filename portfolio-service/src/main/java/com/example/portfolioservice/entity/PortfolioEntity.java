@@ -9,11 +9,15 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import org.hibernate.annotations.ColumnDefault;
 
+import java.time.LocalDateTime;
+import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
 import java.util.List;
 
 @Entity
-@Table(name = "`portfolio`")
+@Table(name = "`portfolio`", indexes = {
+        @Index(name = "idx_portfolio_popularity", columnList = "is_published, popularity_score")
+})
 @Getter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 public class PortfolioEntity extends BaseEntity {
@@ -68,9 +72,11 @@ public class PortfolioEntity extends BaseEntity {
 
     @Column(name = "like_count", nullable = false)
     @ColumnDefault("0")
-    private Long likeCount = 0L;
+    private Long likeCount = 0L; // 북마크 수
 
-
+    @Column(name = "popularity_score")
+    @ColumnDefault("0")
+    private Long popularityScore = 0L;
 
     // == 생성자 == //
     @Builder
@@ -101,16 +107,18 @@ public class PortfolioEntity extends BaseEntity {
     // --- 내부 헬퍼 메서드 --- //
     public void increaseViewCount() {
         this.viewCount++;
+        calculatePopularityScore();
     }
 
     public void increaseLikeCount() {
         this.likeCount++;
+        calculatePopularityScore();
     }
 
     public void decreaseLikeCount() {
         this.likeCount = Math.max(0, this.likeCount - 1);
+        calculatePopularityScore();
     }
-
 
     // 사용자가 입력한 포트폴리오 정보 갱신
     public void updateUserInput(String photoUrl, String oneLiner, String content, String position, List<String> hashtags) {
@@ -130,6 +138,26 @@ public class PortfolioEntity extends BaseEntity {
         if (!this.isPublished) {
             this.isPublished = true;
         }
+        calculatePopularityScore();
+    }
+
+    // 점수 계산 로직
+    // ㄴ Hacker News 알고리즘의 변형(시간이 지날수록 분모가 커져서 점수가 낮아지도록) -> Score = (Points) / (Time + 2)^1.5
+    private void calculatePopularityScore() {
+
+        long points = (this.viewCount * 1) + (this.likeCount * 50);
+
+        // 2. 시간 경과 계산 (생성일로부터 현재까지의 시간 '시' 단위)
+        LocalDateTime timeBase = (this.getLastModifiedAt() != null) ? this.getLastModifiedAt() : LocalDateTime.now();
+
+        // 시간 차이가 음수가 나오지 않도록 방어 로직 (서버 시간차 등 대비)
+        long hoursDiff = Math.max(0, ChronoUnit.HOURS.between(timeBase, LocalDateTime.now()));
+
+        // 3. Time Decay 적용 (오래될수록 점수 하락)
+        double timeFactor = Math.pow(hoursDiff + 2, 1.5);
+
+        // 4. 최종 점수 계산
+        this.popularityScore = (long) ((points * 1000) / timeFactor);
     }
 
 

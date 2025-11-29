@@ -7,7 +7,6 @@ import com.querydsl.core.types.Order;
 import com.querydsl.core.types.OrderSpecifier;
 import com.querydsl.core.types.Projections;
 import com.querydsl.core.types.dsl.BooleanExpression;
-import com.querydsl.core.types.dsl.PathBuilder;
 import com.querydsl.jpa.impl.JPAQuery;
 import com.querydsl.jpa.impl.JPAQueryFactory;
 import lombok.RequiredArgsConstructor;
@@ -82,13 +81,10 @@ public class PortfolioRepositoryImpl implements PortfolioRepositoryCustom {
      */
     private void applySorting(JPAQuery<?> query, Sort sort) {
         if (sort.isUnsorted()) {
-            // 정렬 조건이 없으면 기본값 (최신순)
-            query.orderBy(portfolio.createdAt.desc());
+            // 정렬 조건이 없으면 기본값 (최신 수정순)
+            query.orderBy(portfolio.lastModifiedAt.desc());
             return;
         }
-
-        // PathBuilder를 사용하여 문자열 기반의 정렬 속성을 Q-Type 경로로 변환
-        PathBuilder<PortfolioEntity> entityPath = new PathBuilder<>(PortfolioEntity.class, "portfolioEntity");
 
         for (Sort.Order order : sort) {
             Order direction = order.isAscending() ? Order.ASC : Order.DESC;
@@ -98,23 +94,16 @@ public class PortfolioRepositoryImpl implements PortfolioRepositoryCustom {
 
             // 정렬 가능한 속성을 화이트리스트 방식으로 제한
             switch (property) {
-                case "createdAt":
-                    orderSpecifier = new OrderSpecifier<>(direction, portfolio.createdAt);
+                case "popularityScore": // 인기순
+                    orderSpecifier = new OrderSpecifier<>(direction, portfolio.popularityScore);
                     break;
-                case "likeCount":
-                    orderSpecifier = new OrderSpecifier<>(direction, portfolio.likeCount);
-                    break;
-                case "viewCount":
-                    orderSpecifier = new OrderSpecifier<>(direction, portfolio.viewCount);
-                    break;
-                // '수정일순'을 이전에 추가했다면 여기 포함
-                case "lastModifiedAt":
+                case "lastModifiedAt": // 최신순 (수정일 기준)
                     orderSpecifier = new OrderSpecifier<>(direction, portfolio.lastModifiedAt);
                     break;
                 default:
-                    // 허용되지 않은 정렬 속성이면 경고 로그만 남기고 무시 (기본값 최신순 적용)
-                    log.warn("Warning: Invalid sort property provided: {}. Defaulting to createdAt.", property);
-                    orderSpecifier = new OrderSpecifier<>(Order.DESC, portfolio.createdAt);
+                    // 허용되지 않은 정렬 속성이면 경고 로그만 남기고 무시 (기본값 최신 수정순 적용)
+                    log.warn("Warning: Invalid sort property provided: {}. Defaulting to lastModifiedAt.", property);
+                    orderSpecifier = new OrderSpecifier<>(Order.DESC, portfolio.lastModifiedAt);
             }
             query.orderBy(orderSpecifier);
         }
