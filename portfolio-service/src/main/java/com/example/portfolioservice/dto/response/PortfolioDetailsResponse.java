@@ -1,14 +1,15 @@
 package com.example.portfolioservice.dto.response;
 
 import com.example.commonmodule.entity.enumerate.Gender;
-import lombok.Builder;
-import lombok.Data;
+import lombok.*;
 
 import java.time.LocalDateTime;
 import java.util.List;
 
 @Data
 @Builder
+@NoArgsConstructor
+@AllArgsConstructor
 public class PortfolioDetailsResponse {
     // 고정 정보 (캐시)
     private Long userId;
