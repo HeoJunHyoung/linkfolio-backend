@@ -63,7 +63,7 @@ public class PortfolioController {
         return ResponseEntity.ok(response);
     }
 
-    @Operation(summary = "포트폴리오 관심 추가", description = "특정 포트폴리오에 관심을 추가합니다.")
+    @Operation(summary = "포트폴리오 북마크 추가", description = "특정 포트폴리오를 북마크로 추가합니다.")
     @SecurityRequirement(name = "BearerAuthentication")
     @PostMapping("/portfolios/{portfolioId}/like")
     public ResponseEntity<Void> addLikeApi(@AuthenticationPrincipal AuthUser authUser,
@@ -72,7 +72,7 @@ public class PortfolioController {
         return ResponseEntity.status(HttpStatus.CREATED).build();
     }
 
-    @Operation(summary = "포트폴리오 관심 취소", description = "특정 포트폴리오에 대한 관심을 취소합니다.")
+    @Operation(summary = "포트폴리오 북마크 취소", description = "특정 포트폴리오에 대한 북마크를 취소합니다.")
     @SecurityRequirement(name = "BearerAuthentication")
     @DeleteMapping("/portfolios/{portfolioId}/like")
     public ResponseEntity<Void> removeLikeApi(@AuthenticationPrincipal AuthUser authUser,

@@ -16,7 +16,12 @@ import java.util.List;
 
 @Entity
 @Table(name = "`portfolio`", indexes = {
-        @Index(name = "idx_portfolio_popularity", columnList = "is_published, popularity_score")
+        // 인기순 정렬 (필터링 X)
+        @Index(name = "idx_portfolio_popularity", columnList = "is_published, popularity_score DESC"),
+        // 최신순(수정순) 정렬 (필터링 X)
+        @Index(name = "idx_portfolio_publish_date", columnList = "is_published, last_modified_at DESC"),
+        // 직군별 필터링 + 최신 수정순 정렬 (커버링 인덱스 효과)
+        @Index(name = "idx_portfolio_position_publish_date", columnList = "is_published, position, last_modified_at DESC")
 })
 @Getter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
@@ -105,19 +110,18 @@ public class PortfolioEntity extends BaseEntity {
     }
 
     // --- 내부 헬퍼 메서드 --- //
-    public void increaseViewCount() {
-        this.viewCount++;
-        calculatePopularityScore();
+
+    // 스케줄러가 조회수 반영할 때 사용
+    public void increaseViewCount(Long count) {
+        this.viewCount += count;
     }
 
     public void increaseLikeCount() {
         this.likeCount++;
-        calculatePopularityScore();
     }
 
     public void decreaseLikeCount() {
         this.likeCount = Math.max(0, this.likeCount - 1);
-        calculatePopularityScore();
     }
 
     // 사용자가 입력한 포트폴리오 정보 갱신
@@ -138,27 +142,19 @@ public class PortfolioEntity extends BaseEntity {
         if (!this.isPublished) {
             this.isPublished = true;
         }
-        calculatePopularityScore();
+        calculateAndSetPopularityScore();
     }
 
     // 점수 계산 로직
     // ㄴ Hacker News 알고리즘의 변형(시간이 지날수록 분모가 커져서 점수가 낮아지도록) -> Score = (Points) / (Time + 2)^1.5
-    private void calculatePopularityScore() {
-
+    public void calculateAndSetPopularityScore() {
         long points = (this.viewCount * 1) + (this.likeCount * 50);
 
-        // 2. 시간 경과 계산 (생성일로부터 현재까지의 시간 '시' 단위)
         LocalDateTime timeBase = (this.getLastModifiedAt() != null) ? this.getLastModifiedAt() : LocalDateTime.now();
-
-        // 시간 차이가 음수가 나오지 않도록 방어 로직 (서버 시간차 등 대비)
         long hoursDiff = Math.max(0, ChronoUnit.HOURS.between(timeBase, LocalDateTime.now()));
-
-        // 3. Time Decay 적용 (오래될수록 점수 하락)
         double timeFactor = Math.pow(hoursDiff + 2, 1.5);
 
-        // 4. 최종 점수 계산
         this.popularityScore = (long) ((points * 1000) / timeFactor);
     }
-
 
 }

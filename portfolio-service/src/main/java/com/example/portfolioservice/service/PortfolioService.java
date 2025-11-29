@@ -14,6 +14,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Slice;
+import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -28,6 +29,7 @@ public class PortfolioService {
     private final PortfolioRepository portfolioRepository;
     private final PortfolioMapper portfolioMapper;
     private final PortfolioLikeRepository portfolioLikeRepository;
+    private final RedisTemplate<String, Object> redisTemplate;
 
     /**
      * 내 포트폴리오 조회 (마이페이지)
@@ -94,7 +96,16 @@ public class PortfolioService {
             throw new BusinessException(ErrorCode.PORTFOLIO_NOT_FOUND);
         }
 
-        portfolio.increaseViewCount();
+        // 1. Redis 카운트 증가
+        String viewKey = "portfolio:view:" + portfolioId;
+        redisTemplate.opsForValue().increment(viewKey);
+
+        // 2. 실시간 조회수 계산 (DB 값 + Redis 값)
+        Object cachedValue = redisTemplate.opsForValue().get(viewKey);
+        long cachedCount = (cachedValue != null) ? Long.parseLong(String.valueOf(cachedValue)) : 0L;
+
+        long realTimeViewCount = portfolio.getViewCount() + cachedCount;
+
 
         boolean isLiked = false;
         if (authUser != null) {
@@ -116,7 +127,7 @@ public class PortfolioService {
                 .hashtags(hashtags)
                 .isPublished(portfolio.isPublished())
                 .isLiked(isLiked)
-                .viewCount(portfolio.getViewCount())
+                .viewCount(realTimeViewCount)
                 .likeCount(portfolio.getLikeCount())
                 .createdAt(portfolio.getCreatedAt())
                 .lastModifiedAt(portfolio.getLastModifiedAt())
