@@ -39,7 +39,7 @@ public class PostRepositoryImpl implements PostRepositoryCustom {
                         post.userId,
                         post.category,
                         post.title,
-                        Expressions.stringTemplate("SUBSTRING({0}, 1, 80)", post.content).as("content"),
+                        post.content,
                         post.viewCount,
                         post.bookmarkCount,
                         post.isSolved,
@@ -164,7 +164,7 @@ public class PostRepositoryImpl implements PostRepositoryCustom {
                 .select(Projections.fields(MyBookmarkPostResponse.class,
                         post.id,
                         post.title,
-                        Expressions.stringTemplate("SUBSTRING({0}, 1, 80)", post.content).as("content"),
+                        post.content,
                         post.category,
                         post.createdAt,
                         userProfile.name.as("writerName") // 유저 테이블과 조인하여 이름 바로 매핑

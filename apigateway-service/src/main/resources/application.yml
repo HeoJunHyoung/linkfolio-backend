@@ -74,6 +74,9 @@ spring:
               uri: http://community-service:80
               predicates:
                 - Path=/community-service/**
+          httpclient:
+            connect-timeout: 10000
+            response-timeout: 30s
 
 app:
   gateway:

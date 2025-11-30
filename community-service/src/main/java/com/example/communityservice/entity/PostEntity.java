@@ -36,8 +36,7 @@ public class PostEntity extends BaseEntity {
     @Column(nullable = false)
     private String title;
 
-    @Lob
-    @Column(nullable = false, columnDefinition = "LONGTEXT")
+    @Column(nullable = false, columnDefinition = "MEDIUMTEXT")
     private String content;
 
     @Column(nullable = false)
