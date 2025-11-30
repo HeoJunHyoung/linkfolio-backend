@@ -29,4 +29,20 @@ public class CommentResponse {
 
     @Builder.Default
     private List<CommentResponse> children = new ArrayList<>();
+
+    // QueryDSL Projections.constructor 사용을 위한 생성자 (children 제외)
+    public CommentResponse(Long id, Long postId, Long userId, String writerName, String writerEmail,
+                           String content, boolean isAccepted, Long parentId,
+                           LocalDateTime createdAt, LocalDateTime lastModifiedAt) {
+        this.id = id;
+        this.postId = postId;
+        this.userId = userId;
+        this.writerName = writerName;
+        this.writerEmail = writerEmail;
+        this.content = content;
+        this.isAccepted = isAccepted;
+        this.parentId = parentId;
+        this.createdAt = createdAt;
+        this.lastModifiedAt = lastModifiedAt;
+    }
 }

@@ -12,7 +12,6 @@ import java.time.LocalDateTime;
 @Data
 @Builder
 @NoArgsConstructor
-@AllArgsConstructor
 public class MyBookmarkPostResponse {
     private Long id;
     private String title;
@@ -20,6 +19,16 @@ public class MyBookmarkPostResponse {
     private PostCategory category;
     private LocalDateTime createdAt;
     private String writerName; // 원 글 작성자 이름
+
+    // QueryDSL Projections.constructor 사용을 위한 생성자
+    public MyBookmarkPostResponse(Long id, String title, String content, PostCategory category, LocalDateTime createdAt, String writerName) {
+        this.id = id;
+        this.title = title;
+        this.content = content;
+        this.category = category;
+        this.createdAt = createdAt;
+        this.writerName = writerName;
+    }
 
     public static MyBookmarkPostResponse from(PostEntity entity) {
         return MyBookmarkPostResponse.builder()
@@ -30,5 +39,4 @@ public class MyBookmarkPostResponse {
                 .createdAt(entity.getCreatedAt())
                 .build();
     }
-
 }

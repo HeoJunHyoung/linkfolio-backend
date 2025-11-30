@@ -3,20 +3,21 @@ package com.example.communityservice.dto.response;
 import com.example.communityservice.entity.PostEntity;
 import com.example.communityservice.entity.enumerate.PostCategory;
 import com.example.communityservice.entity.enumerate.RecruitmentStatus;
+import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
+import lombok.NoArgsConstructor;
 
 import java.time.LocalDateTime;
-import java.util.List;
-import java.util.stream.Collectors;
 
 @Data
 @Builder
+@NoArgsConstructor
 public class PostResponse {
     private Long id;
     private Long userId;
 
-    // 작성자 정보 (Service에서 채움)
+    // 작성자 정보
     private String writerName;
     private String writerEmail;
 
@@ -29,6 +30,26 @@ public class PostResponse {
     private RecruitmentStatus recruitmentStatus;
     private LocalDateTime createdAt;
     private LocalDateTime lastModifiedAt;
+
+    // QueryDSL Projections.constructor 사용을 위한 생성자
+    public PostResponse(Long id, Long userId, String writerName, String writerEmail,
+                        PostCategory category, String title, String content,
+                        Long viewCount, Long bookmarkCount, Boolean isSolved,
+                        RecruitmentStatus recruitmentStatus, LocalDateTime createdAt, LocalDateTime lastModifiedAt) {
+        this.id = id;
+        this.userId = userId;
+        this.writerName = writerName;
+        this.writerEmail = writerEmail;
+        this.category = category;
+        this.title = title;
+        this.content = content;
+        this.viewCount = viewCount;
+        this.bookmarkCount = bookmarkCount;
+        this.isSolved = isSolved;
+        this.recruitmentStatus = recruitmentStatus;
+        this.createdAt = createdAt;
+        this.lastModifiedAt = lastModifiedAt;
+    }
 
     public static PostResponse from(PostEntity entity) {
         return PostResponse.builder()
@@ -45,5 +66,4 @@ public class PostResponse {
                 .lastModifiedAt(entity.getLastModifiedAt())
                 .build();
     }
-
 }

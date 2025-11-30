@@ -29,4 +29,24 @@ public class PostDetailResponse {
 
     @Builder.Default
     private List<CommentResponse> comments = new ArrayList<>();
+
+    // QueryDSL Projections.constructor 사용을 위한 생성자 (comments 제외)
+    public PostDetailResponse(Long id, Long userId, String writerName, String writerEmail,
+                              PostCategory category, String title, String content,
+                              Long viewCount, Long bookmarkCount, boolean isSolved,
+                              boolean isBookmarked, LocalDateTime createdAt, LocalDateTime lastModifiedAt) {
+        this.id = id;
+        this.userId = userId;
+        this.writerName = writerName;
+        this.writerEmail = writerEmail;
+        this.category = category;
+        this.title = title;
+        this.content = content;
+        this.viewCount = viewCount;
+        this.bookmarkCount = bookmarkCount;
+        this.isSolved = isSolved;
+        this.isBookmarked = isBookmarked;
+        this.createdAt = createdAt;
+        this.lastModifiedAt = lastModifiedAt;
+    }
 }

@@ -34,19 +34,20 @@ public class PostRepositoryImpl implements PostRepositoryCustom {
     @Override
     public Page<PostResponse> searchPosts(PostCategory category, String keyword, Boolean isSolved, Pageable pageable) {
         List<PostResponse> content = queryFactory
-                .select(Projections.fields(PostResponse.class,
+                .select(Projections.constructor(PostResponse.class,
                         post.id,
                         post.userId,
+                        userProfile.name,  // writerName
+                        userProfile.email, // writerEmail
                         post.category,
                         post.title,
                         post.content,
                         post.viewCount,
                         post.bookmarkCount,
                         post.isSolved,
+                        post.recruitmentStatus, // DTO 생성자 순서에 맞춰 추가
                         post.createdAt,
-                        post.lastModifiedAt,
-                        userProfile.name.as("writerName"),  // Join된 작성자 이름
-                        userProfile.email.as("writerEmail") // Join된 작성자 이메일
+                        post.lastModifiedAt
                 ))
                 .from(post)
                 .leftJoin(userProfile).on(post.userId.eq(userProfile.userId)) // 작성자 조인
@@ -79,11 +80,11 @@ public class PostRepositoryImpl implements PostRepositoryCustom {
     @Override
     public Optional<PostDetailResponse> findPostDetailById(Long postId, Long loginUserId) {
         return Optional.ofNullable(queryFactory
-                .select(Projections.fields(PostDetailResponse.class,
+                .select(Projections.constructor(PostDetailResponse.class,
                         post.id,
                         post.userId,
-                        userProfile.name.as("writerName"),
-                        userProfile.email.as("writerEmail"),
+                        userProfile.name,  // writerName
+                        userProfile.email, // writerEmail
                         post.category,
                         post.title,
                         post.content,
@@ -111,15 +112,15 @@ public class PostRepositoryImpl implements PostRepositoryCustom {
     @Override
     public List<CommentResponse> findCommentsByPostId(Long postId) {
         return queryFactory
-                .select(Projections.fields(CommentResponse.class,
+                .select(Projections.constructor(CommentResponse.class,
                         postComment.id,
-                        postComment.post.id.as("postId"),
+                        postComment.post.id, // postId
                         postComment.userId,
-                        userProfile.name.as("writerName"),
-                        userProfile.email.as("writerEmail"),
+                        userProfile.name,    // writerName
+                        userProfile.email,   // writerEmail
                         postComment.content,
                         postComment.isAccepted,
-                        postComment.parent.id.as("parentId"),
+                        postComment.parent.id, // parentId
                         postComment.createdAt,
                         postComment.lastModifiedAt
                 ))
@@ -161,13 +162,13 @@ public class PostRepositoryImpl implements PostRepositoryCustom {
     @Override
     public Page<MyBookmarkPostResponse> findMyBookmarkedPosts(Long userId, PostCategory category, Pageable pageable) {
         List<MyBookmarkPostResponse> content = queryFactory
-                .select(Projections.fields(MyBookmarkPostResponse.class,
+                .select(Projections.constructor(MyBookmarkPostResponse.class,
                         post.id,
                         post.title,
                         post.content,
                         post.category,
                         post.createdAt,
-                        userProfile.name.as("writerName") // 유저 테이블과 조인하여 이름 바로 매핑
+                        userProfile.name // writerName
                 ))
                 .from(post)
                 .join(postBookmark).on(post.id.eq(postBookmark.post.id))
