@@ -89,5 +89,5 @@ export function runBase(headers) {
 
 export function handleSummary(data) {
     // tests/k6/results/exploration/global_load_test.{html,json,txt} 로 저장됨
-    return generateSummary(data, "exploration/global_load_test");
+    return generateSummary(data, "exploration/global_load_test_after");
 }
