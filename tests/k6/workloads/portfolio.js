@@ -5,7 +5,7 @@ const BASE_URL = 'http://linkfolio.127.0.0.1.nip.io';
 
 export function portfolioList(headers) {
     // 인덱스 테스트용 정렬 조건
-    const res = http.get(`${BASE_URL}/portfolio-service/portfolios?page=0&size=10&sort=viewCount,desc`, headers);
+    const res = http.get(`${BASE_URL}/portfolio-service/portfolios?page=0&size=10&sort=popularityScore,desc`, headers);
     check(res, { 'Portfolio List 200': (r) => r.status === 200 });
 }
 

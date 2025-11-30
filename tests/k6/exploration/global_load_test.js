@@ -18,8 +18,8 @@ export const options = {
             executor: 'ramping-vus',
             startVUs: 0,
             stages: [
-                { duration: '30s', target: 10 },  // [Warmup] 서서히 예열
-                { duration: '1m', target: 80 },   // [Load] 본격 부하 (상세 조회 집중)
+                { duration: '30s', target: 3 },  // [Warmup] 서서히 예열
+                { duration: '1m', target: 10 },   // [Load] 본격 부하 (상세 조회 집중)
                 { duration: '30s', target: 0 },   // [Cooldown]
             ],
             exec: 'runCommunity',
@@ -30,8 +30,8 @@ export const options = {
             executor: 'ramping-vus',
             startVUs: 0,
             stages: [
-                { duration: '30s', target: 5 },
-                { duration: '1m', target: 40 },
+                { duration: '30s', target: 3 },
+                { duration: '1m', target: 10 },
                 { duration: '30s', target: 0 },
             ],
             exec: 'runPortfolio',

@@ -9,15 +9,15 @@ export function communityList(headers) {
 }
 
 export function communityDetail(headers) {
-    // 1번 게시글 집중 조회 (Hot Key -> DB Lock 유발 포인트)
-    const postId = 2;
+    // 100번 게시글 집중 조회 (Hot Key -> DB Lock 유발 포인트)
+    const postId = 100;
     const res = http.get(`${BASE_URL}/community-service/posts/${postId}`, headers);
     check(res, { 'Community Detail 200': (r) => r.status === 200 });
 }
 
 export function communityComment(headers) {
-    // 1번 게시글에 댓글 작성 (Write 부하)
-    const postId = 2;
+    // 100번 게시글에 댓글 작성 (Write 부하)
+    const postId = 100;
     const payload = JSON.stringify({ content: "Stress Test Comment" });
     const res = http.post(`${BASE_URL}/community-service/posts/${postId}/comments`, payload, headers);
     check(res, { 'Community Comment 200': (r) => r.status === 200 });

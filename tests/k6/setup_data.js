@@ -3,9 +3,14 @@ import { seedRealUsers, seedDummyPortfolios, seedCommunityPosts, seedSupportData
 const BASE_URL = 'http://linkfolio.127.0.0.1.nip.io';
 
 export const options = {
-    vus: 1,
-    iterations: 1,
-    setupTimeout: '1000s', // 데이터 생성이 오래 걸릴 수 있음
+    scenarios: {
+        setup: {
+            executor: 'shared-iterations', // 정해진 횟수(1회)만큼 실행
+            vus: 1,
+            iterations: 1,
+            maxDuration: '30m',
+        },
+    },
 };
 
 export default function () {
