@@ -26,49 +26,52 @@ public class PortfolioLikeService {
     private final PortfolioLikeRepository portfolioLikeRepository;
     private final StringRedisTemplate redisTemplate;
 
+    // 실시간 조회용 (화면에 보여지는 값)
     private static final String STATS_KEY_PREFIX = "portfolio:stats:";
+    // 배치 동기화용 (DB에 반영할 증감분)
+    private static final String LIKE_BATCH_KEY = "portfolio:likes:delta";
 
     /**
-     * 포트폴리오 북마크 추가 (DB + Redis 동시 업데이트)
+     * 포트폴리오 북마크 추가
      */
     public void addLike(Long authUserId, Long portfolioId) {
-        // 1. 검증 (Proxy 조회로 쿼리 절약 가능)
-        PortfolioEntity portfolio = portfolioRepository.findById(portfolioId)
-                .orElseThrow(() -> new BusinessException(ErrorCode.PORTFOLIO_NOT_FOUND));
+        // 1. 검증 (Proxy 조회로 쿼리 절약)
+        PortfolioEntity portfolio = portfolioRepository.getReferenceById(portfolioId);
 
-        if (!portfolio.isPublished()) throw new BusinessException(ErrorCode.PORTFOLIO_NOT_FOUND);
-
+        // 중복 체크 (DB 조회는 필요하지만, Parent Row Lock은 걸리지 않음)
         if (portfolioLikeRepository.existsByLikerIdAndPortfolio(authUserId, portfolio)) {
             return;
         }
 
-        // 2. DB 반영 (안전성 보장)
+        // 2. DB 반영 (자식 테이블 Insert만 수행 -> Parent Lock 없음)
         portfolioLikeRepository.save(PortfolioLikeEntity.of(authUserId, portfolio));
-        portfolio.increaseLikeCount();
 
-        // 3. Redis 반영 (실시간성 보장)
-        // ㄴ 전체 캐시를 삭제하는게 아니라, '숫자'만 1 올림 -> Cache Miss 없음
+        // 3. Redis 반영
+        // A. 실시간 조회용 값 증가 (+1)
         redisTemplate.opsForHash().increment(STATS_KEY_PREFIX + portfolioId, "likeCount", 1L);
+        // B. 배치 동기화용 Delta 값 증가 (+1)
+        redisTemplate.opsForHash().increment(LIKE_BATCH_KEY, String.valueOf(portfolioId), 1L);
     }
 
     /**
      * 포트폴리오 북마크 취소 (DB + Redis 동시 업데이트)
      */
     public void removeLike(Long authUserId, Long portfolioId) {
-        PortfolioEntity portfolio = portfolioRepository.findById(portfolioId)
-                .orElseThrow(() -> new BusinessException(ErrorCode.PORTFOLIO_NOT_FOUND));
+        PortfolioEntity portfolio = portfolioRepository.getReferenceById(portfolioId);
 
         PortfolioLikeEntity portfolioLike = portfolioLikeRepository.findByLikerIdAndPortfolio(authUserId, portfolio)
                 .orElse(null);
 
         if (portfolioLike == null) return;
 
-        // 2. DB 반영
+        // 2. DB 반영 (자식 테이블 Delete만 수행)
         portfolioLikeRepository.delete(portfolioLike);
-        portfolio.decreaseLikeCount();
 
         // 3. Redis 반영
+        // A. 실시간 조회용 값 감소 (-1)
         redisTemplate.opsForHash().increment(STATS_KEY_PREFIX + portfolioId, "likeCount", -1L);
+        // B. 배치 동기화용 Delta 값 감소 (-1)
+        redisTemplate.opsForHash().increment(LIKE_BATCH_KEY, String.valueOf(portfolioId), -1L);
     }
 
     /**

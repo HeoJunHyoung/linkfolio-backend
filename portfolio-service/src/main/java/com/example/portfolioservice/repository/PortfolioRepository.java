@@ -14,12 +14,17 @@ public interface PortfolioRepository extends JpaRepository<PortfolioEntity, Long
     // userId(소유자ID)로 포트폴리오를 조회하는 메서드
     Optional<PortfolioEntity> findByUserId(Long userId);
 
-    // 조회수 Bulk Update (SELECT 없이 바로 증가)
+    // 조회수 Bulk Update
     @Modifying(clearAutomatically = true)
     @Query("UPDATE PortfolioEntity p SET p.viewCount = p.viewCount + :count WHERE p.portfolioId = :id")
     void incrementViewCount(@Param("id") Long id, @Param("count") Long count);
 
-    // 인기 점수 Bulk Update (애플리케이션 로딩 없이 DB에서 바로 계산)
+    // 좋아요 수 Bulk Update
+    @Modifying(clearAutomatically = true)
+    @Query("UPDATE PortfolioEntity p SET p.likeCount = p.likeCount + :delta WHERE p.portfolioId = :id")
+    void updateLikeCount(@Param("id") Long id, @Param("delta") Long delta);
+
+    // 인기 점수 Bulk Update
     @Modifying(clearAutomatically = true)
     @Query(value = "UPDATE portfolio p SET p.popularity_score = " +
             "CAST((p.view_count + p.like_count * 50) * 1000 / POW(TIMESTAMPDIFF(HOUR, IFNULL(p.last_modified_at, NOW()), NOW()) + 2, 1.5) AS UNSIGNED)",
