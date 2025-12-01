@@ -40,7 +40,7 @@ export const options = {
         // 3. [Base] 기타 서비스 (인증, 유저, 공지사항 - 배경 트래픽)
         base_scenario: {
             executor: 'constant-vus',
-            vus: 30,
+            vus: 10,
             duration: '2m',
             exec: 'runBase',
         },
