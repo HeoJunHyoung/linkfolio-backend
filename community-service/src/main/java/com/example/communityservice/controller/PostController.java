@@ -6,10 +6,7 @@ import com.example.communityservice.dto.request.CommentRequest;
 import com.example.communityservice.dto.request.PostCreateRequest;
 import com.example.communityservice.dto.request.PostUpdateRequest;
 import com.example.communityservice.dto.request.RecruitmentStatusRequest;
-import com.example.communityservice.dto.response.MyBookmarkPostResponse;
-import com.example.communityservice.dto.response.MyPostResponse;
-import com.example.communityservice.dto.response.PostDetailResponse;
-import com.example.communityservice.dto.response.PostResponse;
+import com.example.communityservice.dto.response.*;
 import com.example.communityservice.entity.enumerate.PostCategory;
 import com.example.communityservice.service.PostService;
 import io.swagger.v3.oas.annotations.Operation;
@@ -81,12 +78,13 @@ public class PostController {
 
     @Operation(summary = "게시글 목록 조회 (검색/필터)", description = "카테고리, 키워드, 해결 여부 등을 조건으로 게시글 목록을 조회합니다. (인증 불필요)")
     @GetMapping("/posts")
-    public ResponseEntity<Page<PostResponse>> getPosts(
+    public ResponseEntity<CustomPageResponse<PostResponse>> getPosts(
             @Parameter(description = "카테고리 (QNA, INFO, RECRUIT)") @RequestParam(required = false) PostCategory category,
             @Parameter(description = "검색 키워드 (제목 + 내용)") @RequestParam(required = false) String keyword,
             @Parameter(description = "해결 여부 (QnA 전용)") @RequestParam(required = false) Boolean isSolved,
             @Parameter(description = "페이징 설정 (기본: 최신순 10개)") @PageableDefault(size = 10, sort = "createdAt", direction = Sort.Direction.DESC) Pageable pageable) {
-        return ResponseEntity.ok(postService.getPosts(category, keyword, isSolved, pageable));
+        Page<PostResponse> page = postService.getPosts(category, keyword, isSolved, pageable);
+        return ResponseEntity.ok(new CustomPageResponse<>(page));
     }
 
     @Operation(summary = "게시글 상세 조회", description = "게시글의 상세 내용과 계층형 댓글 목록을 조회합니다. 로그인 시 북마크 여부가 포함됩니다.")
@@ -207,21 +205,23 @@ public class PostController {
     @Operation(summary = "내가 쓴 게시글 조회", description = "로그인한 사용자가 작성한 게시글 목록을 조회합니다. (카테고리 필터링 가능)")
     @SecurityRequirement(name = "BearerAuthentication")
     @GetMapping("/posts/me")
-    public ResponseEntity<Page<MyPostResponse>> getMyPosts(
+    public ResponseEntity<CustomPageResponse<MyPostResponse>> getMyPosts(
             @AuthenticationPrincipal AuthUser authUser,
             @Parameter(description = "카테고리 (QNA, INFO, RECRUIT), 미입력 시 전체") @RequestParam(required = false) PostCategory category,
             @PageableDefault(sort = "createdAt", direction = Sort.Direction.DESC) Pageable pageable) {
-        return ResponseEntity.ok(postService.getMyPosts(authUser.getUserId(), category, pageable));
+        Page<MyPostResponse> page = postService.getMyPosts(authUser.getUserId(), category, pageable);
+        return ResponseEntity.ok(new CustomPageResponse<>(page));
     }
 
     @Operation(summary = "내가 북마크한 글 조회", description = "로그인한 사용자가 북마크한 게시글 목록을 조회합니다. (카테고리 필터링 가능)")
     @SecurityRequirement(name = "BearerAuthentication")
     @GetMapping("/posts/me/bookmarks")
-    public ResponseEntity<Page<MyBookmarkPostResponse>> getMyBookmarkedPosts(
+    public ResponseEntity<CustomPageResponse<MyBookmarkPostResponse>> getMyBookmarkedPosts(
             @AuthenticationPrincipal AuthUser authUser,
             @Parameter(description = "카테고리 (QNA, INFO, RECRUIT), 미입력 시 전체") @RequestParam(required = false) PostCategory category,
             @PageableDefault(sort = "createdAt", direction = Sort.Direction.DESC) Pageable pageable) {
-        return ResponseEntity.ok(postService.getMyBookmarkedPosts(authUser.getUserId(), category, pageable));
+        Page<MyBookmarkPostResponse> page = postService.getMyBookmarkedPosts(authUser.getUserId(), category, pageable);
+        return ResponseEntity.ok(new CustomPageResponse<>(page));
     }
 
 }
