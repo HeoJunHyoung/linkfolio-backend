@@ -14,7 +14,7 @@ import java.util.List;
 @AllArgsConstructor
 public class PostDetailResponse {
     private Long id;
-    private Long userId; // 작성자 ID
+    private Long userId;
     private String writerName;
     private String writerEmail;
     private PostCategory category;
@@ -22,19 +22,21 @@ public class PostDetailResponse {
     private String content;
     private Long viewCount;
     private Long bookmarkCount;
+    private Long commentCount;
     private boolean isSolved;
-    private boolean isBookmarked; // 로그인 유저의 북마크 여부
+    private boolean isBookmarked;
     private LocalDateTime createdAt;
     private LocalDateTime lastModifiedAt;
 
     @Builder.Default
     private List<CommentResponse> comments = new ArrayList<>();
 
-    // QueryDSL Projections.constructor 사용을 위한 생성자 (comments 제외)
+    // QueryDSL용 생성자 (comments 제외)
     public PostDetailResponse(Long id, Long userId, String writerName, String writerEmail,
                               PostCategory category, String title, String content,
-                              Long viewCount, Long bookmarkCount, boolean isSolved,
-                              boolean isBookmarked, LocalDateTime createdAt, LocalDateTime lastModifiedAt) {
+                              Long viewCount, Long bookmarkCount, Long commentCount,
+                              boolean isSolved, boolean isBookmarked,
+                              LocalDateTime createdAt, LocalDateTime lastModifiedAt) {
         this.id = id;
         this.userId = userId;
         this.writerName = writerName;
@@ -44,6 +46,7 @@ public class PostDetailResponse {
         this.content = content;
         this.viewCount = viewCount;
         this.bookmarkCount = bookmarkCount;
+        this.commentCount = commentCount;
         this.isSolved = isSolved;
         this.isBookmarked = isBookmarked;
         this.createdAt = createdAt;

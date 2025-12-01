@@ -26,6 +26,7 @@ public class PostResponse {
     private String content;
     private Long viewCount;
     private Long bookmarkCount;
+    private Long commentCount;
     private Boolean isSolved;
     private RecruitmentStatus recruitmentStatus;
     private LocalDateTime createdAt;
@@ -34,8 +35,9 @@ public class PostResponse {
     // QueryDSL Projections.constructor 사용을 위한 생성자
     public PostResponse(Long id, Long userId, String writerName, String writerEmail,
                         PostCategory category, String title, String content,
-                        Long viewCount, Long bookmarkCount, Boolean isSolved,
-                        RecruitmentStatus recruitmentStatus, LocalDateTime createdAt, LocalDateTime lastModifiedAt) {
+                        Long viewCount, Long bookmarkCount, Long commentCount, // [추가]
+                        Boolean isSolved, RecruitmentStatus recruitmentStatus,
+                        LocalDateTime createdAt, LocalDateTime lastModifiedAt) {
         this.id = id;
         this.userId = userId;
         this.writerName = writerName;
@@ -45,6 +47,7 @@ public class PostResponse {
         this.content = content;
         this.viewCount = viewCount;
         this.bookmarkCount = bookmarkCount;
+        this.commentCount = commentCount;
         this.isSolved = isSolved;
         this.recruitmentStatus = recruitmentStatus;
         this.createdAt = createdAt;
@@ -60,6 +63,7 @@ public class PostResponse {
                 .content(entity.getContent())
                 .viewCount(entity.getViewCount())
                 .bookmarkCount(entity.getBookmarkCount())
+                .commentCount(entity.getCommentCount())
                 .isSolved(entity.getCategory() == PostCategory.QNA ? entity.isSolved() : null)
                 .recruitmentStatus(entity.getCategory() == PostCategory.RECRUIT ? entity.getRecruitmentStatus() : null)
                 .createdAt(entity.getCreatedAt())

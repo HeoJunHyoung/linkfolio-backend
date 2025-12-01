@@ -37,20 +37,21 @@ public class PostRepositoryImpl implements PostRepositoryCustom {
                 .select(Projections.constructor(PostResponse.class,
                         post.id,
                         post.userId,
-                        userProfile.name,  // writerName
-                        userProfile.email, // writerEmail
+                        userProfile.name,
+                        userProfile.email,
                         post.category,
                         post.title,
                         post.content,
                         post.viewCount,
                         post.bookmarkCount,
+                        post.commentCount,
                         post.isSolved,
-                        post.recruitmentStatus, // DTO 생성자 순서에 맞춰 추가
+                        post.recruitmentStatus,
                         post.createdAt,
                         post.lastModifiedAt
                 ))
                 .from(post)
-                .leftJoin(userProfile).on(post.userId.eq(userProfile.userId)) // 작성자 조인
+                .leftJoin(userProfile).on(post.userId.eq(userProfile.userId))
                 .where(
                         categoryEq(category),
                         keywordContains(keyword),
@@ -83,15 +84,15 @@ public class PostRepositoryImpl implements PostRepositoryCustom {
                 .select(Projections.constructor(PostDetailResponse.class,
                         post.id,
                         post.userId,
-                        userProfile.name,  // writerName
-                        userProfile.email, // writerEmail
+                        userProfile.name,
+                        userProfile.email,
                         post.category,
                         post.title,
                         post.content,
                         post.viewCount,
                         post.bookmarkCount,
+                        post.commentCount,
                         post.isSolved,
-                        // 북마크 여부: 로그인 유저가 해당 글을 북마크 했는지 서브쿼리 또는 Join으로 확인
                         ExpressionUtils.as(
                                 new com.querydsl.core.types.dsl.CaseBuilder()
                                         .when(isBookmarkedCondition(postId, loginUserId))

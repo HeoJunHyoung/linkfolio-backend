@@ -24,4 +24,14 @@ public interface PostRepository extends JpaRepository<PostEntity, Long>, PostRep
     @Modifying(clearAutomatically = true)
     @Query("UPDATE PostEntity p SET p.viewCount = p.viewCount + :count WHERE p.id = :id")
     void incrementViewCount(@Param("id") Long id, @Param("count") Long count);
+
+    // 북마크 Bulk Update (스케줄러용)
+    @Modifying(clearAutomatically = true)
+    @Query("UPDATE PostEntity p SET p.bookmarkCount = p.bookmarkCount + :delta WHERE p.id = :id")
+    void updateBookmarkCount(@Param("id") Long id, @Param("delta") Long delta);
+
+    // 댓글 수 Bulk Update (스케줄러용)
+    @Modifying(clearAutomatically = true)
+    @Query("UPDATE PostEntity p SET p.commentCount = p.commentCount + :delta WHERE p.id = :id")
+    void updateCommentCount(@Param("id") Long id, @Param("delta") Long delta);
 }
