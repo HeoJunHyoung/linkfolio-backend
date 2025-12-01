@@ -24,6 +24,10 @@ public class TestSetupController {
 
     private final PortfolioRepository portfolioRepository;
 
+    private static final String[] POSITIONS = {
+            "BACKEND", "FRONTEND", "FULLSTACK", "DEVOPS", "AI_ML", "MOBILE", "DESIGN", "PM"
+    };
+
     @PostMapping("/setup")
     @Transactional
     public ResponseEntity<Void> setupPortfolio(@RequestBody Map<String, Object> request) {
@@ -41,13 +45,15 @@ public class TestSetupController {
                         .isPublished(true) //  즉시 공개 상태로 생성
                         .build());
 
+        String randomPosition = POSITIONS[(int) (userId % POSITIONS.length)];
+
         // 2. 테스트용 데이터 강제 주입 (Update)
         portfolio.updateUserInput(
-                "https://via.placeholder.com/150", // photoUrl
-                "안녕하세요, 성능 테스트용 포트폴리오입니다.", // oneLiner
-                "이것은 k6 테스트를 위해 자동 생성된 포트폴리오 내용입니다.", // content
-                "BACKEND", // position
-                null // hashtags
+                "https://via.placeholder.com/150",
+                "안녕하세요, 성능 테스트용 포트폴리오입니다.",
+                "이것은 k6 테스트를 위해 자동 생성된 포트폴리오 내용입니다.",
+                randomPosition,
+                null
         );
 
         portfolioRepository.save(portfolio);

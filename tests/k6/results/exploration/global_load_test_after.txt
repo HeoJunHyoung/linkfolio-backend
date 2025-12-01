@@ -1,29 +1,26 @@
      ✓ Auth Login 200
      ✓ User GetMe 200
-     ✗ Notice List 200
-      ↳  0% — ✓ 1 / ✗ 172
+     ✓ Notice List 200
      ✓ Portfolio List 200
+     ✓ Community List 200
      ✓ Portfolio Detail 200
-     ✗ Community List 200
-      ↳  39% — ✓ 26 / ✗ 40
-     ✗ Community Detail 200
-      ↳  90% — ✓ 59 / ✗ 6
+     ✓ Community Detail 200
      ✓ Community Comment 200
 
-     checks.........................: 87.55% ✓ 1534      ✗ 218 
-     data_received..................: 3.7 MB 30 kB/s
-     data_sent......................: 732 kB 5.9 kB/s
-     http_req_blocked...............: avg=102.8µs min=0s      med=0s       max=141.99ms p(90)=0s      p(95)=0s    
-     http_req_connecting............: avg=29.43µs min=0s      med=0s       max=1.39ms   p(90)=0s      p(95)=0s    
-   ✗ http_req_duration..............: avg=2.15s   min=24.51ms med=929.34ms max=30.29s   p(90)=3.17s   p(95)=5.48s 
-       { expected_response:true }...: avg=1.61s   min=24.51ms med=1.01s    max=29.72s   p(90)=2.86s   p(95)=4.25s 
-   ✗ http_req_failed................: 11.12% ✓ 221       ✗ 1765
-     http_req_receiving.............: avg=22.15ms min=0s      med=9.12ms   max=314.57ms p(90)=56.44ms p(95)=88.4ms
-     http_req_sending...............: avg=14.3µs  min=0s      med=0s       max=1.51ms   p(90)=0s      p(95)=0s    
-     http_req_tls_handshaking.......: avg=0s      min=0s      med=0s       max=0s       p(90)=0s      p(95)=0s    
-     http_req_waiting...............: avg=2.13s   min=20.01ms med=908.29ms max=30.29s   p(90)=3.14s   p(95)=5.47s 
-     http_reqs......................: 1986   15.972861/s
-     iteration_duration.............: avg=6.6s    min=1.1s    med=3.58s    max=1m23s    p(90)=8.88s   p(95)=23.03s
-     iterations.....................: 784    6.3055/s
-     vus............................: 6      min=6       max=70
-     vus_max........................: 70     min=70      max=70
+     checks.........................: 100.00% ✓ 1414     ✗ 0   
+     data_received..................: 10 MB   82 kB/s
+     data_sent......................: 547 kB  4.5 kB/s
+     http_req_blocked...............: avg=25.23µs min=0s      med=0s       max=1.31ms p(90)=0s       p(95)=0s      
+     http_req_connecting............: avg=23.72µs min=0s      med=0s       max=1.31ms p(90)=0s       p(95)=0s      
+   ✗ http_req_duration..............: avg=1.47s   min=11.42ms med=908.41ms max=13.82s p(90)=3.34s    p(95)=5.04s   
+       { expected_response:true }...: avg=1.46s   min=11.42ms med=908.32ms max=13.82s p(90)=3.34s    p(95)=4.95s   
+   ✓ http_req_failed................: 0.06%   ✓ 1        ✗ 1479
+     http_req_receiving.............: avg=40.8ms  min=0s      med=6.41ms   max=1.17s  p(90)=125.89ms p(95)=213.32ms
+     http_req_sending...............: avg=5.65µs  min=0s      med=0s       max=1.52ms p(90)=0s       p(95)=0s      
+     http_req_tls_handshaking.......: avg=0s      min=0s      med=0s       max=0s     p(90)=0s       p(95)=0s      
+     http_req_waiting...............: avg=1.42s   min=9.72ms  med=868.15ms max=13.71s p(90)=3.22s    p(95)=5.03s   
+     http_reqs......................: 1480    12.07394/s
+     iteration_duration.............: avg=4.62s   min=1.05s   med=4.09s    max=23.36s p(90)=7.94s    p(95)=11.38s  
+     iterations.....................: 632     5.155899/s
+     vus............................: 3       min=3      max=45
+     vus_max........................: 45      min=45     max=45

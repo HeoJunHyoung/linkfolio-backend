@@ -13,9 +13,6 @@ spring:
     url: jdbc:mysql://${DB_HOST}/${MYSQL_DATABASE}?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC&useUnicode=true&characterEncoding=UTF-8
     username: ${MYSQL_USER}
     password: ${MYSQL_PASSWORD}
-    hikari:
-      maximum-pool-size: 30      # Pod당 최대 커넥션 수 (기본 10 -> 30으로 증설)
-      connection-timeout: 30000  # (유지) 30초 대기
 
   # --- JPA / Hibernate Configuration ---
   jpa:

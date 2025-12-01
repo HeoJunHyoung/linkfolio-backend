@@ -4,7 +4,7 @@ import { check } from 'k6';
 const BASE_URL = 'http://linkfolio.127.0.0.1.nip.io';
 
 export function communityList(headers) {
-    const res = http.get(`${BASE_URL}/community-service/posts?page=0&size=10&sort=createdAt,desc`, headers);
+    const res = http.get(`${BASE_URL}/community-service/posts?category=QNA&page=0&size=10&sort=createdAt,desc`, headers);
     check(res, { 'Community List 200': (r) => r.status === 200 });
 }
 

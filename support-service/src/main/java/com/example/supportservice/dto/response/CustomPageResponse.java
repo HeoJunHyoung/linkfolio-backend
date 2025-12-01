@@ -2,6 +2,7 @@ package com.example.supportservice.dto.response;
 
 import lombok.Getter;
 import lombok.NoArgsConstructor;
+import lombok.Setter;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.PageRequest;
@@ -9,7 +10,8 @@ import org.springframework.data.domain.PageRequest;
 import java.util.List;
 
 @Getter
-@NoArgsConstructor // Redis 역직렬화를 위해 필수!
+@Setter
+@NoArgsConstructor
 public class CustomPageResponse<T> {
     private List<T> content;
     private int pageNumber;

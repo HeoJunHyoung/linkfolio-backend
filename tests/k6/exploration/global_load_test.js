@@ -13,13 +13,12 @@ import { noticeList } from '../workloads/support.js';
 export const options = {
     scenarios: {
         // 1. [Community] 트래픽 집중 (조회수 Lock, 댓글 쓰기 부하)
-        // -> 여기가 메인 병목 지점이 될 것임
         community_scenario: {
             executor: 'ramping-vus',
             startVUs: 0,
             stages: [
-                { duration: '30s', target: 10 },  // [Warmup] 서서히 예열
-                { duration: '1m', target: 30 },   // [Load] 본격 부하 (상세 조회 집중)
+                { duration: '30s', target: 5 },  // [Warmup] 서서히 예열
+                { duration: '1m', target: 20 },   // [Load] 본격 부하 (상세 조회 집중)
                 { duration: '30s', target: 0 },   // [Cooldown]
             ],
             exec: 'runCommunity',
@@ -30,8 +29,8 @@ export const options = {
             executor: 'ramping-vus',
             startVUs: 0,
             stages: [
-                { duration: '30s', target: 10 },
-                { duration: '1m', target: 30 },
+                { duration: '30s', target: 5 },
+                { duration: '1m', target: 20 },
                 { duration: '30s', target: 0 },
             ],
             exec: 'runPortfolio',
@@ -40,7 +39,7 @@ export const options = {
         // 3. [Base] 기타 서비스 (인증, 유저, 공지사항 - 배경 트래픽)
         base_scenario: {
             executor: 'constant-vus',
-            vus: 10,
+            vus: 5,
             duration: '2m',
             exec: 'runBase',
         },
