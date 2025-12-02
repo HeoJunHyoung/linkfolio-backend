@@ -45,5 +45,5 @@ export function runUpdater(headers) {
 }
 
 export function handleSummary(data) {
-    return generateSummary(data, "before/isolated/user_stress");
+    return generateSummary(data, "after/isolated/user_stress");
 }

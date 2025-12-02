@@ -49,5 +49,5 @@ export function runWriter(headers) {
 }
 
 export function handleSummary(data) {
-    return generateSummary(data, "before/isolated/community_stress");
+    return generateSummary(data, "after/isolated/community_stress");
 }

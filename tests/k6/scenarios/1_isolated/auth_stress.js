@@ -29,5 +29,5 @@ export function runLogin() {
 }
 
 export function handleSummary(data) {
-    return generateSummary(data, "before/isolated/auth_stress"); // before/after 지정
+    return generateSummary(data, "after/isolated/auth_stress"); // before/after 지정
 }

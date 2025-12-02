@@ -36,5 +36,5 @@ export function runViewer(headers) {
 }
 
 export function handleSummary(data) {
-    return generateSummary(data, "before/isolated/support_stress");
+    return generateSummary(data, "after/isolated/support_stress");
 }

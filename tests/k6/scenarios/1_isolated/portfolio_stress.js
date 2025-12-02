@@ -47,5 +47,5 @@ export function runLike(headers) {
 }
 
 export function handleSummary(data) {
-    return generateSummary(data, "before/isolated/portfolio_stress");
+    return generateSummary(data, "after/isolated/portfolio_stress");
 }
