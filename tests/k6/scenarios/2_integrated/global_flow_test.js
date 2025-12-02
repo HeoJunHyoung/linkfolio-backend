@@ -87,5 +87,5 @@ export function runBackgroundFlow(headers) {
 }
 
 export function handleSummary(data) {
-    return generateSummary(data, "after/integrated/global_flow_test");
+    return generateSummary(data, "before/integrated/global_flow_test");
 }

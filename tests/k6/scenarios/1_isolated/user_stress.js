@@ -10,8 +10,8 @@ export const options = {
             executor: 'ramping-vus',
             startVUs: 0,
             stages: [
-                { duration: '30s', target: 20 },
-                { duration: '1m', target: 50 },
+                { duration: '30s', target: 10 },
+                { duration: '1m', target: 30 },
                 { duration: '30s', target: 0 },
             ],
             exec: 'runViewer',
@@ -45,5 +45,5 @@ export function runUpdater(headers) {
 }
 
 export function handleSummary(data) {
-    return generateSummary(data, "after/isolated/user_stress");
+    return generateSummary(data, "before/isolated/user_stress");
 }

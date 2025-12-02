@@ -8,7 +8,7 @@ const CATEGORIES = ["QNA", "INFO", "RECRUIT"];
 
 // [Data Setup 정보와 일치시킴]
 // setup_data.js에서 10001 ~ 20000번까지 총 10,000개 생성함
-const MIN_ID = 10001;
+const MIN_ID = 1;
 const TOTAL_COUNT = 10000;
 
 // [핵심] 핫 데이터 시뮬레이션 (80% 트래픽 -> 상위 5% 게시글)

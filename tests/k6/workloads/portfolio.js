@@ -10,7 +10,7 @@ const POSITIONS = [
 
 // [Data Setup 정보]
 // ID 범위: 10001 ~ 20000 (총 10,000개)
-const MIN_ID = 10001;
+const MIN_ID = 1;
 const TOTAL_COUNT = 10000;
 
 // [핵심] 핫 데이터 시뮬레이션 함수

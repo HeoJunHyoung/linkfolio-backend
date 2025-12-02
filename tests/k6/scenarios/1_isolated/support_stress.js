@@ -1,7 +1,7 @@
 import { sleep } from 'k6';
 import { loginAndGetHeader } from '../../utils/auth.js';
 import { generateSummary } from '../../utils/reporter.js';
-import { noticeList, faqList } from '../../workloads/support.js';
+import { noticeList } from '../../workloads/support.js';
 
 export const options = {
     scenarios: {
@@ -32,10 +32,9 @@ export function setup() {
 
 export function runViewer(headers) {
     noticeList(headers);
-    faqList(headers);
     sleep(1);
 }
 
 export function handleSummary(data) {
-    return generateSummary(data, "after/isolated/support_stress");
+    return generateSummary(data, "before/isolated/support_stress");
 }

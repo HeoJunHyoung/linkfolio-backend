@@ -10,9 +10,9 @@ export const options = {
             executor: 'ramping-vus',
             startVUs: 0,
             stages: [
-                { duration: '30s', target: 20 },  // 20명까지 빠르게 증가
-                { duration: '1m', target: 50 },  // 50명 유지 (고부하)
-                { duration: '30s', target: 0 },   // 종료
+                { duration: '30s', target: 10 },
+                { duration: '1m', target: 10 },
+                { duration: '30s', target: 0 },
             ],
             exec: 'runLogin',
         },
@@ -29,5 +29,5 @@ export function runLogin() {
 }
 
 export function handleSummary(data) {
-    return generateSummary(data, "after/isolated/auth_stress"); // before/after 지정
+    return generateSummary(data, "before/isolated/auth_stress"); // before/after 지정
 }
