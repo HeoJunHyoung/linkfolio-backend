@@ -3,6 +3,7 @@ import { check } from 'k6';
 
 const BASE_URL = 'http://linkfolio.127.0.0.1.nip.io';
 
+//
 export function authLogin() {
     const payload = JSON.stringify({
         username: 'user_1', // 테스트용 고정 유저

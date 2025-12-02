@@ -1,4 +1,4 @@
-import { seedRealUsers, seedDummyPortfolios, seedCommunityPosts, seedSupportData } from './utils/seeder.js';
+import { seedRealUsers, seedDummyPortfolios, seedCommunityPosts, seedSupportData } from '../../utils/seeder.js';
 
 const BASE_URL = 'http://linkfolio.127.0.0.1.nip.io';
 
