@@ -47,13 +47,8 @@ jobs:
         with:
           name: service-jars
           path: |
-            apigateway-service/target/*.jar
-            user-service/target/*.jar
-            auth-service/target/*.jar
-            portfolio-service/target/*.jar
-            chat-service/target/*.jar
-            support-service/target/*.jar
-            community-service/target/*.jar
+            */target/*.jar
+            !*/target/*-plain.jar
 
   # -----------------------------------------------------------------
   # Job 2: (Parallel) Docker 이미지 빌드 및 푸시
