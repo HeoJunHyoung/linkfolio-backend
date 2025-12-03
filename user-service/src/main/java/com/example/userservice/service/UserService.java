@@ -12,6 +12,8 @@ import com.example.userservice.repository.UserRepository;
 import com.example.userservice.util.UserMapper;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.cache.annotation.CacheEvict;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -27,11 +29,11 @@ public class UserService {
 
 
     // 회원 단일 조회 (내 정보 조회 / 특정 회원 조회)
+    @Cacheable(value = "user:profile", key = "#userId", unless = "#result == null")
     public UserInfoResponse getUser(Long userId) {
         UserProfileEntity userProfileEntity = userRepository.findById(userId)
                 .orElseThrow(() -> new BusinessException(USER_NOT_FOUND));
 
-        // [예외처리] .name()이 없어 NPE가 발생할 수 있는 부분 수정
         String genderString = (userProfileEntity.getGender() != null) ? userProfileEntity.getGender().name() : null;
 
         return UserInfoResponse.of(userProfileEntity.getEmail(), userProfileEntity.getUsername(), userProfileEntity.getName(),
@@ -43,6 +45,7 @@ public class UserService {
      * ㄴ DB 저장 시 CDC가 이벤트를 자동 발행.
      */
     @Transactional
+    @CacheEvict(value = "user:profile", key = "#userId")
     public UserResponse updateUserProfile(Long userId, UserProfileUpdateRequest request) {
         // 1. 프로필 조회
         UserProfileEntity userProfile = userRepository.findById(userId)
