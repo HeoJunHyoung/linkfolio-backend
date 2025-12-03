@@ -20,7 +20,7 @@ import org.springframework.data.redis.serializer.StringRedisSerializer;
 import java.time.Duration;
 
 @Configuration
-@EnableCaching // 캐시 활성화
+@EnableCaching
 public class RedisConfig {
 
     @Value("${spring.data.redis.host}")
@@ -28,33 +28,29 @@ public class RedisConfig {
     @Value("${spring.data.redis.port}")
     private int port;
 
-    // Redis 커넥션 Bean 명시적 등록
     @Bean
     public LettuceConnectionFactory redisConnectionFactory() {
         RedisStandaloneConfiguration config = new RedisStandaloneConfiguration(host, port);
         return new LettuceConnectionFactory(config);
     }
 
-    // ObjectMapper Bean 등록 (JSON 직렬화 시 사용)
     @Bean
     public ObjectMapper objectMapper() {
         ObjectMapper mapper = new ObjectMapper();
-        mapper.registerModule(new JavaTimeModule());
+        mapper.registerModule(new JavaTimeModule()); // Java 8 날짜/시간 모듈 지원
         mapper.disable(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS);
         return mapper;
     }
 
-    // @Cacheable 어노테이션이 사용할 CacheManager를 JSON 직렬화 방식으로 재정의
     @Bean
     public RedisCacheManager redisCacheManager(RedisConnectionFactory connectionFactory, ObjectMapper objectMapper) {
-        // RedisTemplate과 동일한 직렬화 객체 사용 (JSON)
+        // JSON 직렬화 설정
         GenericJackson2JsonRedisSerializer serializer = new GenericJackson2JsonRedisSerializer(objectMapper);
 
-        // 캐시 설정: Key는 String, Value는 JSON으로 저장
         RedisCacheConfiguration redisCacheConfiguration = RedisCacheConfiguration.defaultCacheConfig()
                 .serializeKeysWith(RedisSerializationContext.SerializationPair.fromSerializer(new StringRedisSerializer()))
                 .serializeValuesWith(RedisSerializationContext.SerializationPair.fromSerializer(serializer))
-                .entryTtl(Duration.ofHours(1L)); // 캐시 유효 시간 (예: 1시간)
+                .entryTtl(Duration.ofHours(1L));
 
         return RedisCacheManager.RedisCacheManagerBuilder
                 .fromConnectionFactory(connectionFactory)
@@ -67,15 +63,15 @@ public class RedisConfig {
         RedisTemplate<String, Object> template = new RedisTemplate<>();
         template.setConnectionFactory(connectionFactory);
 
+        // JSON 직렬화 사용
         GenericJackson2JsonRedisSerializer serializer = new GenericJackson2JsonRedisSerializer(objectMapper);
 
         template.setKeySerializer(new StringRedisSerializer());
+        template.setValueSerializer(serializer); // Value를 JSON으로 저장
         template.setHashKeySerializer(new StringRedisSerializer());
-        template.setValueSerializer(serializer);
         template.setHashValueSerializer(serializer);
 
         template.afterPropertiesSet();
-
         return template;
     }
 }
