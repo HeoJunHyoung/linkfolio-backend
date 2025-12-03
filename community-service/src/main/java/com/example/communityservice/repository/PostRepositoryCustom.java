@@ -10,7 +10,7 @@ import java.util.Optional;
 
 public interface PostRepositoryCustom {
     // 기존 메서드
-    Page<PostResponse> searchPosts(PostCategory category, String keyword, Boolean isSolved, Pageable pageable);
+    Page<PostResponse> searchPosts(PostCategory category, Boolean isSolved, Pageable pageable);
 
     // 내가 쓴 글 조회 (경량 DTO)
     Page<MyPostResponse> findMyPosts(Long userId, PostCategory category, Pageable pageable);

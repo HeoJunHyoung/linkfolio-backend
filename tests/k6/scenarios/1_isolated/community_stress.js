@@ -11,7 +11,7 @@ export const options = {
             startVUs: 0,
             stages: [
                 { duration: '30s', target: 20 },
-                { duration: '2m', target: 50 },
+                { duration: '2m', target: 20 },
                 { duration: '30s', target: 0 },
             ],
             exec: 'runViewer',

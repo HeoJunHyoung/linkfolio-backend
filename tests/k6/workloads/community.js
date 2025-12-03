@@ -29,11 +29,7 @@ export function communityList(headers) {
     // 1. 랜덤 카테고리 선택 (인덱스 파티션 테스트)
     const category = CATEGORIES[Math.floor(Math.random() * CATEGORIES.length)];
 
-    // 2. 검색어 필터링 시뮬레이션 (선택 사항)
-    // 가끔 검색어를 넣어 'keywordContains' 동적 쿼리도 테스트
-    const keyword = Math.random() < 0.3 ? '테스트' : '';
-
-    const res = http.get(`${BASE_URL}/community-service/posts?category=${category}&keyword=${keyword}&page=0&size=10&sort=createdAt,desc`, headers);
+    const res = http.get(`${BASE_URL}/community-service/posts?category=${category}&page=0&size=10&sort=createdAt,desc`, headers);
 
     check(res, { 'Community List 200': (r) => r.status === 200 });
 }

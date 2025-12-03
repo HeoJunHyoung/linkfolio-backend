@@ -95,8 +95,8 @@ public class PostService {
 
     // 4. 게시글 목록 조회
     @Transactional(readOnly = true)
-    public Page<PostResponse> getPosts(PostCategory category, String keyword, Boolean isSolved, Pageable pageable) {
-        return postRepository.searchPosts(category, keyword, isSolved, pageable);
+    public Page<PostResponse> getPosts(PostCategory category, Boolean isSolved, Pageable pageable) {
+        return postRepository.searchPosts(category, isSolved, pageable);
     }
 
     // 5. 게시글 상세 조회

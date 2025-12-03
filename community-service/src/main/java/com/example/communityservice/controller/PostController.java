@@ -80,10 +80,9 @@ public class PostController {
     @GetMapping("/posts")
     public ResponseEntity<CustomPageResponse<PostResponse>> getPosts(
             @Parameter(description = "카테고리 (QNA, INFO, RECRUIT)") @RequestParam(required = false) PostCategory category,
-            @Parameter(description = "검색 키워드 (제목 + 내용)") @RequestParam(required = false) String keyword,
             @Parameter(description = "해결 여부 (QnA 전용)") @RequestParam(required = false) Boolean isSolved,
             @Parameter(description = "페이징 설정 (기본: 최신순 10개)") @PageableDefault(size = 10, sort = "createdAt", direction = Sort.Direction.DESC) Pageable pageable) {
-        Page<PostResponse> page = postService.getPosts(category, keyword, isSolved, pageable);
+        Page<PostResponse> page = postService.getPosts(category, isSolved, pageable);
         return ResponseEntity.ok(new CustomPageResponse<>(page));
     }
 

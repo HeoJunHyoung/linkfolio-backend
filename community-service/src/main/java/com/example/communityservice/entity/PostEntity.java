@@ -15,9 +15,17 @@ import java.util.List;
 
 @Entity
 @Table(name = "community_post", indexes = {
-        @Index(name = "idx_post_category_view", columnList = "category, view_count DESC"), // 1. 카테고리별 조회수 정렬 (인기글)
-        @Index(name = "idx_post_category_date", columnList = "category, created_at DESC"), // 2. 카테고리별 최신순 정렬 (목록)
-        @Index(name = "idx_post_user_id", columnList = "user_id") // 3. 내가 쓴 글 조회
+        // 1. [QnA 최적화] 카테고리 + 해결여부 + 최신순 (가장 많이 씀)
+        @Index(name = "idx_post_qna_date", columnList = "category, is_solved, created_at DESC"),
+
+        // 2. [인기글/공통] 카테고리 + 조회순 (해결여부 무관)
+        @Index(name = "idx_post_category_view", columnList = "category, view_count DESC"),
+
+        // 3. [일반 목록] 카테고리 + 최신순 (INFO, RECRUIT 등 해결여부 없는 카테고리용)
+        @Index(name = "idx_post_category_date", columnList = "category, created_at DESC"),
+
+        // 4. [마이페이지] 작성자별 조회
+        @Index(name = "idx_post_user_id", columnList = "user_id, created_at DESC")
 })
 @Getter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)

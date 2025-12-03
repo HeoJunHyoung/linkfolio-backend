@@ -32,7 +32,7 @@ public class PostRepositoryImpl implements PostRepositoryCustom {
 
     // 1. 게시글 목록 조회 (작성자 정보 Join 추가)
     @Override
-    public Page<PostResponse> searchPosts(PostCategory category, String keyword, Boolean isSolved, Pageable pageable) {
+    public Page<PostResponse> searchPosts(PostCategory category, Boolean isSolved, Pageable pageable) {
         List<PostResponse> content = queryFactory
                 .select(Projections.constructor(PostResponse.class,
                         post.id,
@@ -54,7 +54,6 @@ public class PostRepositoryImpl implements PostRepositoryCustom {
                 .leftJoin(userProfile).on(post.userId.eq(userProfile.userId))
                 .where(
                         categoryEq(category),
-                        keywordContains(keyword),
                         isSolvedEq(isSolved)
                 )
                 .offset(pageable.getOffset())
@@ -67,7 +66,6 @@ public class PostRepositoryImpl implements PostRepositoryCustom {
                 .from(post)
                 .where(
                         categoryEq(category),
-                        keywordContains(keyword),
                         isSolvedEq(isSolved)
                 )
                 .fetchOne();
@@ -199,11 +197,6 @@ public class PostRepositoryImpl implements PostRepositoryCustom {
         return category != null ? post.category.eq(category) : null;
     }
 
-    private BooleanExpression keywordContains(String keyword) {
-        if (keyword == null || keyword.isBlank()) return null;
-        return post.title.containsIgnoreCase(keyword)
-                .or(post.content.containsIgnoreCase(keyword));
-    }
 
     private BooleanExpression isSolvedEq(Boolean isSolved) {
         return isSolved != null ? post.isSolved.eq(isSolved) : null;
