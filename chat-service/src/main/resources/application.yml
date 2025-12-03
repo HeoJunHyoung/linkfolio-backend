@@ -53,3 +53,7 @@ management:
   metrics:
     tags:
       application: ${spring.application.name} # Grafana에서 서비스별로 구분하기 위해 태그 추가
+
+# --- Swagger (OpenAPI) ---
+springdoc:
+  override-with-generic-response: false
