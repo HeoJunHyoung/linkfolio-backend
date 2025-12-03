@@ -10,10 +10,16 @@ import com.example.userservice.entity.enumerate.UserProfileStatus;
 import com.example.commonmodule.exception.BusinessException;
 import com.example.userservice.repository.UserRepository;
 import com.example.userservice.util.UserMapper;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.cache.annotation.CacheEvict;
+import org.springframework.cache.annotation.Cacheable;
+import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+
+import java.util.concurrent.TimeUnit;
 
 import static com.example.userservice.exception.ErrorCode.*;
 
@@ -25,17 +31,42 @@ public class UserService {
     private final UserRepository userRepository;
     private final UserMapper userMapper;
 
+    // 수동 캐싱을 위해 RedisTemplate과 ObjectMapper 주입
+    private final RedisTemplate<String, Object> redisTemplate;
+    private final ObjectMapper objectMapper;
 
     // 회원 단일 조회 (내 정보 조회 / 특정 회원 조회)
     public UserInfoResponse getUser(Long userId) {
+        String cacheKey = "user:profile:" + userId;
+
+        // 1. Redis에서 조회
+        try {
+            Object cachedData = redisTemplate.opsForValue().get(cacheKey);
+            if (cachedData != null) {
+                // Redis에서 가져온 데이터(LinkedHashMap)를 UserInfoResponse 객체로 안전하게 변환
+                return objectMapper.convertValue(cachedData, UserInfoResponse.class);
+            }
+        } catch (Exception e) {
+            log.warn("Redis 캐시 조회 중 오류 발생 (DB에서 조회 시도): {}", e.getMessage());
+        }
+
+        // 2. 캐시에 없으면 DB 조회
         UserProfileEntity userProfileEntity = userRepository.findById(userId)
                 .orElseThrow(() -> new BusinessException(USER_NOT_FOUND));
 
-        // [예외처리] .name()이 없어 NPE가 발생할 수 있는 부분 수정
         String genderString = (userProfileEntity.getGender() != null) ? userProfileEntity.getGender().name() : null;
 
-        return UserInfoResponse.of(userProfileEntity.getEmail(), userProfileEntity.getUsername(), userProfileEntity.getName(),
+        UserInfoResponse response = UserInfoResponse.of(userProfileEntity.getEmail(), userProfileEntity.getUsername(), userProfileEntity.getName(),
                 userProfileEntity.getBirthdate(), genderString);
+
+        // 3. 조회된 데이터를 Redis에 저장 (TTL 1시간)
+        try {
+            redisTemplate.opsForValue().set(cacheKey, response, 1, TimeUnit.HOURS);
+        } catch (Exception e) {
+            log.warn("Redis 캐시 저장 실패: {}", e.getMessage());
+        }
+
+        return response;
     }
 
     /**
@@ -54,6 +85,15 @@ public class UserService {
         // 3. DB 저장 (이 시점에 CDC가 UPDATE 이벤트를 감지)
         UserProfileEntity updatedProfile = userRepository.save(userProfile);
         log.info("프로필 '수정' 완료. DB 저장 성공. UserId: {}", updatedProfile.getUserId());
+
+        // 4. Redis 캐시 수동 삭제 (데이터 정합성 유지)
+        String cacheKey = "user:profile:" + userId;
+        try {
+            redisTemplate.delete(cacheKey);
+            log.info("Redis 캐시 삭제 완료 Key: {}", cacheKey);
+        } catch (Exception e) {
+            log.error("Redis 캐시 삭제 실패: {}", e.getMessage());
+        }
 
         // 5. DTO로 변환하여 반환
         return userMapper.toUserResponse(updatedProfile);

@@ -8,6 +8,8 @@ import com.example.supportservice.entity.enumerate.FaqCategory;
 import com.example.supportservice.exception.ErrorCode;
 import com.example.supportservice.repository.FaqRepository;
 import lombok.RequiredArgsConstructor;
+import org.springframework.cache.annotation.CacheEvict;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -21,13 +23,15 @@ public class FaqService {
 
     private final FaqRepository faqRepository;
 
-    // 자주 묻는 질문 전체 목록 조회
+    // 자주 묻는 질문 조회 (title과 contents를 모두 FaqResponse에 담아서 반환 = 목록 조회, 상세 조회 구분 없음)
+    @Cacheable(value = "faqs", key = "'all'")
     public List<FaqResponse> getAllFaqs() {
         return faqRepository.findAll().stream()
                 .map(this::toResponse)
                 .collect(Collectors.toList());
     }
 
+    @Cacheable(value = "faqs", key = "#category")
     public List<FaqResponse> getFaqsByCategory(FaqCategory category) {
         return faqRepository.findAllByCategory(category).stream()
                 .map(this::toResponse)
@@ -36,6 +40,7 @@ public class FaqService {
 
     // 자주 묻는 질문 생성
     @Transactional
+    @CacheEvict(value = "faqs", allEntries = true)
     public void createFaq(FaqRequest request) {
         FaqEntity faq = FaqEntity.builder()
                 .category(request.getCategory())
@@ -47,6 +52,7 @@ public class FaqService {
 
     // 자주 묻는 질문 수정
     @Transactional
+    @CacheEvict(value = "faqs", allEntries = true)
     public void updateFaq(Long id, FaqRequest request) {
         FaqEntity faq = faqRepository.findById(id)
                 .orElseThrow(() -> new BusinessException(ErrorCode.FAQ_NOT_FOUND));
@@ -55,6 +61,7 @@ public class FaqService {
 
     // 자주 묻는 질문 삭제
     @Transactional
+    @CacheEvict(value = "faqs", allEntries = true)
     public void deleteFaq(Long id) {
         faqRepository.deleteById(id);
     }

@@ -14,7 +14,19 @@ import java.util.ArrayList;
 import java.util.List;
 
 @Entity
-@Table(name = "community_post")
+@Table(name = "community_post", indexes = {
+        // 1. [QnA 최적화] 카테고리 + 해결여부 + 최신순 (가장 많이 씀)
+        @Index(name = "idx_post_qna_date", columnList = "category, is_solved, created_at DESC"),
+
+        // 2. [인기글/공통] 카테고리 + 조회순 (해결여부 무관)
+        @Index(name = "idx_post_category_view", columnList = "category, view_count DESC"),
+
+        // 3. [일반 목록] 카테고리 + 최신순 (INFO, RECRUIT 등 해결여부 없는 카테고리용)
+        @Index(name = "idx_post_category_date", columnList = "category, created_at DESC"),
+
+        // 4. [마이페이지] 작성자별 조회
+        @Index(name = "idx_post_user_id", columnList = "user_id, created_at DESC")
+})
 @Getter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 public class PostEntity extends BaseEntity {
@@ -32,8 +44,7 @@ public class PostEntity extends BaseEntity {
     @Column(nullable = false)
     private String title;
 
-    @Lob
-    @Column(nullable = false, columnDefinition = "LONGTEXT")
+    @Column(nullable = false, columnDefinition = "MEDIUMTEXT")
     private String content;
 
     @Column(nullable = false)
@@ -43,6 +54,10 @@ public class PostEntity extends BaseEntity {
     @Column(nullable = false)
     @ColumnDefault("0")
     private Long bookmarkCount = 0L;
+
+    @Column(nullable = false)
+    @ColumnDefault("0")
+    private Long commentCount = 0L;
 
     @Column(nullable = false)
     @ColumnDefault("false")
@@ -71,20 +86,32 @@ public class PostEntity extends BaseEntity {
         this.content = content;
     }
 
-    public void increaseViewCount() {
-        this.viewCount++;
+    // === 통계 데이터 증감 메서드 ===
+
+    // 조회수 증가 (스케줄러가 사용)
+    public void increaseViewCount(Long count) {
+        this.viewCount += count;
     }
 
-    // 북마크 증가
+    // 댓글 수 관리
+    public void increaseCommentCount() {
+        this.commentCount++;
+    }
+
+    public void decreaseCommentCount() {
+        this.commentCount = Math.max(0, this.commentCount - 1);
+    }
+
+    // 북마크 수 관리
     public void increaseBookmarkCount() {
         this.bookmarkCount++;
     }
 
-    // 북마크 감소
     public void decreaseBookmarkCount() {
         this.bookmarkCount = Math.max(0, this.bookmarkCount - 1);
     }
 
+    // 상태 변경 메서드
     public void markAsSolved() {
         if (this.category == PostCategory.QNA) {
             this.isSolved = true;
@@ -96,5 +123,4 @@ public class PostEntity extends BaseEntity {
             this.recruitmentStatus = status;
         }
     }
-
 }

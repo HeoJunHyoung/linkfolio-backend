@@ -9,5 +9,5 @@ import lombok.NoArgsConstructor;
 @AllArgsConstructor
 public class UserProfileCreationFailureEvent {
     private Long userId;
-    private String reason; // 실패 사유
+    private String reason;
 }

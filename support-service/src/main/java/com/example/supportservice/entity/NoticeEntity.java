@@ -5,7 +5,9 @@ import jakarta.persistence.*;
 import lombok.*;
 
 @Entity
-@Table(name = "notice")
+@Table(name = "notice", indexes = {
+        @Index(name = "idx_notice_important_date", columnList = "is_important DESC, created_at DESC")
+})
 @Getter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 public class NoticeEntity extends BaseEntity {

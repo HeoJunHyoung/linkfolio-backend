@@ -1,0 +1,21 @@
+     ✗ User Update 200
+      ↳  98% — ✓ 284 / ✗ 3
+     ✓ User GetMe 200
+
+     checks.........................: 99.64% ✓ 832      ✗ 3   
+     data_received..................: 415 kB 3.4 kB/s
+     data_sent......................: 323 kB 2.6 kB/s
+     http_req_blocked...............: avg=46.1µs  min=0s       med=0s     max=3.75ms   p(90)=0s     p(95)=0s      
+     http_req_connecting............: avg=44.7µs  min=0s       med=0s     max=3.14ms   p(90)=0s     p(95)=0s      
+   ✗ http_req_duration..............: avg=2.28s   min=0s       med=2.17s  max=9.1s     p(90)=3.91s  p(95)=4.73s   
+       { expected_response:true }...: avg=2.29s   min=101.19ms med=2.18s  max=9.1s     p(90)=3.92s  p(95)=4.73s   
+   ✓ http_req_failed................: 0.35%  ✓ 3        ✗ 833 
+     http_req_receiving.............: avg=24.03ms min=0s       med=3.84ms max=711.77ms p(90)=53.1ms p(95)=122.32ms
+     http_req_sending...............: avg=6.47µs  min=0s       med=0s     max=1ms      p(90)=0s     p(95)=0s      
+     http_req_tls_handshaking.......: avg=0s      min=0s       med=0s     max=0s       p(90)=0s     p(95)=0s      
+     http_req_waiting...............: avg=2.26s   min=0s       med=2.15s  max=9.1s     p(90)=3.86s  p(95)=4.71s   
+     http_reqs......................: 836    6.783296/s
+     iteration_duration.............: avg=3.63s   min=1.1s     med=3.45s  max=11.1s    p(90)=5.38s  p(95)=6.34s   
+     iterations.....................: 835    6.775182/s
+     vus............................: 3      min=3      max=40
+     vus_max........................: 40     min=40     max=40

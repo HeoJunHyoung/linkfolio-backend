@@ -41,11 +41,21 @@ spring:
         schema.registry.url: http://10.0.2.9:8081
         specific.avro.reader: false
 
-# --- Feign Client Configuration ---
-app:
-  feign:
-    user-service-url: http://user-service:80 # k8s ?? ??? ??
-
 # --- Swagger (OpenAPI) ---
 springdoc:
   override-with-generic-response: false
+
+# --- Monitoring Configuration (Added) ---
+management:
+  endpoints:
+    web:
+      exposure:
+        include: prometheus, health, info  # 프로메테우스 지표 노출 허용
+  endpoint:
+    health:
+      show-details: always
+    prometheus:
+      enabled: true
+  metrics:
+    tags:
+      application: ${spring.application.name} # Grafana에서 서비스별로 구분하기 위해 태그 추가

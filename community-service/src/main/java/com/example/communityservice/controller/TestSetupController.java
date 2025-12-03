@@ -40,12 +40,18 @@ public class TestSetupController {
 
         // 2. 데이터 생성
         List<PostEntity> posts = new ArrayList<>();
+
+        PostCategory[] categories = PostCategory.values();
+
         for (int i = 0; i < count; i++) {
+
+            PostCategory category = categories[i % categories.length];
+
             posts.add(PostEntity.builder()
                     .userId(userId)
                     .title("성능 테스트용 게시글 " + i)
                     .content("이 게시글은 성능 테스트를 위해 생성된 더미 데이터입니다. ".repeat(5)) // 내용 불리기
-                    .category(PostCategory.INFO)
+                    .category(category)
                     .build());
         }
 

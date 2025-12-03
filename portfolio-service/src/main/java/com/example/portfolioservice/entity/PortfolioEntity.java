@@ -9,11 +9,20 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import org.hibernate.annotations.ColumnDefault;
 
+import java.time.LocalDateTime;
+import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
 import java.util.List;
 
 @Entity
-@Table(name = "`portfolio`")
+@Table(name = "`portfolio`", indexes = {
+        // 인기순 정렬 (필터링 X)
+        @Index(name = "idx_portfolio_popularity", columnList = "is_published, popularity_score DESC"),
+        // 최신순(수정순) 정렬 (필터링 X)
+        @Index(name = "idx_portfolio_publish_date", columnList = "is_published, last_modified_at DESC"),
+        // 직군별 필터링 + 최신 수정순 정렬 (커버링 인덱스 효과)
+        @Index(name = "idx_portfolio_position_publish_date", columnList = "is_published, position, last_modified_at DESC")
+})
 @Getter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 public class PortfolioEntity extends BaseEntity {
@@ -68,9 +77,11 @@ public class PortfolioEntity extends BaseEntity {
 
     @Column(name = "like_count", nullable = false)
     @ColumnDefault("0")
-    private Long likeCount = 0L;
+    private Long likeCount = 0L; // 북마크 수
 
-
+    @Column(name = "popularity_score")
+    @ColumnDefault("0")
+    private Long popularityScore = 0L;
 
     // == 생성자 == //
     @Builder
@@ -99,8 +110,10 @@ public class PortfolioEntity extends BaseEntity {
     }
 
     // --- 내부 헬퍼 메서드 --- //
-    public void increaseViewCount() {
-        this.viewCount++;
+
+    // 스케줄러가 조회수 반영할 때 사용
+    public void increaseViewCount(Long count) {
+        this.viewCount += count;
     }
 
     public void increaseLikeCount() {
@@ -110,7 +123,6 @@ public class PortfolioEntity extends BaseEntity {
     public void decreaseLikeCount() {
         this.likeCount = Math.max(0, this.likeCount - 1);
     }
-
 
     // 사용자가 입력한 포트폴리오 정보 갱신
     public void updateUserInput(String photoUrl, String oneLiner, String content, String position, List<String> hashtags) {
@@ -130,7 +142,19 @@ public class PortfolioEntity extends BaseEntity {
         if (!this.isPublished) {
             this.isPublished = true;
         }
+        calculateAndSetPopularityScore();
     }
 
+    // 점수 계산 로직
+    // ㄴ Hacker News 알고리즘의 변형(시간이 지날수록 분모가 커져서 점수가 낮아지도록) -> Score = (Points) / (Time + 2)^1.5
+    public void calculateAndSetPopularityScore() {
+        long points = (this.viewCount * 1) + (this.likeCount * 50);
+
+        LocalDateTime timeBase = (this.getLastModifiedAt() != null) ? this.getLastModifiedAt() : LocalDateTime.now();
+        long hoursDiff = Math.max(0, ChronoUnit.HOURS.between(timeBase, LocalDateTime.now()));
+        double timeFactor = Math.pow(hoursDiff + 2, 1.5);
+
+        this.popularityScore = (long) ((points * 1000) / timeFactor);
+    }
 
 }

@@ -4,6 +4,7 @@ on:
   push:
     branches:
       - dev
+      - perf/after-optimization
     paths-ignore:
       - 'tests/**'       # k6 스크립트
       - 'docs/**'        # 문서 폴더

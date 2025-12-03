@@ -2,6 +2,7 @@
 import http from 'k6/http';
 import { check, fail } from 'k6';
 
+//
 // 로그인 후 헤더(Authorization) 반환
 export function loginAndGetHeader(baseUrl, username, password) {
 

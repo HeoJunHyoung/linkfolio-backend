@@ -2,6 +2,7 @@
 import http from 'k6/http';
 import { check } from 'k6';
 
+//
 // 1. 실제 로그인 가능한 유저 생성 (Auth + User + Portfolio 연쇄 저장)
 export function seedRealUsers(baseUrl, startIdx, count) {
     const BATCH_SIZE = 10;
