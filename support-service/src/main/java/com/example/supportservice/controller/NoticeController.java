@@ -28,11 +28,7 @@ public class NoticeController {
 
     private final NoticeService noticeService;
 
-    // ==========================
-    // Public API (인증 불필요)
-    // ==========================
-
-    @Operation(summary = "공지사항 목록 조회", description = "모든 사용자가 접근 가능합니다. 중요 공지가 상단에 고정되며, 그 안에서는 최신순으로 정렬됩니다.")
+    @Operation(summary = "공지사항 목록 조회", description = "모든 사용자가 접근 가능합니다.")
     @ApiResponses(value = {
             @ApiResponse(responseCode = "200", description = "조회 성공"),
             @ApiResponse(responseCode = "500", description = "서버 내부 오류", content = @Content(schema = @Schema(implementation = ErrorResponse.class)))
@@ -53,11 +49,7 @@ public class NoticeController {
         return ResponseEntity.ok(noticeService.getNotice(id));
     }
 
-    // ==========================
-    // Admin API (ADMIN 권한 필요)
-    // ==========================
-
-    @Operation(summary = "[Admin] 공지사항 등록", description = "새로운 공지사항을 등록합니다. (ADMIN 권한 필수)")
+    @Operation(summary = "[Admin] 공지사항 등록", description = "새로운 공지사항을 등록합니다.")
     @ApiResponses(value = {
             @ApiResponse(responseCode = "201", description = "등록 성공"),
             @ApiResponse(responseCode = "400", description = "입력값 검증 실패 (제목/내용 누락 등)", content = @Content(schema = @Schema(implementation = ErrorResponse.class))),
@@ -72,6 +64,7 @@ public class NoticeController {
     @Operation(summary = "[Admin] 공지사항 수정", description = "기존 공지사항을 수정합니다.")
     @ApiResponses(value = {
             @ApiResponse(responseCode = "200", description = "수정 성공"),
+            @ApiResponse(responseCode = "403", description = "권한 없음", content = @Content(schema = @Schema(implementation = ErrorResponse.class))),
             @ApiResponse(responseCode = "404", description = "공지사항을 찾을 수 없음 [N001]", content = @Content(schema = @Schema(implementation = ErrorResponse.class)))
     })
     @PutMapping("/admin/notices/{id}")
@@ -83,6 +76,7 @@ public class NoticeController {
     @Operation(summary = "[Admin] 공지사항 삭제", description = "공지사항을 삭제합니다.")
     @ApiResponses(value = {
             @ApiResponse(responseCode = "200", description = "삭제 성공"),
+            @ApiResponse(responseCode = "403", description = "권한 없음", content = @Content(schema = @Schema(implementation = ErrorResponse.class))),
             @ApiResponse(responseCode = "404", description = "공지사항을 찾을 수 없음 [N001]", content = @Content(schema = @Schema(implementation = ErrorResponse.class)))
     })
     @DeleteMapping("/admin/notices/{id}")

@@ -27,10 +27,6 @@ public class FaqController {
 
     private final FaqService faqService;
 
-    // ==========================
-    // Public API (인증 불필요)
-    // ==========================
-
     @Operation(summary = "FAQ 목록 조회", description = "카테고리별 혹은 전체 FAQ 목록을 조회합니다.")
     @ApiResponses(value = {
             @ApiResponse(responseCode = "200", description = "조회 성공"),
@@ -47,10 +43,6 @@ public class FaqController {
         return ResponseEntity.ok(faqService.getAllFaqs());
     }
 
-    // ==========================
-    // Admin API (ADMIN 권한 필요)
-    // ==========================
-
     @Operation(summary = "[Admin] FAQ 등록", description = "새로운 FAQ를 등록합니다. (ADMIN 권한 필수)")
     @ApiResponses(value = {
             @ApiResponse(responseCode = "201", description = "등록 성공"),
@@ -66,6 +58,7 @@ public class FaqController {
     @Operation(summary = "[Admin] FAQ 수정", description = "기존 FAQ를 수정합니다.")
     @ApiResponses(value = {
             @ApiResponse(responseCode = "200", description = "수정 성공"),
+            @ApiResponse(responseCode = "403", description = "권한 없음", content = @Content(schema = @Schema(implementation = ErrorResponse.class))),
             @ApiResponse(responseCode = "404", description = "FAQ를 찾을 수 없음 [F001]", content = @Content(schema = @Schema(implementation = ErrorResponse.class)))
     })
     @PutMapping("/admin/faqs/{id}")
@@ -77,6 +70,7 @@ public class FaqController {
     @Operation(summary = "[Admin] FAQ 삭제", description = "FAQ를 삭제합니다.")
     @ApiResponses(value = {
             @ApiResponse(responseCode = "200", description = "삭제 성공"),
+            @ApiResponse(responseCode = "403", description = "권한 없음", content = @Content(schema = @Schema(implementation = ErrorResponse.class))),
             @ApiResponse(responseCode = "404", description = "FAQ를 찾을 수 없음 [F001]", content = @Content(schema = @Schema(implementation = ErrorResponse.class)))
     })
     @DeleteMapping("/admin/faqs/{id}")

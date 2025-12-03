@@ -123,6 +123,9 @@ app:
       - /community-service/community/test/setup
       - /support-service/support/test/setup
 
+      - /chat-service/v3/api-docs/**
+      - /ws-chat/**
+
 # JWT Token Settings
 jwt:
   secret: ${JWT_SECRET}
@@ -144,6 +147,8 @@ springdoc:
         url: https://impressionless-connaturally-jonie.ngrok-free.dev/support-service/v3/api-docs
       - name: 5. Community Service
         url: https://impressionless-connaturally-jonie.ngrok-free.dev/community-service/v3/api-docs
+      - name: 6. Chat Service
+        url: https://impressionless-connaturally-jonie.ngrok-free.dev/chat-service/v3/api-docs
 
 
   # 게이트웨이의 공인 주소(ngrok)를 명시하여 Mixed Content 문제 해결
