@@ -30,7 +30,6 @@ import static com.example.communityservice.exception.ErrorCode.*;
 
 @Service
 @RequiredArgsConstructor
-@Transactional(readOnly = true)
 @Slf4j
 public class PostService {
 
@@ -47,7 +46,7 @@ public class PostService {
     private static final String POST_INFO_KEY_PREFIX = "post:info:";
     private static final String POST_STATS_KEY_PREFIX = "post:stats:";
 
-    // Batch Keys (views는 계속 쌓이는 accumulate 값이고 북마크/댓글은 증감이 빈번한 값이라서 아래처럼 변화량를 명확히 하기 위해서 delta라고 이름 지었음)
+    // Batch Keys
     private static final String VIEW_BATCH_KEY = "post:views";
     private static final String BOOKMARK_BATCH_KEY = "post:bookmarks:delta";
     private static final String COMMENT_BATCH_KEY = "post:comments:delta";
@@ -75,6 +74,7 @@ public class PostService {
         }
 
         post.update(request.getTitle(), request.getContent());
+        // 캐시 무효화 (DB 커밋 전/후 언제든 상관없으나, 트랜잭션 안에서 수행)
         redisTemplate.delete(POST_INFO_KEY_PREFIX + postId);
     }
 
@@ -94,31 +94,37 @@ public class PostService {
     }
 
     // 4. 게시글 목록 조회
+    @Transactional(readOnly = true)
     public Page<PostResponse> getPosts(PostCategory category, String keyword, Boolean isSolved, Pageable pageable) {
         return postRepository.searchPosts(category, keyword, isSolved, pageable);
     }
 
     // 5. 게시글 상세 조회
-    @Transactional
     public PostDetailResponse getPostDetail(Long postId, Long currentUserId) {
 
-        // A. 조회수 증가 (Redis)
+        // A. 조회수 증가 (Redis) - DB 연결 필요 없음
         redisTemplate.opsForHash().increment(POST_STATS_KEY_PREFIX + postId, "viewCount", 1L);
         redisTemplate.opsForHash().increment(VIEW_BATCH_KEY, String.valueOf(postId), 1L);
 
         // B. 게시글 본문 조회
+        // 내부적으로 Repository 호출 시 순간적으로 커넥션을 얻고 즉시 반환함
         PostDetailResponse response = getCachedPostBaseInfo(postId);
 
-        // C. 댓글 목록 조회
+        // C. 댓글 목록 조회 (DB)
+        // 이 시점에 커넥션을 얻고, 쿼리 실행 후 즉시 반환
         List<CommentResponse> comments = postRepository.findCommentsByPostId(postId);
         response.setComments(convertToCommentHierarchy(comments));
 
-        // D. 통계 데이터 병합 (댓글 수, 북마크 수 등)
+        // D. 통계 데이터 병합 (Redis) - DB 연결 필요 없음
         mergeDynamicStats(postId, response);
 
-        // E. 개인화 정보 확인
+        // E. 개인화 정보 확인 (DB)
+        // 캐시된 데이터(response)는 공통 정보이므로, 내 북마크 여부는 별도로 확인해야 함.
         if (currentUserId != null) {
+            // getReferenceById는 프록시만 가져오므로 DB 조회 발생 안 함
             PostEntity proxyPost = postRepository.getReferenceById(postId);
+            // exists 쿼리는 매우 가볍고, 인덱스를 타므로 성능 영향 미미함.
+            // 핵심은 이 쿼리 수행 시간 동안만 커넥션을 점유한다는 것임.
             boolean isBookmarked = postBookmarkRepository.existsByPostAndUserId(proxyPost, currentUserId);
             response.setBookmarked(isBookmarked);
         }
@@ -146,7 +152,6 @@ public class PostService {
 
         commentRepository.save(comment);
 
-        // DB Update 제거 -> Redis 반영
         redisTemplate.opsForHash().increment(POST_STATS_KEY_PREFIX + postId, "commentCount", 1L);
         redisTemplate.opsForHash().increment(COMMENT_BATCH_KEY, String.valueOf(postId), 1L);
     }
@@ -173,7 +178,6 @@ public class PostService {
 
         commentRepository.delete(comment);
 
-        // DB Update 제거 -> Redis 반영
         redisTemplate.opsForHash().increment(POST_STATS_KEY_PREFIX + postId, "commentCount", -1L);
         redisTemplate.opsForHash().increment(COMMENT_BATCH_KEY, String.valueOf(postId), -1L);
     }
@@ -213,7 +217,8 @@ public class PostService {
         );
     }
 
-    // 11. 팀원 모집 지원
+    // 11. 팀원 모집 지원 (Read/Feign -> DB Write 없음)
+    @Transactional(readOnly = true)
     public void applyTeam(Long applicantId, Long postId) {
         PostEntity post = postRepository.findById(postId).orElseThrow(() -> new BusinessException(POST_NOT_FOUND));
         if (post.getCategory() != PostCategory.RECRUIT) throw new BusinessException(NOT_RECRUIT_CATEGORY);
@@ -239,10 +244,12 @@ public class PostService {
     }
 
     // 13. 마이페이지 관련 조회
+    @Transactional(readOnly = true)
     public Page<MyPostResponse> getMyPosts(Long userId, PostCategory category, Pageable pageable) {
         return postRepository.findMyPosts(userId, category, pageable);
     }
 
+    @Transactional(readOnly = true)
     public Page<MyBookmarkPostResponse> getMyBookmarkedPosts(Long userId, PostCategory category, Pageable pageable) {
         return postRepository.findMyBookmarkedPosts(userId, category, pageable);
     }
@@ -263,6 +270,8 @@ public class PostService {
             }
         }
 
+        // Cache Miss -> DB 조회
+        // Repository 메서드 호출 시점에만 DB 커넥션 사용
         PostDetailResponse response = postRepository.findPostDetailById(postId, null)
                 .orElseThrow(() -> new BusinessException(POST_NOT_FOUND));
         response.setComments(new ArrayList<>());
@@ -283,16 +292,13 @@ public class PostService {
         Object bookmarkCount = stats.get(1);
         Object commentCount = stats.get(2);
 
-        // Redis에 값이 하나라도 없으면(Cache Miss), DTO(DB) 값으로 초기화
         if (viewCount == null || bookmarkCount == null || commentCount == null) {
             redisTemplate.opsForHash().putIfAbsent(statsKey, "viewCount", String.valueOf(response.getViewCount()));
             redisTemplate.opsForHash().putIfAbsent(statsKey, "bookmarkCount", String.valueOf(response.getBookmarkCount()));
 
-            // DTO에 commentCount가 있으므로 안전하게 초기화 가능
             String dbCommentCount = response.getCommentCount() != null ? String.valueOf(response.getCommentCount()) : "0";
             redisTemplate.opsForHash().putIfAbsent(statsKey, "commentCount", dbCommentCount);
         } else {
-            // Redis Hit: Redis 값으로 DTO 덮어쓰기
             response.setViewCount(Long.parseLong(viewCount.toString()));
             response.setBookmarkCount(Long.parseLong(bookmarkCount.toString()));
             response.setCommentCount(Long.parseLong(commentCount.toString()));

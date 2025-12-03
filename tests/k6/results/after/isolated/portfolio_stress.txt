@@ -1,0 +1,22 @@
+     ✗ Portfolio List 200
+      ↳  99% — ✓ 397 / ✗ 1
+     ✗ Portfolio Detail 200
+      ↳  99% — ✓ 397 / ✗ 1
+
+     checks.........................: 99.74% ✓ 794      ✗ 2   
+     data_received..................: 2.4 MB 13 kB/s
+     data_sent......................: 636 kB 3.5 kB/s
+     http_req_blocked...............: avg=10.07µs min=0s       med=0s       max=1.18ms   p(90)=0s      p(95)=0s      
+     http_req_connecting............: avg=9.41µs  min=0s       med=0s       max=1.18ms   p(90)=0s      p(95)=0s      
+   ✗ http_req_duration..............: avg=1.08s   min=60.21ms  med=750.65ms max=30.72s   p(90)=1.82s   p(95)=2.29s   
+       { expected_response:true }...: avg=1.07s   min=60.21ms  med=748.91ms max=28.58s   p(90)=1.82s   p(95)=2.29s   
+   ✓ http_req_failed................: 0.12%  ✓ 2        ✗ 1629
+     http_req_receiving.............: avg=23.6ms  min=0s       med=977.3µs  max=295.19ms p(90)=80.82ms p(95)=115.45ms
+     http_req_sending...............: avg=3.17µs  min=0s       med=0s       max=1.03ms   p(90)=0s      p(95)=0s      
+     http_req_tls_handshaking.......: avg=0s      min=0s       med=0s       max=0s       p(90)=0s      p(95)=0s      
+     http_req_waiting...............: avg=1.06s   min=60.21ms  med=726.05ms max=30.72s   p(90)=1.77s   p(95)=2.24s   
+     http_reqs......................: 1631   8.94577/s
+     iteration_duration.............: avg=3.9s    min=743.81ms med=3.62s    max=37.66s   p(90)=5.99s   p(95)=6.75s   
+     iterations.....................: 815    4.470143/s
+     vus............................: 1      min=1      max=20
+     vus_max........................: 20     min=20     max=20
