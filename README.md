@@ -1,10 +1,25 @@
 # 🔗 LinkFolio
 ### 🧑‍💻 개발자를 위한 포트폴리오 공유 및 커뮤니티 플랫폼
+
+> **개발 기간: 2025.10.27 ~ 2025.12.12**
 <p align="center">
   <img src="images/etc/linkfolio_logo.png" width="750" alt="linkfolio"/>
+  <br/>
+  <br/>
+  <a href="https://github.com/HeoJunHyoung/Linkfolio-backend">
+    <img src="https://img.shields.io/badge/GitHub-Backend-181717?style=for-the-badge&logo=github"/>
+  </a>
+  &nbsp; <a href="https://github.com/park/Linkfolio-backend">
+    <img src="https://img.shields.io/badge/GitHub-Frontend-181717?style=for-the-badge&logo=github"/>
+  </a>
+  &nbsp;
+  <a href="https://github.com/HeoJunHyoung/Linkfolio-manifest">
+    <img src="https://img.shields.io/badge/GitHub-Manifest-181717?style=for-the-badge&logo=github"/>
+  </a>
 </p>
 
 ---
+
 ## 목차
 1. [📋 프로젝트 개요](#-프로젝트-개요)
 2. [🎯 앱 주요 기능](#-앱-주요-기능)
@@ -18,16 +33,13 @@
 ---
 
 ## 📋 프로젝트 개요
+### **"파편화된 개발자의 경험을 하나로, LinkFolio"**
 
-**LinkFolio**는 개발자들이 자신의 기술 스택과 프로젝트 경험을 체계적으로 관리하고 공유할 수 있는 플랫폼입니다. 단순한 이력서 호스팅을 넘어, **실시간 채팅**과 **커뮤니티** 기능을 통해 개발자 간의 협업과 지식 공유가 가능한 생태계를 제공합니다.
+현대 채용 시장에서 개발자의 이력은 GitHub, 기술 블로그, LinkedIn 등으로 분산되어 관리의 번거로움이 존재합니다. **LinkFolio**는 이러한 **정보의 파편화(Fragmentation)를 해결**하고, 구직자가 자신의 전문성을 효과적으로 증명할 수 있도록 돕는 **퍼스널 브랜딩 및 채용 통합 관리 플랫폼**입니다.
 
-<b> 제작 기간:</b> 2025/10/27 ~ 2025/12/12 <br/>
-<b> Backend GitHub:</b> https://github.com/HeoJunHyoung/Linkfolio-backend <br/>
-<b> Frontend GitHub:</b> https://github.com/park/Linkfolio-backend <br/>
-<b> Manifest GitHub:</b> https://github.com/HeoJunHyoung/Linkfolio-manifest <br/>
+단순한 링크 모음(Link-in-Bio) 서비스를 넘어, 프로젝트 경험과 기술 스택을 시각적으로 구조화하여 보여줍니다. 또한, 기업과 구직자가 직접 소통할 수 있는 **실시간 채팅**과 **커뮤니티** 기능을 통해, 정적인 이력서 제출 방식을 넘어선 **양방향 채용 생태계**를 지향합니다.
 
 ---
-
 ## 🎯 앱 주요 기능
 
 ### 1. 회원가입 및 계정 관리 (Authentication)
