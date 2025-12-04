@@ -16,67 +16,7 @@
 
 ---
 
-## 1️⃣ 팀원 구성 및 역할
-
-<table>
-  <tr>
-    <td align="center" width="50%">
-      <a href="https://github.com/HeoJunHyoung">
-        <img src="https://github.com/HeoJunHyoung.png" width="120" style="border-radius:50%;"/>
-      </a>
-      <br/>
-      <h3>허준형</h3>
-    </td>
-    <td align="center" width="50%">
-      <a href="https://github.com/park-sunghyun">
-        <img src="https://github.com/park-sunghyun.png" width="120" style="border-radius:50%;"/>
-      </a>
-      <br/>
-      <h3>박성현</h3>
-    </td>
-  </tr>
-  <tr>
-    <td valign="top">
-      <br/>
-      <b>🛠 Architecture & DevOps</b><br/>
-      - MSA 환경 구축 및 시스템 아키텍처 설계<br/>
-      - On-Premise Kubernetes 클러스터 구축<br/>
-      - GitHub Actions & ArgoCD 기반 GitOps 구현<br/>
-      <br/>
-      <b>💻 Backend Development</b><br/>
-      - Kafka 기반 Event-Driven 데이터 동기화 처리<br/>
-      - Polyglot Persistence (MySQL, MongoDB, Redis) 설계<br/>
-    </td>
-    <td valign="top">
-      <br/>
-      <b>🎨 Frontend Development</b><br/>
-      - Next.js 기반 웹 클라이언트 아키텍처 설계<br/>
-      - 전역 상태 관리 및 렌더링 최적화 (SSR/CSR)<br/>
-      - WebSocket 클라이언트 연동 및 실시간 처리<br/>
-      <br/>
-      <b>✨ UI/UX Design</b><br/>
-      - 사용자 중심 서비스 플로우 및 인터페이스 설계<br/>
-      - 반응형 웹 디자인 및 인터랙티브 컴포넌트 개발<br/>
-      <br/>
-    </td>
-  </tr>
-</table>
-
-## 2️⃣ 기술 스택
-
-| Category | Technology |
-| :--- | :--- |
-| **Frontend** | ![Next.js](https://img.shields.io/badge/Next.js-000000?style=flat-square&logo=next.js&logoColor=white) ![Node.js](https://img.shields.io/badge/Node.js-339933?style=flat-square&logo=node.js&logoColor=white) ![HTML5](https://img.shields.io/badge/HTML5-E34F26?style=flat-square&logo=html5&logoColor=white) ![CSS3](https://img.shields.io/badge/CSS3-1572B6?style=flat-square&logo=css3&logoColor=white) ![JavaScript](https://img.shields.io/badge/JavaScript-F7DF1E?style=flat-square&logo=javascript&logoColor=black) |
-| **Backend** | ![Java](https://img.shields.io/badge/Java-007396?style=flat-square&logo=openjdk&logoColor=white) ![Spring Boot](https://img.shields.io/badge/Spring_Boot-6DB33F?style=flat-square&logo=springboot&logoColor=white) ![Spring Cloud](https://img.shields.io/badge/Spring_Cloud-6DB33F?style=flat-square&logo=spring&logoColor=white) ![Spring Security](https://img.shields.io/badge/Spring_Security-6DB33F?style=flat-square&logo=springsecurity&logoColor=white) ![QueryDSL](https://img.shields.io/badge/QueryDSL-007396?style=flat-square) ![WebSocket](https://img.shields.io/badge/WebSocket-000000?style=flat-square&logo=socket.io&logoColor=white) |
-| **Database** | ![MySQL](https://img.shields.io/badge/MySQL-4479A1?style=flat-square&logo=mysql&logoColor=white) ![MongoDB](https://img.shields.io/badge/MongoDB-47A248?style=flat-square&logo=mongodb&logoColor=white) ![Redis](https://img.shields.io/badge/Redis-DC382D?style=flat-square&logo=redis&logoColor=white) |
-| **Messaging** | ![Apache Kafka](https://img.shields.io/badge/Apache_Kafka-231F20?style=flat-square&logo=apachekafka&logoColor=white) ![Debezium](https://img.shields.io/badge/Debezium-000000?style=flat-square) ![Avro](https://img.shields.io/badge/Avro-231F20?style=flat-square&logo=apache) |
-| **Infra & DevOps** | ![Kubernetes](https://img.shields.io/badge/Kubernetes-326CE5?style=flat-square&logo=kubernetes&logoColor=white) ![Docker](https://img.shields.io/badge/Docker-2496ED?style=flat-square&logo=docker&logoColor=white) ![Ubuntu](https://img.shields.io/badge/Ubuntu-E95420?style=flat-square&logo=ubuntu&logoColor=white) ![GitHub Actions](https://img.shields.io/badge/GitHub_Actions-2088FF?style=flat-square&logo=githubactions&logoColor=white) ![ArgoCD](https://img.shields.io/badge/ArgoCD-EF7B4D?style=flat-square&logo=argo&logoColor=white) |
-| **Monitoring** | ![Prometheus](https://img.shields.io/badge/Prometheus-E6522C?style=flat-square&logo=prometheus&logoColor=white) ![Grafana](https://img.shields.io/badge/Grafana-F46800?style=flat-square&logo=grafana&logoColor=white) ![k6](https://img.shields.io/badge/k6-7D64FF?style=flat-square&logo=k6&logoColor=white) |
-| **Tools** | ![IntelliJ IDEA](https://img.shields.io/badge/IntelliJ_IDEA-000000?style=flat-square&logo=intellijidea&logoColor=white) ![VS Code](https://img.shields.io/badge/VS_Code-007ACC?style=flat-square&logo=visualstudiocode&logoColor=white) ![Swagger](https://img.shields.io/badge/Swagger-85EA2D?style=flat-square&logo=swagger&logoColor=black) ![Git](https://img.shields.io/badge/Git-F05032?style=flat-square&logo=git&logoColor=white) |
-
----
-
-## 3️⃣ 앱 주요 기능
+## 🎯 앱 주요 기능
 
 ### 1. 회원가입 및 계정 관리 (Authentication)
 
@@ -162,22 +102,81 @@
 </p>
 
 * **활동 내역 조회**: 내가 작성한 커뮤니티 게시글과 북마크한 포트폴리오/게시글을 한눈에 모아볼 수 있어, 관심 콘텐츠를 효율적으로 관리할 수 있습니다.
+
 ---
 
-## 4️⃣ 시스템 아키텍처
-LinkFolio는 도메인별로 독립적인 **7개의 마이크로서비스**와 **1개의 공통 모듈**로 구성되어 있습니다.
+## 🏗️ 시스템 아키텍처
+
+LinkFolio는 **On-Premise Kubernetes** 환경과 **외부 메시징 인프라**가 결합된 하이브리드 아키텍처로 구성되어 있습니다.
 
 <p align="center">
   <img src="images/etc/architecture_diagram.png" width="100%" alt="System Architecture Diagram"/>
 </p>
 
-## 5️⃣ 고도화 구현 기술 
+### 🌍 인프라 설계 및 배포 전략 (Infrastructure & Deployment)
+
+#### 1. Hybrid Cloud Topology
+시스템의 안정성과 리소스 효율성을 위해 **Kubernetes 클러스터**와 **메시징 시스템**을 물리적으로 분리하여 구축했습니다.
+
+* **Kubernetes Cluster (Self-Hosted On-Premise)**
+  * **VirtualBox VM** 위에 **3개의 노드(1 Master, 2 Worker)**로 구성된 클러스터를 직접 구축하여 운영합니다.
+  * 모든 마이크로서비스와 데이터베이스가 이곳에서 구동되며, `NodePort`를 통해 외부 네트워크(Kafka VM)와 통신합니다.
+* **External Messaging Server (Ubuntu VM)**
+  * Kafka, Zookeeper, Kafka Connect 등 이벤트 브로커 생태계가 독립된 환경에서 운영됩니다.
+  * K8s 리소스 부하와 격리된 환경에서 안정적인 메시지 처리를 보장합니다.
+
+#### 2. GitOps Workflow (ArgoCD)
+* **ArgoCD**가 Manifest 리포지토리(`linkfolio-manifest`)를 감시하며, 변경 사항 발생 시 Kubernetes 클러스터의 상태를 자동으로 동기화(Sync)합니다.
+
+### 💻 인프라 설계 상세 (Infrastructure Details)
+운영 환경에 대한 깊은 이해를 위해 관리형 도구(Minikube 등)를 사용하지 않고, **VirtualBox VM 기반의 3-Node 클러스터**를 구축했습니다.
+
+| 항목 | 구성 내용 | 비고 |
+| :--- | :--- | :--- |
+| **OS / Environment** | Ubuntu 22.04 LTS (VirtualBox) | 1 Master + 2 Worker Nodes |
+| **Provisioning** | **Kubeadm**, Kubelet, Kubectl | 클러스터 수동 프로비저닝 |
+| **Container Runtime** | **Containerd** | Docker Shim 제거 트렌드 반영 (CRI 표준 준수) |
+| **Network (CNI)** | **Calico** | Pod 네트워크 통신 및 정책 관리 |
+| **Node Spec** | 2GB RAM, 2 vCPU per Node | Swap 비활성화 및 Kernel 파라미터 튜닝 |
+
+> **구축 의의:**
+> - `Kubeadm`을 통한 클러스터 초기화부터 `CNI(Calico)` 네트워크 플러그인 설정을 수행하며 Kubernetes 내부 동작 원리(CRI, CNI, OCI)를 이해했습니다.
+> - VM 간 NAT 네트워크 구성을 통해 외부 네트워크와 격리된 클러스터 통신 환경을 설계했습니다.
+
+### ⚡️ Messaging Infrastructure
+데이터 파이프라인의 안정성을 보장하기 위해 다음과 같은 컴포넌트들을 구성했습니다.
+
+| Component | Role |
+| :--- | :--- |
+| **Apache Kafka** | • 이벤트 브로커 (Topic 파티셔닝을 통한 병렬 처리) |
+| **Kafka Connect** | • DB와 Kafka 간의 데이터 파이프라인 구축 (Source Connector) |
+| **Schema Registry** | • **Avro Serialization**을 통한 스키마 검증 및 데이터 타입 안정성 보장 |
+| **Debezium** | • MySQL Binlog를 감지하여 실시간 데이터 변경 사항 캡처 (CDC) |
+
+---
+
+## 🛠️ 기술 스택
+
+| Category | Technology |
+| :--- | :--- |
+| **Frontend** | ![Next.js](https://img.shields.io/badge/Next.js-000000?style=flat-square&logo=next.js&logoColor=white) ![Node.js](https://img.shields.io/badge/Node.js-339933?style=flat-square&logo=node.js&logoColor=white) ![HTML5](https://img.shields.io/badge/HTML5-E34F26?style=flat-square&logo=html5&logoColor=white) ![CSS3](https://img.shields.io/badge/CSS3-1572B6?style=flat-square&logo=css3&logoColor=white) ![JavaScript](https://img.shields.io/badge/JavaScript-F7DF1E?style=flat-square&logo=javascript&logoColor=black) |
+| **Backend** | ![Java](https://img.shields.io/badge/Java-007396?style=flat-square&logo=openjdk&logoColor=white) ![Spring Boot](https://img.shields.io/badge/Spring_Boot-6DB33F?style=flat-square&logo=springboot&logoColor=white) ![Spring Cloud](https://img.shields.io/badge/Spring_Cloud-6DB33F?style=flat-square&logo=spring&logoColor=white) ![Spring Security](https://img.shields.io/badge/Spring_Security-6DB33F?style=flat-square&logo=springsecurity&logoColor=white) ![QueryDSL](https://img.shields.io/badge/QueryDSL-007396?style=flat-square) ![WebSocket](https://img.shields.io/badge/WebSocket-000000?style=flat-square&logo=socket.io&logoColor=white) |
+| **Database** | ![MySQL](https://img.shields.io/badge/MySQL-4479A1?style=flat-square&logo=mysql&logoColor=white) ![MongoDB](https://img.shields.io/badge/MongoDB-47A248?style=flat-square&logo=mongodb&logoColor=white) ![Redis](https://img.shields.io/badge/Redis-DC382D?style=flat-square&logo=redis&logoColor=white) |
+| **Messaging** | ![Apache Kafka](https://img.shields.io/badge/Apache_Kafka-231F20?style=flat-square&logo=apachekafka&logoColor=white) ![Debezium](https://img.shields.io/badge/Debezium-000000?style=flat-square) ![Avro](https://img.shields.io/badge/Avro-231F20?style=flat-square&logo=apache) |
+| **Infra & DevOps** | ![Kubernetes](https://img.shields.io/badge/Kubernetes-326CE5?style=flat-square&logo=kubernetes&logoColor=white) ![Docker](https://img.shields.io/badge/Docker-2496ED?style=flat-square&logo=docker&logoColor=white) ![Ubuntu](https://img.shields.io/badge/Ubuntu-E95420?style=flat-square&logo=ubuntu&logoColor=white) ![GitHub Actions](https://img.shields.io/badge/GitHub_Actions-2088FF?style=flat-square&logo=githubactions&logoColor=white) ![ArgoCD](https://img.shields.io/badge/ArgoCD-EF7B4D?style=flat-square&logo=argo&logoColor=white) |
+| **Monitoring** | ![Prometheus](https://img.shields.io/badge/Prometheus-E6522C?style=flat-square&logo=prometheus&logoColor=white) ![Grafana](https://img.shields.io/badge/Grafana-F46800?style=flat-square&logo=grafana&logoColor=white) ![k6](https://img.shields.io/badge/k6-7D64FF?style=flat-square&logo=k6&logoColor=white) |
+| **Tools** | ![IntelliJ IDEA](https://img.shields.io/badge/IntelliJ_IDEA-000000?style=flat-square&logo=intellijidea&logoColor=white) ![VS Code](https://img.shields.io/badge/VS_Code-007ACC?style=flat-square&logo=visualstudiocode&logoColor=white) ![Swagger](https://img.shields.io/badge/Swagger-85EA2D?style=flat-square&logo=swagger&logoColor=black) ![Git](https://img.shields.io/badge/Git-F05032?style=flat-square&logo=git&logoColor=white) |
+
+---
+
+## 🚀 고도화 구현 기술
 > 본 프로젝트의 주요 고도화 구현 기술을 요약합니다. 상세 설계 및 구현 내용은 아래에 있는 `'서비스 구성 및 상세 문서'`를 확인해주세요.
 
 ### 1. Kafka & Debezium 기반의 Event-Driven Architecture
-- **문제:** 서비스 간 강한 결합도와 데이터 불일치 문제.
-- **해결:** DB 트랜잭션 로그를 감지하는 Debezium(CDC)을 도입하여, `User Service`의 프로필 변경 사항을 `Chat`, `Portfolio`, `Auth` 서비스로 실시간 전파.
-- **효과:** 'Dual Write' 문제 해결 및 Feign Client 호출 제거를 통한 장애 격리 구현.
+- **문제:** 서비스 간 강한 결합도와 데이터 불일치, 그리고 'Dual Write' 문제.
+- **해결:** DB 트랜잭션 로그를 감지하는 **Debezium(CDC)** 을 도입하여 데이터 파이프라인을 구축.
+  - **CDC Pattern (`user-profile-connector`):** `User Service`의 프로필 변경 사항(Update)을 실시간으로 감지하여 `Chat`, `Portfolio` 서비스로 자동 전파.
+- **효과:** Feign Client 호출 제거를 통한 장애 격리 및 서비스 간 결합도 최소화.
 
 ### 2. Split Caching Strategy (Portfolio Service)
 - **문제:** 포트폴리오 상세 조회 시 빈번한 DB 부하 발생.
@@ -195,11 +194,10 @@ LinkFolio는 도메인별로 독립적인 **7개의 마이크로서비스**와 *
 
 ### 4. SAGA 패턴을 이용한 분산 트랜잭션
 - **시나리오:** 회원가입 시 `Auth DB`(계정)와 `User DB`(프로필)의 원자성 보장 필요.
-- **구현:**
-  1. Auth Service: `PENDING` 상태 계정 생성 및 Outbox 테이블에 이벤트 기록.
-  2. Debezium: Outbox 테이블 감지 후 Kafka 이벤트 발행.
-  3. User Service: 이벤트 수신 후 프로필 생성, 성공/실패 이벤트를 다시 발행.
-  4. Auth Service: 최종 상태(`COMPLETED` or `CANCELLED`) 업데이트.
+- **해결:** **Transactional Outbox Pattern**을 적용한 Orchestration 기반 SAGA 구현.
+  1. **Event Router (`auth-outbox-connector`):** 비즈니스 로직에서 `outbox` 테이블에 이벤트를 기록하면, Debezium이 이를 감지하여 `outbox.event.{EventType}` 토픽으로 라우팅.
+  2. **Flow:** Auth Service(Pending) → Kafka → User Service(Create) → Kafka → Auth Service(Completed/Cancelled).
+- **효과:** 분산 환경에서의 데이터 일관성 보장 및 보상 트랜잭션 처리.
 
 ### 서비스 구성 및 상세 문서
 
@@ -216,7 +214,7 @@ LinkFolio는 도메인별로 독립적인 **7개의 마이크로서비스**와 *
 
 ---
 
-## 6️⃣ 테스트 및 성능 개선
+## 📊 테스트 및 성능 개선
 > 본 프로젝트 서비스(모듈)들의 전체적인 성능 지표를 보여줍니다. 각 서비스별 부하 테스트 시나리오, 병목 구간 분석 및 구체적인 튜닝 과정은 아래 `'상세 분석 보고서'` 에서 확인하실 수 있습니다.
 <p align="center">
   <img src="images/test/per_service_perf_test.png" width="100%" alt="System Architecture Diagram"/>
@@ -226,32 +224,33 @@ LinkFolio는 도메인별로 독립적인 **7개의 마이크로서비스**와 *
 
 | 서비스                   | 지표               | Before  | After   | 개선 효과                   |
 | ------------------------ | ------------------ | -------- | -------- | ---------------------------- |
-| **User Service**         | 평균 응답시간 (ms) | 2287.37 | 1040.11 | ▼ **54.5% 감소**            |
-|                          | 처리량 (TPS)       | 6.78    | 10.90   | ▲ **60.7% 증가**            |
-|                          | 오류율 (%)         | 0.36    | 0.00    | ▼ **100% 감소**     |
-| **Portfolio Service**    | 평균 응답시간 (ms) | 210.08  | 385.60  | ▲ **83.5% 증가**      |
-|                          | 처리량 (TPS)       | 15.81   | 14.56   | ▼ **7.8% 감소**             |
-|                          | 오류율 (%)         | 58.62   | 0.04    | ▼ **99.9% 감소**    |
-| **Community Service**    | 평균 응답시간 (ms) | 1796.24 | 656.58  | ▼ **63.4% 감소**            |
-|                          | 처리량 (TPS)       | 12.13   | 12.62   | ▲ **4.0% 증가**             |
-|                          | 오류율 (%)         | 12.13   | 0.00    | ▼ **100% 감소**     |
-| **Support Service**      | 평균 응답시간 (ms) | 2579.43 | 1043.60 | ▼ **59.5% 감소**            |
-|                          | 처리량 (TPS)       | 12.65   | 22.04   | ▲ **74.2% 증가**            |
+| **User Service** | 평균 응답시간 (ms) | 2287.37 | 1040.11 | ▼ **54.5% 감소** |
+|                          | 처리량 (TPS)       | 6.78    | 10.90   | ▲ **60.7% 증가** |
+|                          | 오류율 (%)         | 0.36    | 0.00    | ▼ **100% 감소** |
+| **Portfolio Service** | 평균 응답시간 (ms) | 210.08  | 385.60  | ▲ **83.5% 증가** |
+|                          | 처리량 (TPS)       | 15.81   | 14.56   | ▼ **7.8% 감소** |
+|                          | 오류율 (%)         | 58.62   | 0.04    | ▼ **99.9% 감소** |
+| **Community Service** | 평균 응답시간 (ms) | 1796.24 | 656.58  | ▼ **63.4% 감소** |
+|                          | 처리량 (TPS)       | 12.13   | 12.62   | ▲ **4.0% 증가** |
+|                          | 오류율 (%)         | 12.13   | 0.00    | ▼ **100% 감소** |
+| **Support Service** | 평균 응답시간 (ms) | 2579.43 | 1043.60 | ▼ **59.5% 감소** |
+|                          | 처리량 (TPS)       | 12.65   | 22.04   | ▲ **74.2% 증가** |
 |                          | 오류율 (%)         | 0.00    | 0.00    | ■ 변화 없음                 |
 
-
+> **💡 Note (Portfolio Service):** 평균 응답 시간의 증가는 **시스템 안정화에 따른 Trade-off**입니다. 개선 전(Before)에는 58%의 요청이 즉시 오류를 반환(Fail-fast)하여 시간이 짧게 측정되었으나, 개선 후(After)에는 정상적인 비즈니스 로직(캐싱 및 DB 조회)을 수행하게 되어 실제 처리 시간이 반영된 결과입니다.
 
 ### 상세 분석 보고서
 
 |          주제           | 분석 내용 요약 |                             상세 문서                              |
 |:---------------------:|:---|:--------------------------------------------------------------:|
-|   **User Service**    | • **DB Lock 해소**: 프로필 수정 트랜잭션 최적화 및 커넥션 풀 튜닝 |   [바로가기](docs/analyze%20test/user_service_perf_analysis.md)    |
+|   **User Service** | • **DB Lock 해소**: 프로필 수정 트랜잭션 최적화 및 커넥션 풀 튜닝 |   [바로가기](docs/analyze%20test/user_service_perf_analysis.md)    |
 | **Portfolio Service** | • **Split Caching 효과**: 정적/동적 데이터 분리 캐싱 전략의 Trade-off 분석 | [바로가기](docs/analyze%20test/portfolio_service_perf_analysis.md) |
 | **Community Service** | • **조회수 동기화**: Redis HyperLogLog 및 배치 처리를 통한 DB 부하 감소 | [바로가기](docs/analyze%20test/community_service_perf_analysis.md) |
-|  **Support Service**  | • **Read-Heavy 최적화**: `@Cacheable` 전략과 캐시 만료 정책(TTL) 튜닝 |  [바로가기](docs/analyze%20test/support_service_perf_analysis.md)  |
+|  **Support Service** | • **Read-Heavy 최적화**: `@Cacheable` 전략과 캐시 만료 정책(TTL) 튜닝 |  [바로가기](docs/analyze%20test/support_service_perf_analysis.md)  |
+
 ---
 
-## 7️⃣ 트러블 슈팅 (Troubleshooting)
+## 🔥 트러블 슈팅 (Troubleshooting)
 > 개발 과정에서 마주친 주요 기술적 난관과 이를 해결한 자세한 과정은 아래 `'트러블 슈팅 문서'`를 참고해주세요.
 
 ### 트러블 슈팅 문서
@@ -263,3 +262,51 @@ LinkFolio는 도메인별로 독립적인 **7개의 마이크로서비스**와 *
 | **WebSocket** | • **보안 컨텍스트**: STOMP 연결 시 인증 객체(`Principal`) 유실 문제 해결 | [바로가기](docs/trouble%20shooting/websocket-stomp-principal-loss-issue.md) |
 | **Redis Cache** | • **Page 객체 캐싱**: `Page<T>` 직렬화 시 `ClassCastException` 해결 | [바로가기](docs/trouble%20shooting/redis-cache-serialization-issue.md) |
 | **Dependency** | • **라이브러리 충돌**: Swagger와 Kafka Avro Serializer 간 의존성 충돌 해결 | [바로가기](docs/trouble%20shooting/swagger-dependency-conflict-issue.md) |
+
+---
+
+## 👥 팀원 구성 및 역할
+
+<table>
+  <tr>
+    <td align="center" width="50%">
+      <a href="https://github.com/HeoJunHyoung">
+        <img src="https://github.com/HeoJunHyoung.png" width="120" style="border-radius:50%;"/>
+      </a>
+      <br/>
+      <h3>허준형</h3>
+    </td>
+    <td align="center" width="50%">
+      <a href="https://github.com/park-sunghyun">
+        <img src="https://github.com/park-sunghyun.png" width="120" style="border-radius:50%;"/>
+      </a>
+      <br/>
+      <h3>박성현</h3>
+    </td>
+  </tr>
+  <tr>
+    <td valign="top">
+      <br/>
+      <b>🛠 Architecture & DevOps</b><br/>
+      - MSA 환경 구축 및 시스템 아키텍처 설계<br/>
+      - On-Premise Kubernetes 클러스터 구축<br/>
+      - GitHub Actions & ArgoCD 기반 GitOps 구현<br/>
+      <br/>
+      <b>💻 Backend Development</b><br/>
+      - Kafka 기반 Event-Driven 데이터 동기화 처리<br/>
+      - Polyglot Persistence (MySQL, MongoDB, Redis) 설계<br/>
+    </td>
+    <td valign="top">
+      <br/>
+      <b>🎨 Frontend Development</b><br/>
+      - Next.js 기반 웹 클라이언트 아키텍처 설계<br/>
+      - 전역 상태 관리 및 렌더링 최적화 (SSR/CSR)<br/>
+      - WebSocket 클라이언트 연동 및 실시간 처리<br/>
+      <br/>
+      <b>✨ UI/UX Design</b><br/>
+      - 사용자 중심 서비스 플로우 및 인터페이스 설계<br/>
+      - 반응형 웹 디자인 및 인터랙티브 컴포넌트 개발<br/>
+      <br/>
+    </td>
+  </tr>
+</table>
