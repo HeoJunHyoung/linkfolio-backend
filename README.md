@@ -131,13 +131,42 @@ LinkFolio는 **On-Premise Kubernetes** 환경과 **외부 메시징 인프라**�
 ### 💻 인프라 설계 상세 (Infrastructure Details)
 운영 환경에 대한 깊은 이해를 위해 관리형 도구(Minikube 등)를 사용하지 않고, **VirtualBox VM 기반의 3-Node 클러스터**를 구축했습니다.
 
-| 항목 | 구성 내용 | 비고 |
-| :--- | :--- | :--- |
-| **OS / Environment** | Ubuntu 22.04 LTS (VirtualBox) | 1 Master + 2 Worker Nodes |
-| **Provisioning** | **Kubeadm**, Kubelet, Kubectl | 클러스터 수동 프로비저닝 |
-| **Container Runtime** | **Containerd** | Docker Shim 제거 트렌드 반영 (CRI 표준 준수) |
-| **Network (CNI)** | **Calico** | Pod 네트워크 통신 및 정책 관리 |
-| **Node Spec** | 2GB RAM, 2 vCPU per Node | Swap 비활성화 및 Kernel 파라미터 튜닝 |
+<table width="100%">
+  <thead>
+    <tr>
+      <th width="20%">항목</th>
+      <th>구성 내용</th>
+      <th>비고</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td align="center"><b>OS / Environment</b></td>
+      <td>Ubuntu 22.04 LTS (VirtualBox)</td>
+      <td>1 Master + 2 Worker Nodes</td>
+    </tr>
+    <tr>
+      <td align="center"><b>Provisioning</b></td>
+      <td><b>Kubeadm</b>, Kubelet, Kubectl</td>
+      <td>클러스터 수동 프로비저닝</td>
+    </tr>
+    <tr>
+      <td align="center"><b>Container Runtime</b></td>
+      <td><b>Containerd</b></td>
+      <td>Docker Shim 제거 트렌드 반영 (CRI 표준 준수)</td>
+    </tr>
+    <tr>
+      <td align="center"><b>Network (CNI)</b></td>
+      <td><b>Calico</b></td>
+      <td>Pod 네트워크 통신 및 정책 관리</td>
+    </tr>
+    <tr>
+      <td align="center"><b>Node Spec</b></td>
+      <td>2GB RAM, 2 vCPU per Node</td>
+      <td>Swap 비활성화 및 Kernel 파라미터 튜닝</td>
+    </tr>
+  </tbody>
+</table>
 
 > **구축 의의:**
 > - `Kubeadm`을 통한 클러스터 초기화부터 `CNI(Calico)` 네트워크 플러그인 설정을 수행하며 Kubernetes 내부 동작 원리(CRI, CNI, OCI)를 이해했습니다.
@@ -146,26 +175,111 @@ LinkFolio는 **On-Premise Kubernetes** 환경과 **외부 메시징 인프라**�
 ### ⚡️ Messaging Infrastructure
 데이터 파이프라인의 안정성을 보장하기 위해 다음과 같은 컴포넌트들을 구성했습니다.
 
-| Component | Role |
-| :--- | :--- |
-| **Apache Kafka** | • 이벤트 브로커 (Topic 파티셔닝을 통한 병렬 처리) |
-| **Kafka Connect** | • DB와 Kafka 간의 데이터 파이프라인 구축 (Source Connector) |
-| **Schema Registry** | • **Avro Serialization**을 통한 스키마 검증 및 데이터 타입 안정성 보장 |
-| **Debezium** | • MySQL Binlog를 감지하여 실시간 데이터 변경 사항 캡처 (CDC) |
+<table width="100%">
+  <thead>
+    <tr>
+      <th width="20%">Component</th>
+      <th>Role</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td align="center"><b>Apache Kafka</b></td>
+      <td>• 이벤트 브로커 (Topic 파티셔닝을 통한 병렬 처리)</td>
+    </tr>
+    <tr>
+      <td align="center"><b>Kafka Connect</b></td>
+      <td>• DB와 Kafka 간의 데이터 파이프라인 구축 (Source Connector)</td>
+    </tr>
+    <tr>
+      <td align="center"><b>Schema Registry</b></td>
+      <td>• <b>Avro Serialization</b>을 통한 스키마 검증 및 데이터 타입 안정성 보장</td>
+    </tr>
+    <tr>
+      <td align="center"><b>Debezium</b></td>
+      <td>• MySQL Binlog를 감지하여 실시간 데이터 변경 사항 캡처 (CDC)</td>
+    </tr>
+  </tbody>
+</table>
 
 ---
 
 ## 🛠️ 기술 스택
 
-| Category | Technology |
-| :--- | :--- |
-| **Frontend** | ![Next.js](https://img.shields.io/badge/Next.js-000000?style=flat-square&logo=next.js&logoColor=white) ![Node.js](https://img.shields.io/badge/Node.js-339933?style=flat-square&logo=node.js&logoColor=white) ![HTML5](https://img.shields.io/badge/HTML5-E34F26?style=flat-square&logo=html5&logoColor=white) ![CSS3](https://img.shields.io/badge/CSS3-1572B6?style=flat-square&logo=css3&logoColor=white) ![JavaScript](https://img.shields.io/badge/JavaScript-F7DF1E?style=flat-square&logo=javascript&logoColor=black) |
-| **Backend** | ![Java](https://img.shields.io/badge/Java-007396?style=flat-square&logo=openjdk&logoColor=white) ![Spring Boot](https://img.shields.io/badge/Spring_Boot-6DB33F?style=flat-square&logo=springboot&logoColor=white) ![Spring Cloud](https://img.shields.io/badge/Spring_Cloud-6DB33F?style=flat-square&logo=spring&logoColor=white) ![Spring Security](https://img.shields.io/badge/Spring_Security-6DB33F?style=flat-square&logo=springsecurity&logoColor=white) ![QueryDSL](https://img.shields.io/badge/QueryDSL-007396?style=flat-square) ![WebSocket](https://img.shields.io/badge/WebSocket-000000?style=flat-square&logo=socket.io&logoColor=white) |
-| **Database** | ![MySQL](https://img.shields.io/badge/MySQL-4479A1?style=flat-square&logo=mysql&logoColor=white) ![MongoDB](https://img.shields.io/badge/MongoDB-47A248?style=flat-square&logo=mongodb&logoColor=white) ![Redis](https://img.shields.io/badge/Redis-DC382D?style=flat-square&logo=redis&logoColor=white) |
-| **Messaging** | ![Apache Kafka](https://img.shields.io/badge/Apache_Kafka-231F20?style=flat-square&logo=apachekafka&logoColor=white) ![Debezium](https://img.shields.io/badge/Debezium-000000?style=flat-square) ![Avro](https://img.shields.io/badge/Avro-231F20?style=flat-square&logo=apache) |
-| **Infra & DevOps** | ![Kubernetes](https://img.shields.io/badge/Kubernetes-326CE5?style=flat-square&logo=kubernetes&logoColor=white) ![Docker](https://img.shields.io/badge/Docker-2496ED?style=flat-square&logo=docker&logoColor=white) ![Ubuntu](https://img.shields.io/badge/Ubuntu-E95420?style=flat-square&logo=ubuntu&logoColor=white) ![GitHub Actions](https://img.shields.io/badge/GitHub_Actions-2088FF?style=flat-square&logo=githubactions&logoColor=white) ![ArgoCD](https://img.shields.io/badge/ArgoCD-EF7B4D?style=flat-square&logo=argo&logoColor=white) |
-| **Monitoring** | ![Prometheus](https://img.shields.io/badge/Prometheus-E6522C?style=flat-square&logo=prometheus&logoColor=white) ![Grafana](https://img.shields.io/badge/Grafana-F46800?style=flat-square&logo=grafana&logoColor=white) ![k6](https://img.shields.io/badge/k6-7D64FF?style=flat-square&logo=k6&logoColor=white) |
-| **Tools** | ![IntelliJ IDEA](https://img.shields.io/badge/IntelliJ_IDEA-000000?style=flat-square&logo=intellijidea&logoColor=white) ![VS Code](https://img.shields.io/badge/VS_Code-007ACC?style=flat-square&logo=visualstudiocode&logoColor=white) ![Swagger](https://img.shields.io/badge/Swagger-85EA2D?style=flat-square&logo=swagger&logoColor=black) ![Git](https://img.shields.io/badge/Git-F05032?style=flat-square&logo=git&logoColor=white) |
+<table width="100%">
+  <thead>
+    <tr>
+      <th width="15%">Category</th>
+      <th>Technology</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td align="center"><b>Frontend</b></td>
+      <td>
+        <img src="https://img.shields.io/badge/Next.js-000000?style=flat-square&logo=next.js&logoColor=white">
+        <img src="https://img.shields.io/badge/Node.js-339933?style=flat-square&logo=node.js&logoColor=white">
+        <img src="https://img.shields.io/badge/HTML5-E34F26?style=flat-square&logo=html5&logoColor=white">
+        <img src="https://img.shields.io/badge/CSS3-1572B6?style=flat-square&logo=css3&logoColor=white">
+        <img src="https://img.shields.io/badge/JavaScript-F7DF1E?style=flat-square&logo=javascript&logoColor=black">
+      </td>
+    </tr>
+    <tr>
+      <td align="center"><b>Backend</b></td>
+      <td>
+        <img src="https://img.shields.io/badge/Java-007396?style=flat-square&logo=openjdk&logoColor=white">
+        <img src="https://img.shields.io/badge/Spring_Boot-6DB33F?style=flat-square&logo=springboot&logoColor=white">
+        <img src="https://img.shields.io/badge/Spring_Cloud-6DB33F?style=flat-square&logo=spring&logoColor=white">
+        <img src="https://img.shields.io/badge/Spring_Security-6DB33F?style=flat-square&logo=springsecurity&logoColor=white">
+        <img src="https://img.shields.io/badge/QueryDSL-007396?style=flat-square">
+        <img src="https://img.shields.io/badge/WebSocket-000000?style=flat-square&logo=socket.io&logoColor=white">
+      </td>
+    </tr>
+    <tr>
+      <td align="center"><b>Database</b></td>
+      <td>
+        <img src="https://img.shields.io/badge/MySQL-4479A1?style=flat-square&logo=mysql&logoColor=white">
+        <img src="https://img.shields.io/badge/MongoDB-47A248?style=flat-square&logo=mongodb&logoColor=white">
+        <img src="https://img.shields.io/badge/Redis-DC382D?style=flat-square&logo=redis&logoColor=white">
+      </td>
+    </tr>
+    <tr>
+      <td align="center"><b>Messaging</b></td>
+      <td>
+        <img src="https://img.shields.io/badge/Apache_Kafka-231F20?style=flat-square&logo=apachekafka&logoColor=white">
+        <img src="https://img.shields.io/badge/Debezium-000000?style=flat-square">
+        <img src="https://img.shields.io/badge/Avro-231F20?style=flat-square&logo=apache">
+      </td>
+    </tr>
+    <tr>
+      <td align="center"><b>Infra & DevOps</b></td>
+      <td>
+        <img src="https://img.shields.io/badge/Kubernetes-326CE5?style=flat-square&logo=kubernetes&logoColor=white">
+        <img src="https://img.shields.io/badge/Docker-2496ED?style=flat-square&logo=docker&logoColor=white">
+        <img src="https://img.shields.io/badge/Ubuntu-E95420?style=flat-square&logo=ubuntu&logoColor=white">
+        <img src="https://img.shields.io/badge/GitHub_Actions-2088FF?style=flat-square&logo=githubactions&logoColor=white">
+        <img src="https://img.shields.io/badge/ArgoCD-EF7B4D?style=flat-square&logo=argo&logoColor=white">
+      </td>
+    </tr>
+    <tr>
+      <td align="center"><b>Monitoring</b></td>
+      <td>
+        <img src="https://img.shields.io/badge/Prometheus-E6522C?style=flat-square&logo=prometheus&logoColor=white">
+        <img src="https://img.shields.io/badge/Grafana-F46800?style=flat-square&logo=grafana&logoColor=white">
+        <img src="https://img.shields.io/badge/k6-7D64FF?style=flat-square&logo=k6&logoColor=white">
+      </td>
+    </tr>
+    <tr>
+      <td align="center"><b>Tools</b></td>
+      <td>
+        <img src="https://img.shields.io/badge/IntelliJ_IDEA-000000?style=flat-square&logo=intellijidea&logoColor=white">
+        <img src="https://img.shields.io/badge/VS_Code-007ACC?style=flat-square&logo=visualstudiocode&logoColor=white">
+        <img src="https://img.shields.io/badge/Swagger-85EA2D?style=flat-square&logo=swagger&logoColor=black">
+        <img src="https://img.shields.io/badge/Git-F05032?style=flat-square&logo=git&logoColor=white">
+      </td>
+    </tr>
+  </tbody>
+</table>
 
 ---
 
@@ -201,16 +315,57 @@ LinkFolio는 **On-Premise Kubernetes** 환경과 **외부 메시징 인프라**�
 
 ### 서비스 구성 및 상세 문서
 
-| 서비스 명 | 역할 및 주요 기술 | 상세 문서 |
-|:---:|:---|:---:|
-| **API Gateway** | • 진입점 관리, 라우팅, JWT 인증/인가 | [바로가기](docs/developer%20guide/1_APIGATEWAY_SERVICE.md) |
-| **Auth Service** | • 로그인(OAuth2/Local), 토큰 관리, SAGA 주관 | [바로가기](docs/developer%20guide/2_AUTH_SERVICE.md) |
-| **User Service** | • 사용자 프로필 관리, SAGA 참여 | [바로가기](docs/developer%20guide/3_USER_SERVICE.md) |
-| **Portfolio Service** | • 포트폴리오 관리, Split Caching 적용 | [바로가기](docs/developer%20guide/4_PORTFOLIO_SERVICE.md) |
-| **Community Service** | • 게시판/댓글 관리, Redis Batch 처리 | [바로가기](docs/developer%20guide/5_COMMUNITY_SERVICE.md) |
-| **Chat Service** | • 실시간 채팅 (WebSocket + Redis Pub/Sub) | [바로가기](docs/developer%20guide/6_CHAT_SERVICE.md) |
-| **Support Service** | • 공지사항/FAQ 관리 (Read-Heavy 캐싱) | [바로가기](docs/developer%20guide/7_SUPPORT_SERVICE.md) |
-| **Common Module** | • 공통 DTO, 예외 처리, 유틸리티 | [바로가기](docs/developer%20guide/0_COMMON_MODULE.md) |
+<table width="100%">
+  <thead>
+    <tr>
+      <th width="20%">서비스 명</th>
+      <th>역할 및 주요 기술</th>
+      <th width="15%">상세 문서</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td align="center"><b>API Gateway</b></td>
+      <td>• 진입점 관리, 라우팅, JWT 인증/인가</td>
+      <td align="center"><a href="docs/developer guide/1_APIGATEWAY_SERVICE.md">바로가기</a></td>
+    </tr>
+    <tr>
+      <td align="center"><b>Auth Service</b></td>
+      <td>• 로그인(OAuth2/Local), 토큰 관리, SAGA 주관</td>
+      <td align="center"><a href="docs/developer guide/2_AUTH_SERVICE.md">바로가기</a></td>
+    </tr>
+    <tr>
+      <td align="center"><b>User Service</b></td>
+      <td>• 사용자 프로필 관리, SAGA 참여</td>
+      <td align="center"><a href="docs/developer guide/3_USER_SERVICE.md">바로가기</a></td>
+    </tr>
+    <tr>
+      <td align="center"><b>Portfolio Service</b></td>
+      <td>• 포트폴리오 관리, Split Caching 적용</td>
+      <td align="center"><a href="docs/developer guide/4_PORTFOLIO_SERVICE.md">바로가기</a></td>
+    </tr>
+    <tr>
+      <td align="center"><b>Community Service</b></td>
+      <td>• 게시판/댓글 관리, Redis Batch 처리</td>
+      <td align="center"><a href="docs/developer guide/5_COMMUNITY_SERVICE.md">바로가기</a></td>
+    </tr>
+    <tr>
+      <td align="center"><b>Chat Service</b></td>
+      <td>• 실시간 채팅 (WebSocket + Redis Pub/Sub)</td>
+      <td align="center"><a href="docs/developer guide/6_CHAT_SERVICE.md">바로가기</a></td>
+    </tr>
+    <tr>
+      <td align="center"><b>Support Service</b></td>
+      <td>• 공지사항/FAQ 관리 (Read-Heavy 캐싱)</td>
+      <td align="center"><a href="docs/developer guide/7_SUPPORT_SERVICE.md">바로가기</a></td>
+    </tr>
+    <tr>
+      <td align="center"><b>Common Module</b></td>
+      <td>• 공통 DTO, 예외 처리, 유틸리티</td>
+      <td align="center"><a href="docs/developer guide/0_COMMON_MODULE.md">바로가기</a></td>
+    </tr>
+  </tbody>
+</table>
 
 ---
 
@@ -222,31 +377,131 @@ LinkFolio는 **On-Premise Kubernetes** 환경과 **외부 메시징 인프라**�
 
 ### 통합 성능 개선 요약표
 
-| 서비스                   | 지표               | Before  | After   | 개선 효과                   |
-| ------------------------ | ------------------ | -------- | -------- | ---------------------------- |
-| **User Service** | 평균 응답시간 (ms) | 2287.37 | 1040.11 | ▼ **54.5% 감소** |
-|                          | 처리량 (TPS)       | 6.78    | 10.90   | ▲ **60.7% 증가** |
-|                          | 오류율 (%)         | 0.36    | 0.00    | ▼ **100% 감소** |
-| **Portfolio Service** | 평균 응답시간 (ms) | 210.08  | 385.60  | ▲ **83.5% 증가** |
-|                          | 처리량 (TPS)       | 15.81   | 14.56   | ▼ **7.8% 감소** |
-|                          | 오류율 (%)         | 58.62   | 0.04    | ▼ **99.9% 감소** |
-| **Community Service** | 평균 응답시간 (ms) | 1796.24 | 656.58  | ▼ **63.4% 감소** |
-|                          | 처리량 (TPS)       | 12.13   | 12.62   | ▲ **4.0% 증가** |
-|                          | 오류율 (%)         | 12.13   | 0.00    | ▼ **100% 감소** |
-| **Support Service** | 평균 응답시간 (ms) | 2579.43 | 1043.60 | ▼ **59.5% 감소** |
-|                          | 처리량 (TPS)       | 12.65   | 22.04   | ▲ **74.2% 증가** |
-|                          | 오류율 (%)         | 0.00    | 0.00    | ■ 변화 없음                 |
+<table width="100%">
+  <thead>
+    <tr>
+      <th width="20%">서비스</th>
+      <th width="25%">지표</th>
+      <th>Before</th>
+      <th>After</th>
+      <th>개선 효과</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td rowspan="3" align="center"><b>User Service</b></td>
+      <td>평균 응답시간 (ms)</td>
+      <td align="center">2287.37</td>
+      <td align="center">1040.11</td>
+      <td>▼ <b>54.5% 감소</b></td>
+    </tr>
+    <tr>
+      <td>처리량 (TPS)</td>
+      <td align="center">6.78</td>
+      <td align="center">10.90</td>
+      <td>▲ <b>60.7% 증가</b></td>
+    </tr>
+    <tr>
+      <td>오류율 (%)</td>
+      <td align="center">0.36</td>
+      <td align="center">0.00</td>
+      <td>▼ <b>100% 감소</b></td>
+    </tr>
+    <tr>
+      <td rowspan="3" align="center"><b>Portfolio Service</b></td>
+      <td>평균 응답시간 (ms)</td>
+      <td align="center">210.08</td>
+      <td align="center">385.60</td>
+      <td>▲ <b>83.5% 증가</b></td>
+    </tr>
+    <tr>
+      <td>처리량 (TPS)</td>
+      <td align="center">15.81</td>
+      <td align="center">14.56</td>
+      <td>▼ <b>7.8% 감소</b></td>
+    </tr>
+    <tr>
+      <td>오류율 (%)</td>
+      <td align="center">58.62</td>
+      <td align="center">0.04</td>
+      <td>▼ <b>99.9% 감소</b></td>
+    </tr>
+    <tr>
+      <td rowspan="3" align="center"><b>Community Service</b></td>
+      <td>평균 응답시간 (ms)</td>
+      <td align="center">1796.24</td>
+      <td align="center">656.58</td>
+      <td>▼ <b>63.4% 감소</b></td>
+    </tr>
+    <tr>
+      <td>처리량 (TPS)</td>
+      <td align="center">12.13</td>
+      <td align="center">12.62</td>
+      <td>▲ <b>4.0% 증가</b></td>
+    </tr>
+    <tr>
+      <td>오류율 (%)</td>
+      <td align="center">12.13</td>
+      <td align="center">0.00</td>
+      <td>▼ <b>100% 감소</b></td>
+    </tr>
+    <tr>
+      <td rowspan="3" align="center"><b>Support Service</b></td>
+      <td>평균 응답시간 (ms)</td>
+      <td align="center">2579.43</td>
+      <td align="center">1043.60</td>
+      <td>▼ <b>59.5% 감소</b></td>
+    </tr>
+    <tr>
+      <td>처리량 (TPS)</td>
+      <td align="center">12.65</td>
+      <td align="center">22.04</td>
+      <td>▲ <b>74.2% 증가</b></td>
+    </tr>
+    <tr>
+      <td>오류율 (%)</td>
+      <td align="center">0.00</td>
+      <td align="center">0.00</td>
+      <td>■ 변화 없음</td>
+    </tr>
+  </tbody>
+</table>
 
 > **💡 Note (Portfolio Service):** 평균 응답 시간의 증가는 **시스템 안정화에 따른 Trade-off**입니다. 개선 전(Before)에는 58%의 요청이 즉시 오류를 반환(Fail-fast)하여 시간이 짧게 측정되었으나, 개선 후(After)에는 정상적인 비즈니스 로직(캐싱 및 DB 조회)을 수행하게 되어 실제 처리 시간이 반영된 결과입니다.
 
 ### 상세 분석 보고서
 
-|          주제           | 분석 내용 요약 |                             상세 문서                              |
-|:---------------------:|:---|:--------------------------------------------------------------:|
-|   **User Service** | • **DB Lock 해소**: 프로필 수정 트랜잭션 최적화 및 커넥션 풀 튜닝 |   [바로가기](docs/analyze%20test/user_service_perf_analysis.md)    |
-| **Portfolio Service** | • **Split Caching 효과**: 정적/동적 데이터 분리 캐싱 전략의 Trade-off 분석 | [바로가기](docs/analyze%20test/portfolio_service_perf_analysis.md) |
-| **Community Service** | • **조회수 동기화**: Redis HyperLogLog 및 배치 처리를 통한 DB 부하 감소 | [바로가기](docs/analyze%20test/community_service_perf_analysis.md) |
-|  **Support Service** | • **Read-Heavy 최적화**: `@Cacheable` 전략과 캐시 만료 정책(TTL) 튜닝 |  [바로가기](docs/analyze%20test/support_service_perf_analysis.md)  |
+<table width="100%">
+  <thead>
+    <tr>
+      <th width="20%">주제</th>
+      <th>분석 내용 요약</th>
+      <th width="15%">상세 문서</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td align="center"><b>User Service</b></td>
+      <td>• <b>DB Lock 해소</b>: 프로필 수정 트랜잭션 최적화 및 커넥션 풀 튜닝</td>
+      <td align="center"><a href="docs/analyze test/user_service_perf_analysis.md">바로가기</a></td>
+    </tr>
+    <tr>
+      <td align="center"><b>Portfolio Service</b></td>
+      <td>• <b>Split Caching 효과</b>: 정적/동적 데이터 분리 캐싱 전략의 Trade-off 분석</td>
+      <td align="center"><a href="docs/analyze test/portfolio_service_perf_analysis.md">바로가기</a></td>
+    </tr>
+    <tr>
+      <td align="center"><b>Community Service</b></td>
+      <td>• <b>조회수 동기화</b>: Redis HyperLogLog 및 배치 처리를 통한 DB 부하 감소</td>
+      <td align="center"><a href="docs/analyze test/community_service_perf_analysis.md">바로가기</a></td>
+    </tr>
+    <tr>
+      <td align="center"><b>Support Service</b></td>
+      <td>• <b>Read-Heavy 최적화</b>: <code>@Cacheable</code> 전략과 캐시 만료 정책(TTL) 튜닝</td>
+      <td align="center"><a href="docs/analyze test/support_service_perf_analysis.md">바로가기</a></td>
+    </tr>
+  </tbody>
+</table>
 
 ---
 
@@ -254,20 +509,54 @@ LinkFolio는 **On-Premise Kubernetes** 환경과 **외부 메시징 인프라**�
 > 개발 과정에서 마주친 주요 기술적 난관과 이를 해결한 자세한 과정은 아래 `'트러블 슈팅 문서'`를 참고해주세요.
 
 ### 트러블 슈팅 문서
-| 주제 | 이슈 및 해결 요약 | 상세 문서 |
-|:---:|:---|:---:|
-| **API Gateway** | • **JWT 버전 불일치**: 서비스 간 라이브러리 버전 차이로 인한 인증 실패 해결 | [바로가기](docs/trouble%20shooting/gateway-jwt-auth-failure.md) |
-| **OAuth2 / Redis** | • **직렬화 이슈**: OAuth2 인증 객체의 Redis 저장 시 역직렬화 실패 해결 | [바로가기](docs/trouble%20shooting/oauth2-redis-serialization-issue.md) |
-| **QueryDSL** | • **멀티 모듈 상속**: 공통 모듈(`BaseEntity`)의 상속 필드 미인식 문제 해결 | [바로가기](docs/trouble%20shooting/querydsl-baseentity-inheritance-issue.md) |
-| **WebSocket** | • **보안 컨텍스트**: STOMP 연결 시 인증 객체(`Principal`) 유실 문제 해결 | [바로가기](docs/trouble%20shooting/websocket-stomp-principal-loss-issue.md) |
-| **Redis Cache** | • **Page 객체 캐싱**: `Page<T>` 직렬화 시 `ClassCastException` 해결 | [바로가기](docs/trouble%20shooting/redis-cache-serialization-issue.md) |
-| **Dependency** | • **라이브러리 충돌**: Swagger와 Kafka Avro Serializer 간 의존성 충돌 해결 | [바로가기](docs/trouble%20shooting/swagger-dependency-conflict-issue.md) |
+
+<table width="100%">
+  <thead>
+    <tr>
+      <th width="20%">주제</th>
+      <th>이슈 및 해결 요약</th>
+      <th width="15%">상세 문서</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td align="center"><b>API Gateway</b></td>
+      <td>• <b>JWT 버전 불일치</b>: 서비스 간 라이브러리 버전 차이로 인한 인증 실패 해결</td>
+      <td align="center"><a href="docs/trouble shooting/gateway-jwt-auth-failure.md">바로가기</a></td>
+    </tr>
+    <tr>
+      <td align="center"><b>OAuth2 / Redis</b></td>
+      <td>• <b>직렬화 이슈</b>: OAuth2 인증 객체의 Redis 저장 시 역직렬화 실패 해결</td>
+      <td align="center"><a href="docs/trouble shooting/oauth2-redis-serialization-issue.md">바로가기</a></td>
+    </tr>
+    <tr>
+      <td align="center"><b>QueryDSL</b></td>
+      <td>• <b>멀티 모듈 상속</b>: 공통 모듈(<code>BaseEntity</code>)의 상속 필드 미인식 문제 해결</td>
+      <td align="center"><a href="docs/trouble shooting/querydsl-baseentity-inheritance-issue.md">바로가기</a></td>
+    </tr>
+    <tr>
+      <td align="center"><b>WebSocket</b></td>
+      <td>• <b>보안 컨텍스트</b>: STOMP 연결 시 인증 객체(<code>Principal</code>) 유실 문제 해결</td>
+      <td align="center"><a href="docs/trouble shooting/websocket-stomp-principal-loss-issue.md">바로가기</a></td>
+    </tr>
+    <tr>
+      <td align="center"><b>Redis Cache</b></td>
+      <td>• <b>Page 객체 캐싱</b>: <code>Page&lt;T&gt;</code> 직렬화 시 <code>ClassCastException</code> 해결</td>
+      <td align="center"><a href="docs/trouble shooting/redis-cache-serialization-issue.md">바로가기</a></td>
+    </tr>
+    <tr>
+      <td align="center"><b>Dependency</b></td>
+      <td>• <b>라이브러리 충돌</b>: Swagger와 Kafka Avro Serializer 간 의존성 충돌 해결</td>
+      <td align="center"><a href="docs/trouble shooting/swagger-dependency-conflict-issue.md">바로가기</a></td>
+    </tr>
+  </tbody>
+</table>
 
 ---
 
 ## 👥 팀원 구성 및 역할
 
-<table>
+<table width="100%">
   <tr>
     <td align="center" width="50%">
       <a href="https://github.com/HeoJunHyoung">
