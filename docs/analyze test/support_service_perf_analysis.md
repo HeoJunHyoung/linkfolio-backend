@@ -30,7 +30,7 @@ HikariCP Pool Size를 30개로 증설한 상태에서 테스트를 진행했음�
 * **원인**: 커넥션 개수 문제가 아님. 쿼리 처리 시간(Processing Time) 자체가 너무 길어서, 커넥션을 점유하고 있는 시간이 길어짐에 따라 회전율이 떨어진 것임.
 
 <p align="center">
-  <img src="C:\- linkfolio\linkfolio-backend\images\test\support\support_before_connections.png" width="1200">
+  <img src="../../images/test\support\support_before_connections.png" width="1200">
 </p>
 
 ### 4.2. DB 비효율성 (Sort Rows & read_rnd_next)
@@ -38,7 +38,7 @@ HikariCP Pool Size를 30개로 증설한 상태에서 테스트를 진행했음�
 * **원인**: 공지사항 목록 조회 시 정렬 기준(`isImportant`, `createdAt`)에 맞는 인덱스가 없어, 매 요청마다 **Full Table Scan**과 **Memory Filesort**가 발생함. 80명의 요청이 동시에 들어오면서 DB CPU와 I/O 부하를 가중시킴.
 
 <p align="center">
-  <img src="C:\- linkfolio\linkfolio-backend\images\test\support\support_before_sorts.png" width="800">
+  <img src="../../images/test\support\support_before_sorts.png" width="800">
 </p>
 
 ## 5. 개선 후 (After) 분석: "소프트웨어 튜닝의 완성"
@@ -51,7 +51,7 @@ HikariCP Pool Size를 30개로 증설한 상태에서 테스트를 진행했음�
 * **해석**: 인덱스(`idx_notice_important_date`)가 정확히 적용되어 DB가 필요한 데이터만 효율적으로 조회하게 됨. DB 리소스 여유가 생기며 처리량이 2배(12.6 → 24.8 RPS)로 증가함.
 
 <p align="center">
-  <img src="C:\- linkfolio\linkfolio-backend\images\test\support\support_after_mysql_handlers.png" width="1200">
+  <img src="../../images/test\support\support_after_mysql_handlers.png" width="1200">
 </p>
 
 ### 5.2. HikariCP 병목 해소
@@ -59,7 +59,7 @@ HikariCP Pool Size를 30개로 증설한 상태에서 테스트를 진행했음�
 * **해석**: 쿼리 수행 속도가 813ms로 빨라지면서 커넥션 반납과 재사용이 원활해짐. 스레드 대기 현상이 사라짐.
 
 <p align="center">
-  <img src="C:\- linkfolio\linkfolio-backend\images\test\support\support_after_connections.png" width="1200">
+  <img src="../../images/test\support\support_after_connections.png" width="1200">
 </p>
 
 ### 5.3. CPU Load Average (36) 분석

@@ -22,8 +22,8 @@
 | **DB Lock 대기** | 발생 (Write on Read) | 0 | 병목 해소 |
 
 <p align="center">
-  <img src="C:\- linkfolio\linkfolio-backend\images\test\portfolio\portfolio_before_mysql_handlers.png" width="1200">
-  <img src="C:\- linkfolio\linkfolio-backend\images\test\portfolio\portfolio_after_mysql_handlers.png" width="1200">
+  <img src="../../images/test\portfolio\portfolio_before_mysql_handlers.png" width="1200">
+  <img src="../../images/test\portfolio\portfolio_after_mysql_handlers.png" width="1200">
 </p>
 
 
@@ -38,7 +38,7 @@
 * **원인**: 정렬 기준인 `created_at` 또는 `popularity_score`에 대한 적절한 인덱스가 없어, DB가 매 요청마다 **Full Table Scan**에 가까운 비효율적인 스캔과 메모리 정렬(Filesort)을 수행함.
 
 <p align="center">
-  <img src="C:\- linkfolio\linkfolio-backend\images\test\portfolio\portfolio_before_describe_mysql.png" width="1200">
+  <img src="../../images/test\portfolio\portfolio_before_describe_mysql.png" width="1200">
 </p>
 
 
@@ -49,7 +49,7 @@
 * **결과**: 50명의 사용자가 동시에 조회를 시도할 때마다 DB Row Lock(쓰기 잠금) 경합이 발생하여, 읽기 작업까지 블로킹(Blocking)되는 교착 상태 유발.
 
 <p align="center">
-  <img src="C:\- linkfolio\linkfolio-backend\images\test\portfolio\portfolio_before_load_average.png" width="600">
+  <img src="../../images/test\portfolio\portfolio_before_load_average.png" width="600">
 </p>
 
 
@@ -71,7 +71,7 @@ DB 튜닝과 아키텍처 변경(Split Caching) 적용 후, 시스템은 모든 
   * 조회 성능이 확보되자, `Like`(좋아요)와 같은 쓰기 작업도 300ms 내외로 쾌속 처리됨.
 
 <p align="center">
-  <img src="C:\- linkfolio\linkfolio-backend\images\test\portfolio\portfolio_after_mysql_locks.png" width="800">
+  <img src="../../images/test\portfolio\portfolio_after_mysql_locks.png" width="800">
 </p>
 
 ### 5.3. 리소스 사용 효율화
@@ -79,7 +79,7 @@ DB 튜닝과 아키텍처 변경(Split Caching) 적용 후, 시스템은 모든 
 * **JVM Memory**: Heap 사용량이 70% 수준에서 안정적으로 유지되며, GC 또한 지연 없이 수행됨.
 
 <p align="center">
-  <img src="C:\- linkfolio\linkfolio-backend\images\test\portfolio\portfolio_after_connections.png" width="1200">
+  <img src="../../images/test\portfolio\portfolio_after_connections.png" width="1200">
 </p>
 
 ## 6. 결론

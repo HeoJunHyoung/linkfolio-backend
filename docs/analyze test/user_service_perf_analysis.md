@@ -21,11 +21,11 @@
 | **DB 커넥션 대기 (Pending)** | 23 (Max) | **0** | **병목 해소** |
 
 <p align="center">
-  <img src="C:\- linkfolio\linkfolio-backend\images\test\user\user_test_before_response_time.png" width="1200">
+  <img src="../../images/test/user/user_test_before_response_time.png" width="1200">
 </p>
 
 <p align="center">
-  <img src="C:\- linkfolio\linkfolio-backend\images\test\user\user_test_after_response_time.png" width="1200">
+  <img src="../../images/test/user/user_test_after_response_time.png" width="1200">
 </p>
 
 ---
@@ -39,7 +39,7 @@
 * **Pending Connections**: 23 (Max)
 
 <p align="center">
-  <img src="C:\- linkfolio\linkfolio-backend\images\test\user\user_test_before_connections.png" width="1200">
+  <img src="../../images/test/user/user_test_before_connections.png" width="1200">
 </p>
 
 
@@ -48,7 +48,7 @@
 ### 4.2. 시스템 리소스 상태
 * **Load Average**: Max 26.9 (I/O Wait 폭발)
 <p align="center">
-  <img src="C:\- linkfolio\linkfolio-backend\images\test\user\user_test_before_load_average.png" width="800">
+  <img src="../../images/test/user/user_test_before_load_average.png" width="800">
 </p>
 
 **분석**: CPU 사용률(72.7%)에 비해 Load Average가 비정상적으로 높았다. 이는 DB 응답을 기다리는 I/O 작업이 적체되어 있음을 의미한다.

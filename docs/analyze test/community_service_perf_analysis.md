@@ -24,7 +24,7 @@
 | **커넥션 대기 (Pending)** | 9 (고갈) | 0 (여유) | 병목 해소 |
 
 <p align="center">
-  <img src="C:\- linkfolio\linkfolio-backend\images\test\community\community_after_response_time.png" width="1200">
+  <img src="../../images/test\community\community_after_response_time.png" width="1200">
 </p>
 
 > *해석: 개선 전에는 대다수 요청이 연결 거부(Connection Refused)되거나 타임아웃되었으나, 튜닝 후 모든 요청을 안정적으로 처리함.*
@@ -39,7 +39,7 @@
 * **Filesort 발생**: 메모리상에서 데이터를 강제로 재정렬(`Sort Rows: 53.7`)하느라 DB 리소스가 고갈됨.
 
 <p align="center">
-  <img src="C:\- linkfolio\linkfolio-backend\images\test\community\community_before_mysql_handlers.png" width="1200">
+  <img src="../../images/test\community\community_before_mysql_handlers.png" width="1200">
 </p>
 
 ### 4.2. VUs 조절 테스트 결과 (VUs 60 → 30)
@@ -53,7 +53,7 @@
 * DB가 응답하지 않아 애플리케이션 스레드가 블로킹(Blocked)되었고, 이로 인해 후속 요청들이 연결조차 맺지 못하고 거절당함.
 
 <p align="center">
-  <img src="C:\- linkfolio\linkfolio-backend\images\test\community\community_before_load_average.png" width="800">
+  <img src="../../images/test\community\community_before_load_average.png" width="800">
 </p>
 
 ## 5. 개선 후 (After) 분석: "인덱스 튜닝을 통한 병목 해소"
@@ -68,7 +68,7 @@
 
 
 <p align="center">
-  <img src="C:\- linkfolio\linkfolio-backend\images\test\community\community_after_mysql_handlers.png" width="1200">
+  <img src="../../images/test\community\community_after_mysql_handlers.png" width="1200">
 </p>
 
 ### 5.2. HikariCP 커넥션 풀 안정화
@@ -76,7 +76,7 @@
 * **분석**: 쿼리 실행 속도가 빨라지면서 트랜잭션 점유 시간이 단축됨. 설정된 30개의 커넥션 풀 내에서 60 VUs의 트래픽을 여유롭게 처리함.
 
 <p align="center">
-  <img src="C:\- linkfolio\linkfolio-backend\images\test\community\community_after_connections.png" width="1200">
+  <img src="../../images/test\community\community_after_connections.png" width="1200">
 </p>
 
 
@@ -85,7 +85,7 @@
 * **한계점**: 여전히 1 Core CPU 기준으로는 부하가 높은 편(Warning 수준)이며, 응답 속도(P95 1.55s)도 최적화 여지가 있음. 이는 DB 병목은 해소되었으나 애플리케이션 레벨의 로직 처리나 GC, 또는 CPU 사양의 물리적 한계로 추정됨.
 
 <p align="center">
-  <img src="C:\- linkfolio\linkfolio-backend\images\test\community\community_after_load_average.png" width="800">
+  <img src="../../images/test\community\community_after_load_average.png" width="800">
 </p>
 
 ## 6. 결론
