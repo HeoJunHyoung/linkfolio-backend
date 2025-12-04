@@ -10,6 +10,7 @@ on:
       - 'docs/**'        # 문서 폴더
       - '**.md'          # 마크다운 파일
       - '.gitignore'
+      - 'images/**'
   workflow_dispatch:
 
 jobs:
