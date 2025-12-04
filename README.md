@@ -1,37 +1,18 @@
 # LinkFolio
 
 <p align="center">
-  <img src="images/logo/Linkfolio Logo.png" width="750" alt="LinkFolio Logo"/>
+  <img src="images/etc/linkfolio_logo.png" width="750" alt="linkfolio"/>
 </p>
 
-## 🧑‍💻 개발자를 위한 포트폴리오 공유 및 커뮤니티 플랫폼
+### 🧑‍💻 개발자를 위한 포트폴리오 공유 및 커뮤니티 플랫폼
 
-### 프로젝트 개요
-**LinkFolio**는 개발자를 위한 종합 포트폴리오 관리 및 커뮤니티 플랫폼입니다. 사용자는 기술 스택과 프로젝트 경험을 체계적으로 관리하고 공유할 수 있으며, 실시간 채팅을 통한 협업과 지식 공유가 가능한 개발자 생태계를 제공합니다.
+**LinkFolio**는 개발자들이 자신의 기술 스택과 프로젝트 경험을 체계적으로 관리하고 공유할 수 있는 플랫폼입니다. 단순한 이력서 호스팅을 넘어, **실시간 채팅**과 **커뮤니티** 기능을 통해 개발자 간의 협업과 지식 공유가 가능한 생태계를 제공합니다.
 
-### 핵심 기술 및 특징
-- **MSA 아키텍처**: 서비스별 독립적인 배포 및 확장이 용이하도록 Spring Cloud 기반의 마이크로서비스 아키텍처 설계
-- **실시간 커뮤니케이션**: WebSocket과 Redis Pub/Sub을 활용하여 대규모 트래픽 환경에서도 안정적인 1:1 실시간 채팅 기능 구현
-- **데이터 동기화**: Kafka와 Debezium(CDC)을 활용한 이벤트 기반 아키텍처(EDA)로 서비스 간 데이터 일관성 유지 및 결합도 감소
-- **고성능 검색**: QueryDSL을 도입하여 복잡한 조건의 동적 쿼리를 최적화하고 검색 성능 향상
-- **보안 강화**: Spring Security와 JWT를 이용한 Stateless 인증/인가 시스템 구축 및 OAuth2 소셜 로그인 지원
-- **DevOps 자동화**: GitHub Actions와 ArgoCD를 연동한 GitOps 기반 CI/CD 파이프라인 구축으로 배포 효율성 증대
+<b> 제작 기간:</b> 2025/10/27 ~ 2025/12/12 <br/>
+<b> Backend GitHub:</b> https://github.com/HeoJunHyoung/Linkfolio-backend <br/>
+<b> Frontend GitHub:</b> https://github.com/park/Linkfolio-backend <br/>
+<b> Manifest GitHub:</b> https://github.com/HeoJunHyoung/Linkfolio-manifest <br/>
 
-### 주요 기능
-- **포트폴리오 관리**: 마크다운 에디터를 활용한 포트폴리오 작성 및 수정, PDF 내보내기 
-- **실시간 채팅**: 사용자 간 1:1 실시간 채팅, 안 읽은 메시지 카운트, 채팅방 목록 관리 
-- **커뮤니티**: 기술 Q&A, 정보 공유, 프로젝트 팀원 모집 게시판 제공 
-- **필터링**: 기술 스택, 직군 등 다양한 조건을 활용한 포트폴리오 및 게시글 탐색
-- **알림** 시스템: 채팅, 댓글 등 주요 이벤트 발생 시 실시간 알림 제공
-
-***
-
-## 🔗 깃허브 링크
-| 분류 | 링크 |
-|:---:|:---|
-| **BackEnd** | [https://github.com/HeoJunHyoung/Linkfolio-backend](https://github.com/HeoJunHyoung/Linkfolio-backend) |
-| **FrontEnd** | [https://github.com/CLD-3rd/Linkfolio-frontend](https://github.com/CLD-3rd/Linkfolio-frontend) |
-| **Manifest** | [https://github.com/HeoJunHyoung/Linkfolio-manifest](https://github.com/HeoJunHyoung/Linkfolio-manifest) |
 
 ---
 
@@ -93,4 +74,70 @@
 | **Monitoring** | ![Prometheus](https://img.shields.io/badge/Prometheus-E6522C?style=flat-square&logo=prometheus&logoColor=white) ![Grafana](https://img.shields.io/badge/Grafana-F46800?style=flat-square&logo=grafana&logoColor=white) ![k6](https://img.shields.io/badge/k6-7D64FF?style=flat-square&logo=k6&logoColor=white) |
 | **Tools** | ![IntelliJ IDEA](https://img.shields.io/badge/IntelliJ_IDEA-000000?style=flat-square&logo=intellijidea&logoColor=white) ![VS Code](https://img.shields.io/badge/VS_Code-007ACC?style=flat-square&logo=visualstudiocode&logoColor=white) ![Swagger](https://img.shields.io/badge/Swagger-85EA2D?style=flat-square&logo=swagger&logoColor=black) ![Git](https://img.shields.io/badge/Git-F05032?style=flat-square&logo=git&logoColor=white) |
 
+---
+
+##  3️⃣ 시스템 아키텍처 (System Architecture)
+
+LinkFolio는 도메인별로 독립적인 **7개의 마이크로서비스**와 **1개의 공통 모듈**로 구성되어 있습니다.
+
+| 서비스 명 | 역할 및 주요 기술 |
+|:---:|:---|
+| **API Gateway** | • 진입점(Single Point of Entry) 관리, 라우팅<br>• JWT 기반 인증/인가 필터링 및 헤더(`X-User-Id`) 주입<br>• `Spring Cloud Gateway` (Reactive) |
+| **Auth Service** | • OAuth2 (Google, Kakao, Naver) 및 자체 로그인<br>• 회원가입 SAGA 트랜잭션의 Coordinator 역할<br>• Redis를 활용한 RTR (Refresh Token Rotation) 구현 |
+| **User Service** | • 사용자 프로필 정보(이름, 직군 등) 관리<br>• Kafka Consumer를 통한 SAGA 트랜잭션 참여<br>• 프로필 변경 시 Kafka CDC 이벤트를 통해 타 서비스로 전파 |
+| **Portfolio Service** | • 포트폴리오 CRUD 및 **Split Caching Strategy** 적용<br>• 정적 데이터(본문)와 동적 데이터(조회수, 좋아요) 분리 캐싱<br>• `QueryDSL`을 활용한 복잡한 검색 및 필터링 최적화 |
+| **Community Service** | • 계층형 댓글(대댓글) 구조 구현<br>• 게시글 조회수 및 북마크 Redis 배치(Batch) 처리<br>• `Feign Client`를 활용한 Chat Service와의 연동 (팀원 모집) |
+| **Chat Service** | • **WebSocket + STOMP** 기반 실시간 1:1 채팅<br>• **Redis Pub/Sub**을 활용한 다중 서버 메시지 브로드캐스팅<br>• MongoDB 기반 대용량 메시지 저장 및 읽음 처리 |
+| **Support Service** | • 공지사항 및 FAQ 관리<br>• Read-Heavy 특성을 고려한 적극적인 Redis Caching |
+
+---
+
+## 4️⃣ 핵심 구현 기술 및 성능 최적화
+
+### 1. Kafka & Debezium 기반의 Event-Driven Architecture
+- **문제:** 서비스 간 강한 결합도와 데이터 불일치 문제.
+- **해결:** DB 트랜잭션 로그를 감지하는 **Debezium(CDC)**을 도입하여, `User Service`의 프로필 변경 사항을 `Chat`, `Portfolio`, `Auth` 서비스로 실시간 전파.
+- **효과:** 'Dual Write' 문제 해결 및 Feign Client 호출 제거를 통한 장애 격리 구현.
+
+### 2. Split Caching Strategy (Portfolio Service)
+- **문제:** 포트폴리오 상세 조회 시 빈번한 DB 부하 발생.
+- **해결:** 변경 주기가 다른 데이터를 분리하여 캐싱.
+    - **정적 데이터(본문):** Redis Cache-Aside 패턴 (TTL 1시간)
+    - **동적 데이터(조회수/좋아요):** Redis Write-Back 패턴 (실시간 인메모리 연산 후 배치 동기화)
+- **성과:** 상세 조회 성능 최적화 및 DB Write Lock 최소화.
+
+### 3. 대규모 실시간 채팅 시스템 (Chat Service)
+- **구조:** `WebSocket` + `STOMP` + `Redis Pub/Sub` + `MongoDB`
+- **특징:**
+    - Gateway에서 검증된 `X-User-Id`를 WebSocket Handshake 단계에서 가로채어 세션에 주입, 완벽한 인증 처리.
+    - Redis Pub/Sub을 통해 Scale-out 된 서버 환경에서도 메시지 실시간 전송 보장.
+    - 사용자 프로필을 로컬 MongoDB(`chat_user_profile`)에 캐싱하여 목록 조회 시 N+1 문제 해결.
+
+### 4. SAGA 패턴을 이용한 분산 트랜잭션
+- **시나리오:** 회원가입 시 `Auth DB`(계정)와 `User DB`(프로필)의 원자성 보장 필요.
+- **구현:**
+    1. Auth Service: `PENDING` 상태 계정 생성 및 Outbox 테이블에 이벤트 기록.
+    2. Debezium: Outbox 테이블 감지 후 Kafka 이벤트 발행.
+    3. User Service: 이벤트 수신 후 프로필 생성, 성공/실패 이벤트를 다시 발행.
+    4. Auth Service: 최종 상태(`COMPLETED` or `CANCELLED`) 업데이트.
+
+---
+
+## 5️⃣ 테스트 및 성능 개선 
+
+
+---
+
+## 6️⃣ 트러블 슈팅
+
+개발 과정에서 겪은 주요 이슈와 해결 과정을 기록했습니다.
+
+* [⚡ API Gateway JWT 인증 실패 및 버전 호환성 해결](docs/trouble%20shooting/gateway-jwt-auth-failure.md)
+* [🔄 OAuth2 인증 객체의 Redis 직렬화/역직렬화 이슈](docs/trouble%20shooting/oauth2-redis-serialization-issue.md)
+* [🧱 QueryDSL과 멀티 모듈(@MappedSuperclass) 인식 문제](docs/trouble%20shooting/querydsl-baseentity-inheritance-issue.md)
+* [🐛 WebSocket 연결 시 Spring Security Principal 유실 문제](docs/trouble%20shooting/websocket-stomp-principal-loss-issue.md)
+* [📉 Redis 캐싱 시 Page 객체 직렬화(ClassCastException) 해결](docs/trouble%20shooting/redis-cache-serialization-issue.md)
+* [💥 Swagger와 Kafka Avro Serializer 의존성 충돌 해결](docs/trouble%20shooting/swagger-dependency-conflict-issue.md)
+
+---
 
