@@ -79,7 +79,7 @@ public class AuthorizationHeaderFilter implements GlobalFilter, Ordered {
 
         // 2. 토큰이 없는 경우 처리
         if (token == null) {
-            // 화이트리스트(인증 예외) 경로라면 인증 없이 통과 (익명 요청)
+            // 화이트리스트(인증 예외) 경로라면 인증 없이 통과 (비로그인 요청 중에서도 인증 없이 가능한 API 호출)
             if (isPatchExcluded(path)) {
                 log.info("Permitting anonymous request to excluded path: {}", path);
                 return chain.filter(exchange);

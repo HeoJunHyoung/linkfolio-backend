@@ -58,16 +58,24 @@ public class SecurityConfig {
 
         // OAuth2 로그인 설정
         http.oauth2Login(oauth2 -> oauth2
+
+                // 1. OAuth2 인증 요청 URL과 인증 요청을 저장하는 저장소 설정
                 .authorizationEndpoint(auth -> auth
                         .baseUri("/oauth2/authorization")
-                        .authorizationRequestRepository(redisBasedAuthorizationRequestRepository)
+                        .authorizationRequestRepository(redisBasedAuthorizationRequestRepository) // 인증 요청 파라미터(state 포함)를 Redis에 저장
                 )
+
+                // 2. OAuth 기반 로그인 후 돌려받는 URL 지정
                 .redirectionEndpoint(redirect -> redirect
                         .baseUri("/login/oauth2/code/*")
                 )
+
+                // 3. 프로바이더에서 사용자 정보 가져오는 서비스 지정
                 .userInfoEndpoint(userInfo -> userInfo
                         .userService(customOAuth2UserService)
                 )
+
+                // 4. OAuth 로그인 성공 후 후처리
                 .successHandler(oAuth2LoginSuccessHandler)
         );
 

@@ -29,9 +29,9 @@
 
 * **`BaseEntity`**: 모든 JPA 엔티티가 상속받는 `@MappedSuperclass`이다. `@CreatedDate` (`createdAt`)와 `@LastModifiedDate` (`lastModifiedAt`) 필드를 제공하여 생성/수정 시간을 자동으로 관리한다.
 * **`enumerate`**:
-    * `Role.java` (USER, ADMIN)
-    * `Gender.java` (MALE, FEMALE)
-    * `UserProvider.java` (LOCAL, GOOGLE, NAVER, KAKAO)
+  * `Role.java` (USER, ADMIN)
+  * `Gender.java` (MALE, FEMALE)
+  * `UserProvider.java` (LOCAL, GOOGLE, NAVER, KAKAO)
 
 ### 2.4. 이벤트 DTO (`dto.event`)
 
@@ -41,6 +41,29 @@ Kafka를 통해 서비스 간 비동기 통신(SAGA 패턴, 데이터 동기화)
 * **`UserProfileCreationSuccessEvent`**: SAGA 성공 이벤트 (User -> Auth).
 * **`UserProfileCreationFailureEvent`**: SAGA 보상 트랜잭션 이벤트 (User -> Auth).
 * **`UserProfilePublishedEvent`**: 프로필 생성/변경 전파(Fan-out) 이벤트 (User -> Auth, Portfolio 등).
+
+### 2.5. 보안 및 인증 객체 (`dto.security`)
+
+#### AuthUser 구분 (vs Auth Service)
+
+본 프로젝트에는 `AuthUser`라는 이름을 가진 클래스가 두 곳(`common-module`, `auth-service`)에 존재한다. 두 클래스는 역할과 목적이 완전히 다르므로 혼동하지 않도록 주의해야 한다.
+
+**1. 비교 및 차이점**
+
+| 구분 | **Common Module (본 모듈)** | **Auth Service** |
+| :--- | :--- | :--- |
+| **패키지** | `com.example.commonmodule.dto.security.AuthUser` | `com.example.authservice.dto.AuthUser` |
+| **핵심 역할** | **인증 결과물 (Context / 방문증)** | **인증 수행자 (Principal / 신분증)** |
+| **구현체** | 단순 POJO (DTO) | `UserDetails`, `OAuth2User` 구현체 |
+| **포함 정보** | `userId`, `email`, `role` (최소 정보) | `password`, `attributes` 등 민감 정보 포함 |
+| **사용 시점** | 로그인 완료 **후** (API 요청 처리 시) | 로그인/토큰 발급 **과정 중** |
+
+**2. 분리 이유**
+
+1.  **의존성 최적화**: 다른 마이크로서비스(`portfolio`, `chat` 등)가 Spring Security의 무거운 의존성 없이도 사용자 정보를 처리할 수 있도록 경량화하였다.
+2.  **보안 강화**: 비즈니스 로직을 수행하는 서비스들 사이에서 패스워드 등 민감한 정보가 객체에 담겨 돌아다니는 것을 원천적으로 차단한다.
+
+> **Note**: 비즈니스 로직(Service 레이어) 개발 시에는 항상 `common-module`의 `AuthUser`를 사용한다.
 
 ---
 
@@ -80,4 +103,3 @@ Kafka를 통해 서비스 간 비동기 통신(SAGA 패턴, 데이터 동기화)
 >     </exclusions>
 > </dependency>
 > ```
->

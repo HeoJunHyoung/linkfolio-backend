@@ -30,7 +30,6 @@ public class AuthUser implements UserDetails {
     }
 
     // --- UserDetails 인터페이스 구현 ---
-
     @Override
     public Collection<? extends GrantedAuthority> getAuthorities() {
         if (this.role == null) {

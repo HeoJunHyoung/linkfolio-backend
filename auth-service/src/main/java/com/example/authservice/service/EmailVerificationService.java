@@ -51,7 +51,7 @@ public class EmailVerificationService {
     public void sendSignUpCode(String email) {
         validateEmailDuplicate(email);
         String code = generateRandomCode();
-        String key = VERIFICATION_CODE_PREFIX + email;
+        String key = VERIFICATION_CODE_PREFIX + email; // 예시) VC: test@gmial.com
 
         storeCode(key, code, CODE_EXPIRATION_MINUTES);
         emailService.sendVerificationCode(email, code);
@@ -61,7 +61,7 @@ public class EmailVerificationService {
      * 2. 회원가입 인증 코드 검증
      */
     public void verifySignUpCode(String email, String code) {
-        String key = VERIFICATION_CODE_PREFIX + email;
+        String key = VERIFICATION_CODE_PREFIX + email; // 예시) VC: test@gmial.com
 
         // 2-1. 코드 검증
         validateCode(key, code, ErrorCode.VERIFICATION_CODE_EXPIRED, ErrorCode.INVALID_VERIFICATION_CODE);
@@ -70,7 +70,7 @@ public class EmailVerificationService {
         deleteKey(key);
 
         // 2-3. "인증 완료" 상태를 Redis에 저장
-        String verifiedKey = VERIFIED_EMAIL_PREFIX + email;
+        String verifiedKey = VERIFIED_EMAIL_PREFIX + email; // 예시) VE: test@gmail.com
         storeCode(verifiedKey, "true", VERIFIED_EXPIRATION_MINUTES);
     }
 
@@ -129,7 +129,7 @@ public class EmailVerificationService {
     /**
      * 8. 비밀번호 재설정 관련 상태 최종 삭제 (코드 + 검증완료 상태)
      */
-    public void deletePasswordResetState(String email) { // <-- 메서드명 변경
+    public void deletePasswordResetState(String email) {
         deleteKey(PW_RESET_CODE_PREFIX + email);
         deleteKey(PW_VERIFIED_PREFIX + email);
     }
