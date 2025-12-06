@@ -1,12 +1,8 @@
-<div align="right">
-  <span style="font-size: 0.85rem; color: #888;">2025.10.27 ~ 2025.12.12</span>
-</div>
-
-# 🔗 LinkFolio
+# 🔗 LinkFolio <img src="https://img.shields.io/badge/2025.10.27_~_2025.12.12-lightgrey?style=flat-square&color=grey&labelColor=blacke&logoColor=555&label=" align="right" height="25">
 
 <h3 style="margin-top: 0;">🧑‍💻 개발자를 위한 포트폴리오 공유 및 커뮤니티 플랫폼</h3>
 
-> 📄 **[LinkFolio 개발 보고서 (PDF) 보기](docs/LinkFolio_최종_개발_보고서.pdf)**
+> 📄 **[LinkFolio 개발 보고서 (PDF) 보기](docs/linkfolio_development_report.pdf)**
 
 <p align="center">
   <img src="images/etc/linkfolio_logo.png" width="750" alt="linkfolio"/>
