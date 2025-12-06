@@ -28,7 +28,7 @@ public class PostBatchScheduler {
     private static final String COMMENT_BATCH_KEY = "post:comments:delta";
     private static final String COMMENT_SYNC_KEY = "post:comments:sync";
 
-    @Scheduled(fixedRate = 600000, initialDelay = 30000) // 10분마다 실행 (Portfolio와 겹치지 않게 30초 딜레이)
+    @Scheduled(fixedRate = 180000, initialDelay = 30000) // 3분마다 실행 (Portfolio와 겹치지 않게 30초 딜레이)
     public void syncCounts() {
         log.info("[Scheduler] 커뮤니티 통계 데이터 DB 동기화 시작");
 

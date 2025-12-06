@@ -26,7 +26,7 @@ public class PortfolioBatchScheduler {
     private static final String LIKE_BATCH_KEY = "portfolio:likes:delta";
     private static final String LIKE_SYNC_KEY = "portfolio:likes:sync";
 
-    @Scheduled(fixedRate = 600000) // 10분마다 수행
+    @Scheduled(fixedRate = 180000) // 3분마다 수행
     public void syncCountsAndCalculateScore() {
         log.info("Batch Scheduler Started");
 

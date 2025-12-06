@@ -3,7 +3,7 @@ name: linkfolio CI/CD (Monorepo Build)
 on:
   push:
     branches:
-#      - dev
+      - dev
 #      - perf/after-optimization
     paths-ignore:
       - 'tests/**'       # k6 스크립트

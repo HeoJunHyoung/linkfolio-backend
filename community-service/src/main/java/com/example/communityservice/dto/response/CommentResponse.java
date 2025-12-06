@@ -44,5 +44,6 @@ public class CommentResponse {
         this.parentId = parentId;
         this.createdAt = createdAt;
         this.lastModifiedAt = lastModifiedAt;
+        this.children = new ArrayList<>();
     }
 }
