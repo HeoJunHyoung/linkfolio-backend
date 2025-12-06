@@ -21,8 +21,7 @@ public class FaqEntity extends BaseEntity {
     @Column(nullable = false)
     private String question;
 
-    @Lob
-    @Column(nullable = false)
+    @Column(nullable = false, columnDefinition = "TEXT")
     private String answer;
 
     @Builder

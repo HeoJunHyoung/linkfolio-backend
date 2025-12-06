@@ -18,8 +18,7 @@ public class NoticeEntity extends BaseEntity {
     @Column(nullable = false, length = 200)
     private String title;
 
-    @Lob // 대용량 텍스트
-    @Column(nullable = false)
+    @Column(nullable = false, columnDefinition = "TEXT")
     private String content;
 
     @Column(nullable = false)

@@ -29,8 +29,7 @@ public class PostCommentEntity extends BaseEntity {
     @Column(nullable = false)
     private Long userId;
 
-    @Lob
-    @Column(nullable = false)
+    @Column(nullable = false, columnDefinition = "TEXT")
     private String content;
 
     @ManyToOne(fetch = FetchType.LAZY)
