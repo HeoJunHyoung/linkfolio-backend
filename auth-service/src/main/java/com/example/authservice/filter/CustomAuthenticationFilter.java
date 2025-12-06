@@ -17,6 +17,7 @@ import java.util.ArrayList;
 
 /**
  * 자체 로그인에서 사용
+ * ㄴ authenticationManager.authenticate()를 호출하여 "이 사람 인증 좀 해줘"라고 요청 -> CustomUserDetailsService의 loadUserByUsername 호출
  */
 @Slf4j
 public class CustomAuthenticationFilter extends UsernamePasswordAuthenticationFilter {
@@ -31,7 +32,6 @@ public class CustomAuthenticationFilter extends UsernamePasswordAuthenticationFi
     }
 
     // 로그인 요청 시, UsernamePasswordAuthenticationFilter가 요청을 가로채서 attemptAuthentication() 메서드 실행
-    // ㄴ 이후 로그인 성공 시, LocalLoginSuccessHandler.java 실행
     @Override
     public Authentication attemptAuthentication(HttpServletRequest request, HttpServletResponse response) throws AuthenticationException {
         try {

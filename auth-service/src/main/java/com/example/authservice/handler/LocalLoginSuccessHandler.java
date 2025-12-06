@@ -21,8 +21,8 @@ import org.springframework.stereotype.Component;
 import java.io.IOException;
 
 /**
- * 로컬 로그인(JSON) 성공 시 JWT를 생성하여 응답 헤더에 추가하는 핸들러.
- * CustomAuthenticationFilter의 successfulAuthentication 로직을 분리.
+ * 이전 CustomUserDetailsService (로컬 로그인) 성공 시 JWT를 생성하여 응답 헤더에 추가하는 핸들러.
+ * ㄴ CustomAuthenticationFilter의 successfulAuthentication 로직을 분리.
  */
 @Slf4j
 @Component

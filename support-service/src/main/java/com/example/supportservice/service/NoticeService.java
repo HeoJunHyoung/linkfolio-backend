@@ -23,6 +23,7 @@ import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.Set;
 import java.util.concurrent.TimeUnit;
 
 @Service
@@ -35,37 +36,37 @@ public class NoticeService {
     private final StringRedisTemplate redisTemplate;
     private final ObjectMapper objectMapper;
 
-    // [USER/ADMIN] 공지사항 목록 조회
+    private static final String NOTICE_LIST_KEY_PREFIX = "noticeList::";
+    private static final String NOTICE_DETAIL_KEY_PREFIX = "noticeDetail::";
+
+
+    /**
+     * [USER/ADMIN] 공지사항 목록 조회
+     */
     public Page<NoticeListResponse> getNotices(Pageable pageable) {
-        String cacheKey = "noticeList::" + pageable.getPageNumber() + "-" + pageable.getPageSize();
+        String cacheKey = NOTICE_LIST_KEY_PREFIX + pageable.getPageNumber() + "-" + pageable.getPageSize();
 
         // 1. 캐시 조회
-        String cachedJson = (String) redisTemplate.opsForValue().get(cacheKey);
-
+        String cachedJson = redisTemplate.opsForValue().get(cacheKey);
         if (cachedJson != null) {
             try {
-                // JSON -> CustomPageResponse (Wrapper)로 역직렬화
                 CustomPageResponse<NoticeListResponse> customPage = objectMapper.readValue(
                         cachedJson,
                         new TypeReference<CustomPageResponse<NoticeListResponse>>() {}
                 );
-                // Wrapper -> PageImpl (원본)로 복구하여 반환
                 return customPage.toPage();
             } catch (JsonProcessingException e) {
                 log.error("Cache Deserialization Failed", e);
-                // 에러 나면 DB 조회하도록 흐름을 이어감
             }
         }
 
-        // 2. DB 조회 (캐시 없거나 에러 시)
+        // 2. DB 조회
         Page<NoticeListResponse> page = noticeRepository.findAll(pageable).map(this::toListResponse);
 
         // 3. 캐시 저장
         try {
-            // PageImpl -> CustomPageResponse (Wrapper)로 변환 -> JSON 직렬화
             CustomPageResponse<NoticeListResponse> wrapper = new CustomPageResponse<>(page);
             String jsonToCache = objectMapper.writeValueAsString(wrapper);
-
             redisTemplate.opsForValue().set(cacheKey, jsonToCache, 1, TimeUnit.HOURS);
         } catch (JsonProcessingException e) {
             log.error("Cache Serialization Failed", e);
@@ -74,17 +75,44 @@ public class NoticeService {
         return page;
     }
 
-    // [USER/ADMIN] 공지사항 상세 조회
-    @Cacheable(value = "noticeDetail", key = "#id")
+
+    /**
+     * [USER/ADMIN] 공지사항 상세 조회
+     */
     public NoticeResponse getNotice(Long id) {
+        String cacheKey = NOTICE_DETAIL_KEY_PREFIX + id;
+
+        // 1. 캐시 조회
+        String cachedJson = redisTemplate.opsForValue().get(cacheKey);
+        if (cachedJson != null) {
+            try {
+                return objectMapper.readValue(cachedJson, NoticeResponse.class);
+            } catch (JsonProcessingException e) {
+                log.error("Cache Deserialization Failed", e);
+            }
+        }
+
+        // 2. DB 조회
         NoticeEntity notice = noticeRepository.findById(id)
                 .orElseThrow(() -> new BusinessException(ErrorCode.NOTICE_NOT_FOUND));
-        return toResponse(notice);
+        NoticeResponse response = toResponse(notice);
+
+        // 3. 캐시 저장
+        try {
+            String jsonToCache = objectMapper.writeValueAsString(response);
+            redisTemplate.opsForValue().set(cacheKey, jsonToCache, 1, TimeUnit.HOURS);
+        } catch (JsonProcessingException e) {
+            log.error("Cache Serialization Failed", e);
+        }
+
+        return response;
     }
 
-    // [ADMIN] 공지사항 등록
+
+    /**
+     * [ADMIN] 공지사항 등록
+     */
     @Transactional
-    @CacheEvict(value = "noticeList", allEntries = true) // 목록 캐시만 초기화
     public void createNotice(NoticeRequest request) {
         NoticeEntity notice = NoticeEntity.builder()
                 .title(request.getTitle())
@@ -92,33 +120,58 @@ public class NoticeService {
                 .isImportant(request.isImportant())
                 .build();
         noticeRepository.save(notice);
+
+        // 목록 캐시 전체 초기화
+        clearNoticeListCache();
     }
 
-    // [ADMIN] 공지사항 수정
+
+    /**
+     * [ADMIN] 공지사항 수정
+     */
     @Transactional
-    @Caching(evict = {
-            @CacheEvict(value = "noticeDetail", key = "#id"),    // 해당 상세 캐시 삭제
-            @CacheEvict(value = "noticeList", allEntries = true) // 목록 캐시 전체 초기화 (제목 등이 바뀔 수 있으므로)
-    })
     public void updateNotice(Long id, NoticeRequest request) {
         NoticeEntity notice = noticeRepository.findById(id)
                 .orElseThrow(() -> new BusinessException(ErrorCode.NOTICE_NOT_FOUND));
 
         notice.update(request.getTitle(), request.getContent(), request.isImportant());
+
+        // 1. 해당 상세 캐시 삭제
+        redisTemplate.delete(NOTICE_DETAIL_KEY_PREFIX + id);
+        // 2. 목록 캐시 전체 초기화 (제목 등이 변경되어 정렬/내용에 영향)
+        clearNoticeListCache();
     }
 
-    // [ADMIN] 공지사항 삭제
+
+    /**
+     * [ADMIN] 공지사항 삭제
+     */
     @Transactional
-    @Caching(evict = {
-            @CacheEvict(value = "noticeDetail", key = "#id"),
-            @CacheEvict(value = "noticeList", allEntries = true)
-    })
     public void deleteNotice(Long id) {
         noticeRepository.deleteById(id);
+
+        // 1. 해당 상세 캐시 삭제
+        redisTemplate.delete(NOTICE_DETAIL_KEY_PREFIX + id);
+        // 2. 목록 캐시 전체 초기화
+        clearNoticeListCache();
     }
 
 
-    // 상세 조회용 매퍼 (Content 포함)
+    //========================//
+    //==== Helper Methods ====//
+    //========================//
+
+    /**
+     * 공지사항 목록 캐시 일괄 삭제 ("noticeList::*" 패턴을 가진 모든 키 삭제)
+     */
+    private void clearNoticeListCache() {
+        Set<String> keys = redisTemplate.keys(NOTICE_LIST_KEY_PREFIX + "*");
+        if (keys != null && !keys.isEmpty()) {
+            redisTemplate.delete(keys);
+            log.info("Cleared {} notice list cache keys.", keys.size());
+        }
+    }
+
     private NoticeResponse toResponse(NoticeEntity entity) {
         return NoticeResponse.builder()
                 .id(entity.getId())
@@ -129,7 +182,6 @@ public class NoticeService {
                 .build();
     }
 
-    // 목록 조회용 매퍼 (Content 제외)
     private NoticeListResponse toListResponse(NoticeEntity entity) {
         return NoticeListResponse.builder()
                 .id(entity.getId())

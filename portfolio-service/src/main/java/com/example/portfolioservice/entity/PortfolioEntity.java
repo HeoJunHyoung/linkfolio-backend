@@ -60,7 +60,7 @@ public class PortfolioEntity extends BaseEntity {
     private String hashtags;
 
     @Lob // TEXT 타입
-    @Column(name = "content")
+    @Column(name = "content", columnDefinition = "LONGTEXT")
     private String content; // 포트폴리오 내용 (PR 등)
 
     @Column(name = "position")

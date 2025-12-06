@@ -120,14 +120,7 @@ public class EmailVerificationService {
     }
 
     /**
-     * 7. 비밀번호 재설정 코드 삭제
-     */
-    public void deletePasswordResetCode(String email) {
-        deleteKey(PW_RESET_CODE_PREFIX + email);
-    }
-
-    /**
-     * 8. 비밀번호 재설정 관련 상태 최종 삭제 (코드 + 검증완료 상태)
+     * 7. 비밀번호 재설정 관련 상태 최종 삭제 (코드 + 검증완료 상태)
      */
     public void deletePasswordResetState(String email) {
         deleteKey(PW_RESET_CODE_PREFIX + email);

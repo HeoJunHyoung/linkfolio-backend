@@ -37,6 +37,9 @@ public class CustomOAuth2UserService implements OAuth2UserService<OAuth2UserRequ
     private final OutboxRepository outboxRepository;
     private final ObjectMapper objectMapper;
 
+    /**
+     * Google로부터 Access Token을 얻은 후, 실제 사용자 정보를 가져오고 DB 처리(회원가입/로그인)를 하는 핵심 로직
+     */
     @Override
     @Transactional
     public OAuth2User loadUser(OAuth2UserRequest userRequest) throws OAuth2AuthenticationException {
@@ -59,6 +62,8 @@ public class CustomOAuth2UserService implements OAuth2UserService<OAuth2UserRequ
         }
 
         // 해당 파서(전략)를 실행하여 속성을 DTO로 변환
+        // ㄴ 제공자마다 제각각인 JSON 응답을 OAuthAttributes라는 통일된 객체로 변환
+        // ㄴ OAuth2AttributeParser 인터페이스와 GoogleAttributeParser/KakaoAttributeParser/NaverAttributeParser 구현체가 여기서 사용됨.
         OAuthAttributes attributes = parser.parse(userNameAttributeName, oAuth2User.getAttributes());
 
         // 5. DB에서 사용자 조회 또는 신규 생성

@@ -17,7 +17,10 @@ import org.springframework.transaction.annotation.Transactional;
 
 /**
  * Spring Security의 UserDetailsService 인터페이스를 구현.
- * 자체 로그인(Local Login) 시 사용자의 이메일(username)을 기반으로 사용자 정보를 조회.
+ * ㄴ 1. ID가 맞는지 확인하기 위해 CustomUserDetailsService의 loadUserByUsername을 호출
+ * ㄴ 2. DB에서 유저 정보를 가져와 AuthUser(UserDetails) 객체를 리턴
+ * ㄴ 3. AuthUser 비밀번호랑 사용자가 입력한 비밀번호가 일치하는지 Spring Security 내부적으로 검증
+ * ㄴ 4. 인증 성공 핸들러(LocalLoginSuccessHandler) 실행
  */
 @Service
 @Slf4j
@@ -47,7 +50,7 @@ public class CustomUserDetailsService implements UserDetailsService {
             throw new BusinessException(ErrorCode.USER_NOT_FOUND);
         }
 
-        // Spring Security 인증 객체(AuthUser) 반환
+        // Spring Security 인증 객체(AuthUser) 반환: LocalLoginSuccessHandler 호출
         return AuthUser.from(authUserEntity);
     }
 }

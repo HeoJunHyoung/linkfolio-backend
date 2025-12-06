@@ -58,7 +58,7 @@ public class AuthService {
                 request.getEmail(),
                 passwordEncoder.encode(request.getPassword()),
                 request.getUsername(),
-                request.getName() // 이름도 Auth DB에 저장
+                request.getName() // 이름도 Auth DB에 저장 (계정 찾기에서 필요함)
         );
         AuthUserEntity savedAuthUser = authUserRepository.save(authUser);
         log.info("AuthUser 'PENDING' 상태로 저장됨. UserId: {}", savedAuthUser.getUserId());

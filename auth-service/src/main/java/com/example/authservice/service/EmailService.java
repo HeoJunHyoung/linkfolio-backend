@@ -58,23 +58,6 @@ public class EmailService {
         }
     }
 
-    // 가입 아이디 발송
-    @Async
-    public void sendUsername(String toEmail, String username) {
-        try {
-            MimeMessage mimeMessage = createMimeMessage(
-                    toEmail,
-                    "[LinkFolio] 아이디 찾기 결과",
-                    createHtmlFindIdEmail(username) // 아이디 찾기용 템플릿
-            );
-            javaMailSender.send(mimeMessage);
-            log.info("{}로 아이디 발송 성공: {}", toEmail, username);
-        } catch (Exception e) {
-            log.error("{}로 아이디 발송 실패", toEmail, e);
-            throw new RuntimeException("메일 발송 중 오류가 발생했습니다.", e);
-        }
-    }
-
     // 비밀번호 재설정 코드 발송
     @Async
     public void sendPasswordResetCode(String toEmail, String code) {
@@ -126,23 +109,6 @@ public class EmailService {
                 + "    <div style='background-color: #f4f4f4; padding: 15px; text-align: center; font-size: 24px; font-weight: bold; letter-spacing: 3px; margin: 20px 0;'>"
                 + code
                 + "    </div>"
-                + createEmailFooter()
-                + "  </div>"
-                + "</body>"
-                + "</html>";
-    }
-
-    // 아이디 찾기 템플릿
-    private String createHtmlFindIdEmail(String username) {
-        return "<html>"
-                + "<body style='font-family: Arial, sans-serif; margin: 40px;'>"
-                + "  <div style='border: 1px solid #ddd; padding: 20px; max-width: 600px; margin: auto;'>"
-                + "    <h2 style='color: #333;'>LinkFolio 아이디 찾기 결과</h2>"
-                + "    <p>요청하신 LinkFolio 계정의 아이디입니다.</p>"
-                + "    <div style='background-color: #f4f4f4; padding: 15px; text-align: center; font-size: 20px; font-weight: bold; margin: 20px 0;'>"
-                + username
-                + "    </div>"
-                + "    <p>로그인 페이지로 돌아가서 로그인을 시도해주세요.</p>"
                 + createEmailFooter()
                 + "  </div>"
                 + "</body>"
