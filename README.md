@@ -1,7 +1,14 @@
-# 🔗 LinkFolio
-### 🧑‍💻 개발자를 위한 포트폴리오 공유 및 커뮤니티 플랫폼
 
-> **개발 기간: 2025.10.27 ~ 2025.12.12**
+
+# 🔗 LinkFolio
+
+<div style="display: flex; justify-content: space-between; align-items: center;">
+  <h3 style="margin: 0;">🧑‍💻 개발자를 위한 포트폴리오 공유 및 커뮤니티 플랫폼</h3>
+  <span style="font-size: 0.85rem; color: #888;">2025.10.27 ~ 2025.12.12</span>
+</div>
+
+> 📄 **[LinkFolio 개발 보고서 (PDF) 보기](docs/linkFolio_development_report.pdf)**
+
 <p align="center">
   <img src="images/etc/linkfolio_logo.png" width="750" alt="linkfolio"/>
   <br/>
@@ -19,6 +26,7 @@
 </p>
 
 ---
+
 
 ## 목차
 1. [📋 프로젝트 개요](#-프로젝트-개요)
@@ -143,7 +151,7 @@ LinkFolio는 **On-Premise Kubernetes** 환경과 **외부 메시징 인프라**�
 시스템의 안정성과 리소스 효율성을 위해 **Kubernetes 클러스터**와 **메시징 시스템**을 물리적으로 분리하여 구축했습니다.
 
 * **Kubernetes Cluster (Self-Hosted On-Premise)**
-  * **VirtualBox VM** 위에 **3개의 노드(1 Master, 2 Worker)**로 구성된 클러스터를 직접 구축하여 운영합니다.
+  * **VirtualBox VM** 위에 3개의 노드(1 Master, 2 Worker)로 구성된 클러스터를 직접 구축하여 운영합니다.
   * 모든 마이크로서비스와 데이터베이스가 이곳에서 구동되며, `NodePort`를 통해 외부 네트워크(Kafka VM)와 통신합니다.
 * **External Messaging Server (Ubuntu VM)**
   * Kafka, Zookeeper, Kafka Connect 등 이벤트 브로커 생태계가 독립된 환경에서 운영됩니다.
@@ -155,18 +163,15 @@ LinkFolio는 **On-Premise Kubernetes** 환경과 **외부 메시징 인프라**�
 ### 💻 인프라 설계 상세 (Infrastructure Details)
 운영 환경에 대한 깊은 이해를 위해 관리형 도구(Minikube 등)를 사용하지 않고, **VirtualBox VM 기반의 3-Node 클러스터**를 구축했습니다.
 
-| 항목 | 구성 내용 | 비고 |
-| :--- | :--- | :--- |
+| 항목 | 구성 내용                         | 비고 |
+| :--- |:------------------------------| :--- |
 | **OS / Environment** | Ubuntu 22.04 LTS (VirtualBox) | 1 Master + 2 Worker Nodes |
 | **Provisioning** | **Kubeadm**, Kubelet, Kubectl | 클러스터 수동 프로비저닝 |
-| **Container Runtime** | **Containerd** | Docker Shim 제거 트렌드 반영 (CRI 표준 준수) |
-| **Network (CNI)** | **Calico** | Pod 네트워크 통신 및 정책 관리 |
-| **Node Spec** | 2GB RAM, 2 vCPU per Node | Swap 비활성화 및 Kernel 파라미터 튜닝 |
+| **Container Runtime** | **Containerd**                | Docker Shim 제거 트렌드 반영 (CRI 표준 준수) |
+| **Network (CNI)** | **Calico**                    | Pod 네트워크 통신 및 정책 관리 |
+| **Node Spec** | 2GB RAM, 1 vCPU per Node      | Swap 비활성화 및 Kernel 파라미터 튜닝 |
 
-> **구축 의의:**
-> - `Kubeadm`을 통한 클러스터 초기화부터 `CNI(Calico)` 네트워크 플러그인 설정을 수행하며 Kubernetes 내부 동작 원리(CRI, CNI, OCI)를 이해했습니다.
-> - VM 간 NAT 네트워크 구성을 통해 외부 네트워크와 격리된 클러스터 통신 환경을 설계했습니다.
-
+> 👉 **[[Blog] VirtualBox 기반 On-Premise Kubernetes 3-Node 클러스터 구축 과정 상세 보기](https://receiver40.tistory.com/52)**
 ### ⚡️ Messaging Infrastructure
 데이터 파이프라인의 안정성을 보장하기 위해 다음과 같은 컴포넌트들을 구성했습니다.
 
