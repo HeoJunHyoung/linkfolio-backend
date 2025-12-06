@@ -65,7 +65,7 @@ public class PortfolioController {
             @ApiResponse(responseCode = "200", description = "조회 성공", content = @Content(schema = @Schema(implementation = Slice.class)))
     })
     @GetMapping("/portfolios")
-    public ResponseEntity<Slice<PortfolioCardResponse>> getPortfolioListApi(@PageableDefault(size = 8, sort = "createdAt", direction = Sort.Direction.DESC) Pageable pageable,
+    public ResponseEntity<Slice<PortfolioCardResponse>> getPortfolioListApi(@PageableDefault(size = 8) Pageable pageable,
                                                                             @RequestParam(required = false) String position) {
         Slice<PortfolioCardResponse> response = portfolioService.getPortfolioList(pageable, position);
         return ResponseEntity.ok(response);
