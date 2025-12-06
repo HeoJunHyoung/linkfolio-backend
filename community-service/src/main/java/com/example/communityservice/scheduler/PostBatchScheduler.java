@@ -29,12 +29,17 @@ public class PostBatchScheduler {
     private static final String COMMENT_SYNC_KEY = "post:comments:sync";
 
     @Scheduled(fixedRate = 180000, initialDelay = 30000) // 3분마다 실행 (Portfolio와 겹치지 않게 30초 딜레이)
+    @Transactional
     public void syncCounts() {
         log.info("[Scheduler] 커뮤니티 통계 데이터 DB 동기화 시작");
 
-        syncViewCounts();
-        syncBookmarkCounts();
-        syncCommentCounts();
+        try {
+            syncViewCounts();
+            syncBookmarkCounts();
+            syncCommentCounts();
+        } catch (Exception e) {
+            log.error("배치 동기화 중 예상치 못한 오류 발생", e);
+        }
 
         log.info("[Scheduler] 동기화 작업 완료");
     }
