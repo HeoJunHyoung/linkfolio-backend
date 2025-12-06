@@ -1,4 +1,4 @@
-# 🔗 LinkFolio <img src="https://img.shields.io/badge/2025.10.27_~_2025.12.12-lightgrey?style=flat-square&color=grey&labelColor=blacke&logoColor=555&label=" align="right" height="25">
+# 🔗 LinkFolio <img src="https://img.shields.io/badge/2025.10.27_~_2025.12.12-black?style=round-square&color=0e1117" align="right" height="25">
 
 <h3 style="margin-top: 0;">🧑‍💻 개발자를 위한 포트폴리오 공유 및 커뮤니티 플랫폼</h3>
 
