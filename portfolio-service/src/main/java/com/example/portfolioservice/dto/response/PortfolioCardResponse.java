@@ -26,14 +26,15 @@ public class PortfolioCardResponse {
 
     private Long viewCount;
     private Long likeCount;
+    private boolean isLiked;
 
     private LocalDateTime createdAt;
     private LocalDateTime lastModifiedAt;
 
     public PortfolioCardResponse(Long userId, Long portfolioId, String name, String email,
                                  String position, String photoUrl, String oneLiner,
-                                 String hashtags, // DB에서 조회한 String 타입
-                                 Long viewCount, Long likeCount,
+                                 String hashtags,
+                                 Long viewCount, Long likeCount, boolean isLiked,
                                  LocalDateTime createdAt, LocalDateTime lastModifiedAt) {
         this.userId = userId;
         this.portfolioId = portfolioId;
@@ -42,9 +43,10 @@ public class PortfolioCardResponse {
         this.position = position;
         this.photoUrl = photoUrl;
         this.oneLiner = oneLiner;
-        this.hashtags = stringToHashtagList(hashtags); // 생성자 내부에서 String -> List<String> 변환 수행
+        this.hashtags = stringToHashtagList(hashtags);
         this.viewCount = viewCount;
         this.likeCount = likeCount;
+        this.isLiked = isLiked;
         this.createdAt = createdAt;
         this.lastModifiedAt = lastModifiedAt;
     }

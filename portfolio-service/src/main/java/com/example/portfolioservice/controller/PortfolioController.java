@@ -65,9 +65,14 @@ public class PortfolioController {
             @ApiResponse(responseCode = "200", description = "조회 성공", content = @Content(schema = @Schema(implementation = Slice.class)))
     })
     @GetMapping("/portfolios")
-    public ResponseEntity<Slice<PortfolioCardResponse>> getPortfolioListApi(@PageableDefault(size = 8) Pageable pageable,
+    public ResponseEntity<Slice<PortfolioCardResponse>> getPortfolioListApi(@AuthenticationPrincipal AuthUser authUser,
+                                                                            @PageableDefault(size = 8) Pageable pageable,
                                                                             @RequestParam(required = false) String position) {
-        Slice<PortfolioCardResponse> response = portfolioService.getPortfolioList(pageable, position);
+        // 비로그인 사용자(null) 처리
+        Long userId = (authUser != null) ? authUser.getUserId() : null;
+
+        // Service 호출 시 userId 전달
+        Slice<PortfolioCardResponse> response = portfolioService.getPortfolioList(userId, pageable, position);
         return ResponseEntity.ok(response);
     }
 

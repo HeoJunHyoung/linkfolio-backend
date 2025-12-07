@@ -3,6 +3,7 @@ package com.example.communityservice.repository;
 import com.example.communityservice.dto.response.*;
 import com.example.communityservice.entity.*;
 import com.example.communityservice.entity.enumerate.PostCategory;
+import com.querydsl.core.types.Expression;
 import com.querydsl.core.types.ExpressionUtils;
 import com.querydsl.core.types.Projections;
 import com.querydsl.core.types.dsl.BooleanExpression;
@@ -32,7 +33,10 @@ public class PostRepositoryImpl implements PostRepositoryCustom {
 
     // 1. 게시글 목록 조회 (작성자 정보 Join 추가)
     @Override
-    public Page<PostResponse> searchPosts(PostCategory category, Boolean isSolved, Pageable pageable) {
+    public Page<PostResponse> searchPosts(Long userId, PostCategory category, Boolean isSolved, Pageable pageable) {
+
+        Expression<Boolean> isBookmarkedExpression = getIsBookmarkedExpression(userId);
+
         List<PostResponse> content = queryFactory
                 .select(Projections.constructor(PostResponse.class,
                         post.id,
@@ -46,6 +50,7 @@ public class PostRepositoryImpl implements PostRepositoryCustom {
                         post.bookmarkCount,
                         post.commentCount,
                         post.isSolved,
+                        isBookmarkedExpression,
                         post.recruitmentStatus,
                         post.createdAt,
                         post.lastModifiedAt
@@ -197,6 +202,22 @@ public class PostRepositoryImpl implements PostRepositoryCustom {
         return category != null ? post.category.eq(category) : null;
     }
 
+    //==================//
+    //== Helper Method==//
+    //==================//
+    private Expression<Boolean> getIsBookmarkedExpression(Long userId) {
+        if (userId == null) {
+            // 비로그인: 무조건 false
+            return Expressions.constant(false);
+        }
+
+        // 로그인: 서브쿼리로 존재 여부 확인 (Correlated Subquery)
+        return JPAExpressions.selectOne()
+                .from(postBookmark)
+                .where(postBookmark.post.id.eq(post.id)
+                        .and(postBookmark.userId.eq(userId)))
+                .exists();
+    }
 
     private BooleanExpression isSolvedEq(Boolean isSolved) {
         return isSolved != null ? post.isSolved.eq(isSolved) : null;

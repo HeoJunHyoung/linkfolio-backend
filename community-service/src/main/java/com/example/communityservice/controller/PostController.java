@@ -79,10 +79,15 @@ public class PostController {
     @Operation(summary = "게시글 목록 조회 (검색/필터)", description = "카테고리, 키워드, 해결 여부 등을 조건으로 게시글 목록을 조회합니다. (인증 불필요)")
     @GetMapping("/posts")
     public ResponseEntity<CustomPageResponse<PostResponse>> getPosts(
+            @AuthenticationPrincipal AuthUser authUser,
             @Parameter(description = "카테고리 (QNA, INFO, RECRUIT)") @RequestParam(required = false) PostCategory category,
             @Parameter(description = "해결 여부 (QnA 전용)") @RequestParam(required = false) Boolean isSolved,
             @Parameter(description = "페이징 설정 (기본: 최신순 10개)") @PageableDefault(size = 10, sort = "createdAt", direction = Sort.Direction.DESC) Pageable pageable) {
-        Page<PostResponse> page = postService.getPosts(category, isSolved, pageable);
+
+        // 비로그인 사용자(null) 처리
+        Long currentUserId = (authUser != null) ? authUser.getUserId() : null;
+
+        Page<PostResponse> page = postService.getPosts(currentUserId, category, isSolved, pageable);
         return ResponseEntity.ok(new CustomPageResponse<>(page));
     }
 

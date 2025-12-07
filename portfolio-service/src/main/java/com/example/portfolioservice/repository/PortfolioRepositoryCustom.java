@@ -10,5 +10,5 @@ public interface PortfolioRepositoryCustom {
     /**
      * 포트폴리오 목록을 동적 쿼리(직군)로 조회
      */
-    Slice<PortfolioCardResponse> searchPortfolioList(String position, Pageable pageable);
+    Slice<PortfolioCardResponse> searchPortfolioList(Long userId, String position, Pageable pageable);
 }

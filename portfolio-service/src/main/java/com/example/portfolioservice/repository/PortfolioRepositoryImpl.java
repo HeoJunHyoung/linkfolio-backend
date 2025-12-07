@@ -3,10 +3,14 @@ package com.example.portfolioservice.repository;
 import com.example.portfolioservice.dto.response.PortfolioCardResponse;
 import com.example.portfolioservice.entity.PortfolioEntity;
 import com.example.portfolioservice.entity.QPortfolioEntity;
+import com.example.portfolioservice.entity.QPortfolioLikeEntity;
+import com.querydsl.core.types.Expression;
 import com.querydsl.core.types.Order;
 import com.querydsl.core.types.OrderSpecifier;
 import com.querydsl.core.types.Projections;
 import com.querydsl.core.types.dsl.BooleanExpression;
+import com.querydsl.core.types.dsl.Expressions;
+import com.querydsl.jpa.JPAExpressions;
 import com.querydsl.jpa.impl.JPAQuery;
 import com.querydsl.jpa.impl.JPAQueryFactory;
 import lombok.RequiredArgsConstructor;
@@ -24,11 +28,13 @@ public class PortfolioRepositoryImpl implements PortfolioRepositoryCustom {
 
     private final JPAQueryFactory queryFactory;
     private final QPortfolioEntity portfolio = QPortfolioEntity.portfolioEntity;
+    private final QPortfolioLikeEntity portfolioLike = QPortfolioLikeEntity.portfolioLikeEntity;
 
     @Override
-    public Slice<PortfolioCardResponse> searchPortfolioList(String position, Pageable pageable) {
+    public Slice<PortfolioCardResponse> searchPortfolioList(Long userId, String position, Pageable pageable) {
 
-        // 1. 기본 쿼리 생성 (필터링)
+        Expression<Boolean> isLikedExpression = getIsLikedExpression(userId);
+
         JPAQuery<PortfolioCardResponse> query = queryFactory
                 .select(Projections.constructor(PortfolioCardResponse.class,
                         portfolio.userId,
@@ -41,25 +47,23 @@ public class PortfolioRepositoryImpl implements PortfolioRepositoryCustom {
                         portfolio.hashtags,
                         portfolio.viewCount,
                         portfolio.likeCount,
+                        isLikedExpression, // 추출한 Expression 주입
                         portfolio.createdAt,
                         portfolio.lastModifiedAt
                 ))
                 .from(portfolio)
                 .where(
-                        portfolio.isPublished.eq(true), // 기본 조건
-                        positionEq(position)            // 동적 조건 (직군)
+                        portfolio.isPublished.eq(true),
+                        positionEq(position)
                 );
 
-        // 2. Pageable의 Sort 정보를 기반으로 동적 정렬 적용
         applySorting(query, pageable.getSort());
 
-        // 3. 페이징 적용
         List<PortfolioCardResponse> results = query
                 .offset(pageable.getOffset())
-                .limit(pageable.getPageSize() + 1) // Slice 처리를 위해 +1
+                .limit(pageable.getPageSize() + 1)
                 .fetch();
 
-        // 4. SliceImpl로 변환
         boolean hasNext = false;
         if (results.size() > pageable.getPageSize()) {
             results.remove(pageable.getPageSize());
@@ -67,6 +71,22 @@ public class PortfolioRepositoryImpl implements PortfolioRepositoryCustom {
         }
 
         return new SliceImpl<>(results, pageable, hasNext);
+    }
+
+    //==================//
+    //== Helper Method==//
+    //==================//
+
+    private Expression<Boolean> getIsLikedExpression(Long userId) {
+        if (userId == null) {
+            // 비로그인: 무조건 false
+            return Expressions.constant(false);
+        }
+        return JPAExpressions.selectOne()
+                .from(portfolioLike)
+                .where(portfolioLike.portfolio.portfolioId.eq(portfolio.portfolioId)
+                        .and(portfolioLike.likerId.eq(userId)))
+                .exists();
     }
 
     /**
