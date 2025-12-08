@@ -35,8 +35,9 @@ public class PortfolioLikeService {
      * 포트폴리오 북마크 추가
      */
     public void addLike(Long authUserId, Long portfolioId) {
-        // 1. 검증 (Proxy 조회로 쿼리 절약)
-        PortfolioEntity portfolio = portfolioRepository.getReferenceById(portfolioId);
+        // 1. 검증
+        PortfolioEntity portfolio = portfolioRepository.findById(portfolioId)
+                .orElseThrow(() -> new BusinessException(ErrorCode.PORTFOLIO_NOT_FOUND));
 
         // 중복 체크 (DB 조회는 필요하지만, Parent Row Lock은 걸리지 않음)
         if (portfolioLikeRepository.existsByLikerIdAndPortfolio(authUserId, portfolio)) {
