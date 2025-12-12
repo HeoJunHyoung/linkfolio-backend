@@ -11,7 +11,7 @@
   <a href="https://github.com/HeoJunHyoung/Linkfolio-backend">
     <img src="https://img.shields.io/badge/GitHub-Backend-181717?style=for-the-badge&logo=github"/>
   </a>
-  &nbsp; <a href="https://github.com/park/Linkfolio-backend">
+  &nbsp; <a href="https://github.com/Hyun-EG/linkfolio">
     <img src="https://img.shields.io/badge/GitHub-Frontend-181717?style=for-the-badge&logo=github"/>
   </a>
   &nbsp;
