@@ -56,6 +56,19 @@
 
 ### 1. 회원가입 및 계정 관리 (Authentication)
 
+<table>
+  <tr>
+    <td align="center" width="50%">
+      <img src="images/demo/authentication/signin.png" alt="로그인" width="100%"><br/>
+      <p>로그인</p>
+    </td>
+    <td align="center" width="50%">
+      <img src="images/demo/authentication/email_verify.png" alt="이메일 인증" width="100%"><br/>
+      <p>이메일 인증</p>
+    </td>
+  </tr>
+</table>
+
 <p align="center">
   <img src="images/demo/authentication/signin.png" width="48%" alt="Sign Up" style="border-radius: 10px; margin-right: 10px;"/>
   <img src="images/demo/authentication/email_verify.png" width="48%" alt="Email Verification" style="border-radius: 10px;"/>
