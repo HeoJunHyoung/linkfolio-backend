@@ -1,0 +1,49 @@
+server:
+  port: 8084
+  servlet:
+    context-path: /support-service
+
+spring:
+  application:
+    name: support-service
+
+  # DB ?? (MySQL)
+  datasource:
+    driver-class-name: com.mysql.cj.jdbc.Driver
+    url: jdbc:mysql://${DB_HOST}/${MYSQL_DATABASE}?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC&useUnicode=true&characterEncoding=UTF-8
+    username: ${MYSQL_USER}
+    password: ${MYSQL_PASSWORD}
+
+  # JPA ??
+  jpa:
+    hibernate:
+      ddl-auto: ${JPA_DDL_AUTO}
+    show-sql: ${JPA_SHOW_SQL}
+    properties:
+      hibernate:
+        format_sql: ${JPA_FORMAT_SQL}
+
+  # Redis ??
+  data:
+    redis:
+      host: ${REDIS_HOST}
+      port: ${REDIS_PORT}
+
+# Swagger ??
+springdoc:
+  override-with-generic-response: false
+
+# --- Monitoring Configuration (Added) ---
+management:
+  endpoints:
+    web:
+      exposure:
+        include: prometheus, health, info  # 프로메테우스 지표 노출 허용
+  endpoint:
+    health:
+      show-details: always
+    prometheus:
+      enabled: true
+  metrics:
+    tags:
+      application: ${spring.application.name} # Grafana에서 서비스별로 구분하기 위해 태그 추가

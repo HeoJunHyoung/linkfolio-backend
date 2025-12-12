@@ -1,0 +1,19 @@
+     ✓ Notice List 200
+
+     checks.........................: 100.00% ✓ 1535      ✗ 0   
+     data_received..................: 3.8 MB  31 kB/s
+     data_sent......................: 576 kB  4.7 kB/s
+     http_req_blocked...............: avg=49.76µs min=0s      med=0s      max=1.59ms   p(90)=0s       p(95)=547.45µs
+     http_req_connecting............: avg=44.86µs min=0s      med=0s      max=1.59ms   p(90)=0s       p(95)=533.42µs
+   ✗ http_req_duration..............: avg=2.57s   min=74.6ms  med=2.74s   max=7.71s    p(90)=4.02s    p(95)=4.54s   
+       { expected_response:true }...: avg=2.57s   min=74.6ms  med=2.74s   max=7.71s    p(90)=4.02s    p(95)=4.54s   
+   ✓ http_req_failed................: 0.00%   ✓ 0         ✗ 1536
+     http_req_receiving.............: avg=89.97ms min=0s      med=21.06ms max=776.87ms p(90)=264.71ms p(95)=344.5ms 
+     http_req_sending...............: avg=6.5µs   min=0s      med=0s      max=751.1µs  p(90)=0s       p(95)=0s      
+     http_req_tls_handshaking.......: avg=0s      min=0s      med=0s      max=0s       p(90)=0s       p(95)=0s      
+     http_req_waiting...............: avg=2.48s   min=72.88ms med=2.67s   max=7.6s     p(90)=3.88s    p(95)=4.46s   
+     http_reqs......................: 1536    12.648935/s
+     iteration_duration.............: avg=3.58s   min=1.07s   med=3.74s   max=8.71s    p(90)=5.02s    p(95)=5.54s   
+     iterations.....................: 1535    12.6407/s
+     vus............................: 2       min=0       max=80
+     vus_max........................: 80      min=80      max=80

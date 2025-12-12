@@ -1,0 +1,23 @@
+     ✗ Community Comment 200
+      ↳  99% — ✓ 479 / ✗ 3
+     ✗ Community List 200
+      ↳  69% — ✓ 601 / ✗ 266
+     ✓ Community Detail 200
+
+     checks.........................: 87.86% ✓ 1947      ✗ 269 
+     data_received..................: 6.2 MB 34 kB/s
+     data_sent......................: 893 kB 4.9 kB/s
+     http_req_blocked...............: avg=24.3µs  min=0s      med=0s     max=1.69ms   p(90)=0s      p(95)=0s     
+     http_req_connecting............: avg=21.99µs min=0s      med=0s     max=1.69ms   p(90)=0s      p(95)=0s     
+   ✗ http_req_duration..............: avg=1.79s   min=0s      med=1.1s   max=10.58s   p(90)=5.35s   p(95)=6.24s  
+       { expected_response:true }...: avg=2.04s   min=46.19ms med=1.32s  max=10.58s   p(90)=5.56s   p(95)=6.34s  
+   ✗ http_req_failed................: 12.13% ✓ 269       ✗ 1948
+     http_req_receiving.............: avg=19.94ms min=0s      med=2.24ms max=969.25ms p(90)=45.43ms p(95)=91.75ms
+     http_req_sending...............: avg=4.19µs  min=0s      med=0s     max=986.8µs  p(90)=0s      p(95)=0s     
+     http_req_tls_handshaking.......: avg=0s      min=0s      med=0s     max=0s       p(90)=0s      p(95)=0s     
+     http_req_waiting...............: avg=1.77s   min=0s      med=1.07s  max=9.88s    p(90)=5.3s    p(95)=6.16s  
+     http_reqs......................: 2217   12.128884/s
+     iteration_duration.............: avg=5.31s   min=2.05s   med=4.02s  max=14.31s   p(90)=9.71s   p(95)=10.46s 
+     iterations.....................: 1349   7.380183/s
+     vus............................: 5      min=5       max=60
+     vus_max........................: 60     min=60      max=60

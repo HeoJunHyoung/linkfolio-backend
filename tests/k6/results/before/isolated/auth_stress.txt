@@ -1,0 +1,19 @@
+     ✓ Auth Login 200
+
+     checks.........................: 100.00% ✓ 280      ✗ 0   
+     data_received..................: 250 kB  2.1 kB/s
+     data_sent......................: 59 kB   486 B/s
+     http_req_blocked...............: avg=43.7µs   min=0s       med=0s      max=2.11ms  p(90)=0s       p(95)=0s      
+     http_req_connecting............: avg=36.71µs  min=0s       med=0s      max=1.44ms  p(90)=0s       p(95)=0s      
+   ✗ http_req_duration..............: avg=2.26s    min=165.62ms med=2.65s   max=4.15s   p(90)=3.42s    p(95)=3.55s   
+       { expected_response:true }...: avg=2.26s    min=165.62ms med=2.65s   max=4.15s   p(90)=3.42s    p(95)=3.55s   
+   ✓ http_req_failed................: 0.00%   ✓ 0        ✗ 280 
+     http_req_receiving.............: avg=398.63µs min=0s       med=332.4µs max=3.79ms  p(90)=959.07µs p(95)=992.81µs
+     http_req_sending...............: avg=6.86µs   min=0s       med=0s      max=676.8µs p(90)=0s       p(95)=0s      
+     http_req_tls_handshaking.......: avg=0s       min=0s       med=0s      max=0s      p(90)=0s       p(95)=0s      
+     http_req_waiting...............: avg=2.26s    min=164.67ms med=2.65s   max=4.15s   p(90)=3.42s    p(95)=3.55s   
+     http_reqs......................: 280     2.325609/s
+     iteration_duration.............: avg=3.26s    min=1.16s    med=3.65s   max=5.15s   p(90)=4.42s    p(95)=4.55s   
+     iterations.....................: 280     2.325609/s
+     vus............................: 1       min=0      max=10
+     vus_max........................: 10      min=10     max=10

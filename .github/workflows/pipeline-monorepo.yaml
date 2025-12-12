@@ -1,0 +1,147 @@
+name: linkfolio CI/CD (Monorepo Build)
+
+on:
+  push:
+    branches:
+#      - dev
+#      - perf/after-optimization
+    paths-ignore:
+      - 'tests/**'       # k6 스크립트
+      - 'docs/**'        # 문서 폴더
+      - '**.md'          # 마크다운 파일
+      - '.gitignore'
+      - 'images/**'
+  workflow_dispatch:
+
+jobs:
+  # -----------------------------------------------------------------
+  # Job 1: (Monorepo) 전체 빌드 및 .jar 아티팩트 업로드
+  # -----------------------------------------------------------------
+  build:
+    runs-on: ubuntu-latest
+    outputs:
+      SHORT_SHA: ${{ steps.sha.outputs.short }}
+
+    steps:
+      - name: Checkout source code
+        uses: actions/checkout@v4
+
+      - name: Set up JDK 17
+        uses: actions/setup-java@v4
+        with:
+          java-version: '17'
+          distribution: 'temurin'
+          cache: maven
+
+      - name: Get short SHA
+        id: sha
+        run: echo "short=${GITHUB_SHA::7}" >> $GITHUB_OUTPUT
+
+      # 루트에서 빌드
+      # ㄴ 백엔드에서 공통 모듈(common-module)이 있기 때문에, 해당 모듈 먼저 빌드하여 순서에 따른 의존성을 보장하기 위함
+      - name: Build all modules with Maven
+        run: mvn -B -DskipTests package
+
+      - name: Upload .jar artifacts
+        # 빌드된 각 서비스의 .jar 파일을 CD Job에서 사용할 수 있도록 업로드
+        uses: actions/upload-artifact@v4
+        with:
+          name: service-jars
+          path: |
+            */target/*.jar
+            !*/target/*-plain.jar
+
+  # -----------------------------------------------------------------
+  # Job 2: (Parallel) Docker 이미지 빌드 및 푸시
+  # -----------------------------------------------------------------
+  build-and-push-docker:
+    runs-on: ubuntu-latest
+    needs: build # build 작업이 성공해야 실행
+    strategy:
+      matrix:
+        service: [apigateway-service, user-service, auth-service, portfolio-service, chat-service, support-service, community-service]
+        include:
+          - service: apigateway-service
+            service-name: apigateway
+          - service: user-service
+            service-name: user
+          - service: auth-service
+            service-name: auth
+          - service: portfolio-service
+            service-name: portfolio
+          - service: chat-service
+            service-name: chat
+          - service: support-service
+            service-name: support
+          - service: community-service
+            service-name: community
+
+    steps:
+      - name: Checkout source code
+        uses: actions/checkout@v4
+
+      - name: Get short SHA from build job
+        id: sha
+        run: echo "short=${{ needs.build.outputs.SHORT_SHA }}" >> $GITHUB_OUTPUT
+
+      - name: Login to Docker Hub
+        uses: docker/login-action@v3
+        with:
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Download .jar artifacts
+        uses: actions/download-artifact@v4
+        with:
+          name: service-jars
+          # 각 서비스의 target 디렉토리로 .jar 파일을 다운로드
+          path: .
+
+      - name: Build and push Docker image
+        uses: docker/build-push-action@v6
+        with:
+          # context는 Dockerfile이 위치한 각 서비스 디렉토리
+          context: ./${{ matrix.service }}
+          file: ./${{ matrix.service }}/Dockerfile
+          push: true
+          tags: h6bro/service-${{ matrix.service-name }}:${{ steps.sha.outputs.short }}
+
+  # -----------------------------------------------------------------
+  # Job 3: (CD) 매니페스트 이미지 태그 업데이트
+  # -----------------------------------------------------------------
+  cd:
+    runs-on: ubuntu-latest
+    # build(SHA 생성)와 push-docker(이미지 푸시 완료)가 모두 끝나야 실행
+    needs: [build, build-and-push-docker]
+
+    steps:
+      - name: Checkout manifest repository
+        uses: actions/checkout@v4
+        with:
+          repository: HeoJunHyoung/linkfolio-manifest
+          ref: dev
+          token: ${{ secrets.GH_TOKEN }}
+          path: linkfolio-manifest
+
+      - name: Set SHORT_SHA env
+        run: echo "SHORT_SHA=${{ needs.build.outputs.SHORT_SHA }}" >> $GITHUB_ENV
+
+      - name: Update image tags with Kustomize
+        run: |
+          cd linkfolio-manifest/overlays/development
+          for SERVICE in apigateway user auth portfolio chat support community; do
+            echo "Updating image for $SERVICE-service..."
+            kustomize edit set image h6bro/service-${SERVICE}=h6bro/service-${SERVICE}:${{ env.SHORT_SHA }}
+          done
+
+      - name: Commit and push changes
+        run: |
+          cd linkfolio-manifest
+          git config --local user.email "action@github.com"
+          git config --local user.name "GitHub Action"
+          git add .
+          git commit -m "🔄 [CI/CD] Monorepo build - update all services to ${{ env.SHORT_SHA }}"
+          git push

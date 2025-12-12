@@ -1,0 +1,61 @@
+server:
+  port: 8082
+  servlet:
+    context-path: /portfolio-service
+
+spring:
+  application:
+    name: portfolio-service
+
+  # --- Database (MySQL) Configuration ---
+  datasource:
+    driver-class-name: com.mysql.cj.jdbc.Driver
+    url: jdbc:mysql://${DB_HOST}/${MYSQL_DATABASE}?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC&useUnicode=true&characterEncoding=UTF-8
+    username: ${MYSQL_USER}
+    password: ${MYSQL_PASSWORD}
+
+  # --- JPA / Hibernate Configuration ---
+  jpa:
+    hibernate:
+      ddl-auto: ${JPA_DDL_AUTO} # development: update, production: validate
+    show-sql: ${JPA_SHOW_SQL}
+    properties:
+      hibernate:
+        format_sql: ${JPA_FORMAT_SQL}
+
+  # --- Redis ---
+  data:
+    redis:
+      host: ${REDIS_HOST}
+      port: ${REDIS_PORT}
+
+  # --- Kafka Configuration ---
+  kafka:
+    bootstrap-servers: ${SPRING_KAFKA_BOOTSTRAP_SERVERS}
+    consumer:
+      bootstrap-servers: ${SPRING_KAFKA_CONSUMER_BOOTSTRAP_SERVERS}
+      key-deserializer: io.confluent.kafka.serializers.KafkaAvroDeserializer
+      value-deserializer: io.confluent.kafka.serializers.KafkaAvroDeserializer
+      group-id: "portfolio-consumer-group"
+      properties:
+        schema.registry.url: http://10.0.2.9:8081
+        specific.avro.reader: false
+
+# --- Swagger (OpenAPI) ---
+springdoc:
+  override-with-generic-response: false
+
+# --- Monitoring Configuration (Added) ---
+management:
+  endpoints:
+    web:
+      exposure:
+        include: prometheus, health, info  # 프로메테우스 지표 노출 허용
+  endpoint:
+    health:
+      show-details: always
+    prometheus:
+      enabled: true
+  metrics:
+    tags:
+      application: ${spring.application.name} # Grafana에서 서비스별로 구분하기 위해 태그 추가

@@ -1,0 +1,212 @@
+################################################################################
+# 🔧 Server Configuration
+################################################################################
+server:
+  port: 8000
+  forward-headers-strategy: NATIVE
+
+
+################################################################################
+# 🌱 Spring Boot & Application Settings
+################################################################################
+spring:
+  main:
+    web-application-type: reactive
+  application:
+    name: apigateway-service
+
+  cloud:
+    gateway:
+
+      ##########################################################################
+      # 🌐 CORS 설정 (전역 CORS 정책)
+      ##########################################################################
+      server:
+        webflux:
+          globalcors:
+            cors-configurations:
+              '[/**]':  # 모든 경로에 적용
+                allowed-origins:
+                  - 'https://impressionless-connaturally-jonie.ngrok-free.dev'
+                  - 'http://localhost:3000'                  # Next.js 로컬
+                  - 'https://linkfolio-three.vercel.app'     # Next.js DEV
+                  - 'https://linkfolio.vercel.app'            # 소셜 리디렉션
+                  - 'http://127.0.0.1:5500'
+                  - 'http://localhost:5500'
+                allowed-methods:
+                  - GET
+                  - POST
+                  - PUT
+                  - DELETE
+                  - PATCH
+                  - OPTIONS
+                allowed-headers: '*'
+                allow-credentials: true
+
+      ##########################################################################
+      # 🔀 API Gateway Route 설정
+      ##########################################################################
+      routes:
+
+        # 1. User Service
+        - id: user-service-route
+          uri: http://user-service:80
+          predicates:
+            - Path=/user-service/**
+
+        # 2. Auth Service
+        - id: auth-service-route
+          uri: http://auth-service:80
+          predicates:
+            - Path=/auth-service/**
+
+        # 3. Portfolio Service
+        - id: portfolio-service-route
+          uri: http://portfolio-service:80
+          predicates:
+            - Path=/portfolio-service/**
+
+        # 4. Chat Service (HTTP)
+        - id: chat-service-route
+          uri: http://chat-service:80
+          predicates:
+            - Path=/chat-service/**
+
+        # 5. Chat Service (WebSocket)
+        - id: chat-service-ws-route
+          uri: http://chat-service:80
+          predicates:
+            - Path=/ws-chat/**
+
+        # 6. Support Service
+        - id: support-service-route
+          uri: http://support-service:80
+          predicates:
+            - Path=/support-service/**
+
+        # 7. Community Service
+        - id: community-service-route
+          uri: http://community-service:80
+          predicates:
+            - Path=/community-service/**
+
+      ##########################################################################
+      # ⏱️ Gateway HTTP Client 설정
+      ##########################################################################
+      httpclient:
+        connect-timeout: 10000
+        response-timeout: 30s
+
+
+################################################################################
+# 🚫 JWT 인증 제외 URL 목록
+################################################################################
+app:
+  gateway:
+    excluded-urls:
+      # User Service
+      - /user-service/welcome
+      - /user-service/swagger-ui/**
+      - /user-service/v3/api-docs/**
+
+      # Spring Actuator
+      - /actuator
+
+      # Auth Service
+      - /auth-service/swagger-ui/**
+      - /auth-service/v3/api-docs/**
+      - /auth-service/auth/signup
+      - /auth-service/auth/login
+      - /auth-service/auth/refresh
+      - /auth-service/auth/logout
+      - /auth-service/auth/check-username
+      - /auth-service/auth/check-password
+      - /auth-service/auth/find-username
+      - /auth-service/auth/password-reset/send-code
+      - /auth-service/auth/password-reset/verify-code
+      - /auth-service/auth/password-reset/change
+      - /auth-service/auth/email-verification/send
+      - /auth-service/auth/email-verification/check
+      - /auth-service/oauth2/authorization/**
+      - /auth-service/login/oauth2/code/**
+      - /auth-service/error
+      - /auth-service/auth/test/setup-user
+
+      # Portfolio Service
+      - /portfolio-service/swagger-ui/**
+      - /portfolio-service/v3/api-docs/**
+      - /portfolio-service/portfolios
+      - /portfolio-service/portfolios/{portfolioId:\d+}
+      - /portfolio-service/portfolio/test/setup
+
+      # Support Service
+      - /support-service/notices
+      - /support-service/notices/**
+      - /support-service/faqs
+      - /support-service/faqs/**
+      - /support-service/v3/api-docs/**
+      - /support-service/support/test/setup
+
+      # Community Service
+      - /community-service/posts
+      - /community-service/posts/**
+      - /community-service/v3/api-docs/**
+      - /community-service/community/test/setup
+
+      # Chat Service
+      - /chat-service/v3/api-docs/**
+      - /ws-chat/**
+
+
+################################################################################
+# 🔐 JWT Token Settings
+################################################################################
+jwt:
+  secret: ${JWT_SECRET}
+  expiration_time: 86400000  # 24 hours
+
+
+################################################################################
+# 📘 Swagger (API 문서 모음)
+################################################################################
+springdoc:
+
+  # Gateway Swagger UI 설정
+  swagger-ui:
+    path: /swagger-ui.html
+    urls:
+      - name: 1. Auth Service
+        url: https://impressionless-connaturally-jonie.ngrok-free.dev/auth-service/v3/api-docs
+      - name: 2. User Service
+        url: https://impressionless-connaturally-jonie.ngrok-free.dev/user-service/v3/api-docs
+      - name: 3. Portfolio Service
+        url: https://impressionless-connaturally-jonie.ngrok-free.dev/portfolio-service/v3/api-docs
+      - name: 4. Support Service (Notice/FAQ)
+        url: https://impressionless-connaturally-jonie.ngrok-free.dev/support-service/v3/api-docs
+      - name: 5. Community Service
+        url: https://impressionless-connaturally-jonie.ngrok-free.dev/community-service/v3/api-docs
+      - name: 6. Chat Service
+        url: https://impressionless-connaturally-jonie.ngrok-free.dev/chat-service/v3/api-docs
+
+  # Mixed Content 방지 (Gateway public address)
+  servers:
+    - url: https://impressionless-connaturally-jonie.ngrok-free.dev
+      description: NGrok Development Server
+
+
+################################################################################
+# 📊 Monitoring / Prometheus / Health Check
+################################################################################
+management:
+  endpoints:
+    web:
+      exposure:
+        include: prometheus, health, info
+  endpoint:
+    health:
+      show-details: always
+    prometheus:
+      enabled: true
+  metrics:
+    tags:
+      application: ${spring.application.name}
