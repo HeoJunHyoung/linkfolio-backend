@@ -54,43 +54,7 @@
 ---
 ## 🎯 앱 주요 기능
 
-### 1. 회원가입 및 계정 관리 (Authentication)
-
-<table>
-  <tr>
-    <td align="center" width="50%">
-      <img src="images/demo/authentication/signin.png" alt="로그인" width="100%"><br/>
-      <p>로그인</p>
-    </td>
-    <td align="center" width="50%">
-      <img src="images/demo/authentication/email_verify.png" alt="이메일 인증" width="100%"><br/>
-      <p>인증코드</p>
-    </td>
-  </tr>
-</table>
-
-* **자체 회원가입**(이메일 인증 기반): 사용자는 이메일 인증(SMTP)을 거쳐 안전하게 계정을 생성합니다. Redis를 활용하여 인증 코드의 유효 시간을 엄격하게 관리합니다.
-* **소셜 로그인**: 사용자는 카카오, 네이버, 구글을 통해 소셜 로그인을 할 수 있습니다.
-
-
-
-
-<table>
-  <tr>
-    <td align="center" width="50%">
-      <img src="images/demo/authentication/id_find.png" alt="로그인" width="100%"><br/>
-      <p>아이디 찾기</p>
-    </td>
-    <td align="center" width="50%">
-      <img src="images/demo/authentication/pw_find.png" alt="이메일 인증" width="100%"><br/>
-      <p>비밀번호 찾기</p>
-    </td>
-  </tr>
-</table>
-
-* **계정 찾기**: 실명과 이메일 검증을 통해 잊어버린 아이디를 찾거나, 임시 비밀번호 발급 대신 안전하게 비밀번호를 재설정할 수 있는 프로세스를 구현했습니다.
-
-### 2. 포트폴리오
+### 1. 포트폴리오
 
 <table>
   <tr>
@@ -108,7 +72,7 @@
 * **인기 개발자 랭킹**: 단순 조회수뿐만 아니라 최신 트렌드를 반영하기 위해 Hacker News의 알고리즘을 변형한 '인기 점수(Popularity Score)' 로직을 적용하여 메인 페이지에 노출합니다.
 * **필터링**: QueryDSL을 활용하여 직군(Frontend, Backend 등) 및 기술 스택별 동적 필터링을 구현했습니다.
 
-### 3. 커뮤니티
+### 2. 커뮤니티
 
 <table>
   <tr>
@@ -137,7 +101,7 @@
 * **팀원 모집 프로세스**: 작성자는 원클릭으로 모집 상태(`OPEN` ↔ `CLOSED`)를 변경할 수 있으며, 지원자는 게시글 내에서 즉시 작성자와 1:1 채팅을 시작하여 지원할 수 있습니다.
 * **계층형 댓글**: 대댓글 구조를 지원하여 사용자 간의 깊이 있는 토론과 소통이 가능합니다.
 
-### 4. 실시간 1:1 채팅
+### 3. 실시간 1:1 채팅
 
 <table>
   <tr>
@@ -154,6 +118,30 @@
 
 * **실시간 소통**: WebSocket과 STOMP 프로토콜을 활용하여 지연 없는 대화 환경을 제공합니다. Redis Pub/Sub을 도입하여 다중 서버 환경에서도 메시지 전송을 보장합니다.
 * **사용자 동기화**: 타 서비스의 프로필 변경 사항을 Kafka CDC로 실시간 동기화하여, 채팅 목록 조회 시 발생하는 N+1 문제를 근본적으로 해결했습니다.
+
+
+
+### 4. 마이페이지
+
+<table>
+  <tr>
+    <td align="center" width="50%">
+      <img src="images/demo/mypage/9_mypage_portfolio.gif" alt="포트폴리오 관리" width="100%"><br/>
+      <p>포트폴리오 관리</p>
+    </td>
+    <td align="center" width="50%">
+      <img src="images/demo/mypage/10_mypage_community.gif" alt="커뮤니티 관리" width="100%"><br/>
+      <p>커뮤니티 관리</p>
+    </td>
+  </tr>
+</table>
+
+* **내 정보 관리**: 프로필 사진, 실명, 생년월일 등의 개인 정보를 수정할 수 있습니다. 변경된 정보는 Kafka 이벤트를 통해 타 서비스(`Portfolio`, `Chat`)에 실시간으로 전파되어 데이터 일관성을 유지합니다.
+* **포트폴리오 관리**: 작성한 포트폴리오의 공개/비공개 전환 및 수정 기능을 제공하여 이력 관리를 돕습니다.
+* **활동 내역 조회**: 내가 작성한 커뮤니티 게시글과 북마크한 포트폴리오/게시글을 한눈에 모아볼 수 있어, 관심 콘텐츠를 효율적으로 관리할 수 있습니다.
+
+
+
 
 ### 5. 고객센터
 
@@ -185,24 +173,43 @@
 * **공지사항 및 FAQ**: 서비스 이용에 필요한 정보를 제공합니다. 읽기 요청이 많은 특성을 고려하여 Redis Caching을 적극적으로 활용, 조회 성능을 극대화했습니다.
 * **관리자 기능**: 관리자(Admin) 권한을 가진 사용자만이 공지사항을 작성 및 수정할 수 있도록 권한을 분리했습니다.
 
-### 6. 마이페이지
+
+
+
+### 6. 회원가입 및 계정 관리 (Authentication)
 
 <table>
   <tr>
     <td align="center" width="50%">
-      <img src="images/demo/mypage/9_mypage_portfolio.gif" alt="포트폴리오 관리" width="100%"><br/>
-      <p>포트폴리오 관리</p>
+      <img src="images/demo/authentication/signin.png" alt="로그인" width="100%"><br/>
+      <p>로그인</p>
     </td>
     <td align="center" width="50%">
-      <img src="images/demo/mypage/10_mypage_community.gif" alt="커뮤니티 관리" width="100%"><br/>
-      <p>커뮤니티 관리</p>
+      <img src="images/demo/authentication/email_verify.png" alt="이메일 인증" width="100%"><br/>
+      <p>인증코드</p>
+    </td>
+  </tr>
+</table>
+<table>
+  <tr>
+    <td align="center" width="50%">
+      <img src="images/demo/authentication/id_find.png" alt="로그인" width="100%"><br/>
+      <p>아이디 찾기</p>
+    </td>
+    <td align="center" width="50%">
+      <img src="images/demo/authentication/pw_find.png" alt="이메일 인증" width="100%"><br/>
+      <p>비밀번호 찾기</p>
     </td>
   </tr>
 </table>
 
-* **내 정보 관리**: 프로필 사진, 실명, 생년월일 등의 개인 정보를 수정할 수 있습니다. 변경된 정보는 Kafka 이벤트를 통해 타 서비스(`Portfolio`, `Chat`)에 실시간으로 전파되어 데이터 일관성을 유지합니다.
-* **포트폴리오 관리**: 작성한 포트폴리오의 공개/비공개 전환 및 수정 기능을 제공하여 이력 관리를 돕습니다.
-* **활동 내역 조회**: 내가 작성한 커뮤니티 게시글과 북마크한 포트폴리오/게시글을 한눈에 모아볼 수 있어, 관심 콘텐츠를 효율적으로 관리할 수 있습니다.
+
+* **자체 회원가입**(이메일 인증 기반): 사용자는 이메일 인증(SMTP)을 거쳐 안전하게 계정을 생성합니다. Redis를 활용하여 인증 코드의 유효 시간을 엄격하게 관리합니다.
+* **소셜 로그인**: 사용자는 카카오, 네이버, 구글을 통해 소셜 로그인을 할 수 있습니다.
+* **계정 찾기**: 실명과 이메일 검증을 통해 잊어버린 아이디를 찾거나, 임시 비밀번호 발급 대신 안전하게 비밀번호를 재설정할 수 있는 프로세스를 구현했습니다.
+
+
+
 
 ---
 
