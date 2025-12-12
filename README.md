@@ -375,8 +375,8 @@ LinkFolio는 **On-Premise Kubernetes** 환경과 **외부 메시징 인프라**�
       <h3>허준형</h3>
     </td>
     <td align="center" width="50%">
-      <a href="https://github.com/park-sunghyun">
-        <img src="https://github.com/park-sunghyun.png" width="120" style="border-radius:50%;"/>
+      <a href="https://github.com/Hyun-EG">
+        <img src="https://github.com/Hyun-EG.png" width="120" style="border-radius:50%;"/>
       </a>
       <br/>
       <h3>박성현</h3>
