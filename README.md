@@ -5,7 +5,7 @@
 > 📄 **[LinkFolio 개발 보고서 (PDF) 보기](docs/linkfolio_development_report.pdf)**
 
 <p align="center">
-  <img src="images/etc/linkfolio_logo.png" width="750" alt="linkfolio"/>
+  <img src="images/etc/linkfolio_logo(2).png" width="750" alt="linkfolio"/>
   <br/>
   <br/>
   <a href="https://github.com/HeoJunHyoung/Linkfolio-backend">
