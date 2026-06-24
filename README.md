@@ -15,7 +15,7 @@
     <img src="https://img.shields.io/badge/GitHub-Frontend-181717?style=for-the-badge&logo=github"/>
   </a>
   &nbsp;
-  <a href="https://github.com/HeoJunHyoung/Linkfolio-manifest">
+  <a href="https://github.com/HeoJunHyoung/linkfolio-manifest/tree/feature/unified-infra-app-of-apps">
     <img src="https://img.shields.io/badge/GitHub-Manifest-181717?style=for-the-badge&logo=github"/>
   </a>
 </p>
